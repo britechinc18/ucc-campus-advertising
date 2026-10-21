@@ -4,7 +4,11 @@ The owner requested deploying the current backend before frontend work. This is 
 
 ## Current access and blockers
 
-On 2026-10-21, GitHub authenticated as `brightwoodepng`, but GitHub denied creating `brightwoodepng/ucc-campus-advertising` with `Resource not accessible by integration (createRepository)`. That creation attempt made no repository. The owner subsequently supplied `https://github.com/britechinc18/ucc-campus-advertising.git`. It exists and is empty, but is public and the connected account has `pull: true`, `push: false`. Its URL is configured as the local origin; no code has been pushed. Reconnect as the repository owner or grant the connected account/app write access. The blueprint recommended a private repository; its owner currently created it public. No visibility change has been made. Do not initialize a separate README or modify any MedNexus repository.
+GitHub access is working through the owner connection `britechinc18`, with the ChatGPT Codex Connector installation authorized. The [repository](https://github.com/britechinc18/ucc-campus-advertising) now contains the planning baseline and all backend source branches. The owner created it public; its visibility has not been changed. No MedNexus repository was touched.
+
+Six draft PRs are open in order: [foundation #1](https://github.com/britechinc18/ucc-campus-advertising/pull/1), [schema/auth #2](https://github.com/britechinc18/ucc-campus-advertising/pull/2), [lifecycle #3](https://github.com/britechinc18/ucc-campus-advertising/pull/3), [moderation #4](https://github.com/britechinc18/ucc-campus-advertising/pull/4), [media/discovery #5](https://github.com/britechinc18/ucc-campus-advertising/pull/5), [deployment #6](https://github.com/britechinc18/ucc-campus-advertising/pull/6). They target their preceding branch. None has been merged. Main retains the approved planning baseline; import `chore/backend-preview-deployment` for the full backend preview.
+
+Publication used GitHub's account-scoped Git API because workspace CLI credentials still select the earlier account. Every remote source tree was verified identical to its local branch snapshot. The API generated new commit identities; original local histories are preserved under `refs/archive/ucc-pre-publication/`, and working branches now track their corresponding published remote branches. Future writes must continue using the `britechinc18` account connection.
 
 Neon and Vercel integrations were found and offered for installation/connection. Neither connection has been confirmed. No Neon project, database branch, Vercel project or deployment exists yet. No connection strings, API keys or billing changes have been requested in chat. Use account authorization and protected environment-variable configuration instead of posting credentials.
 
@@ -16,7 +20,7 @@ Neon and Vercel integrations were found and offered for installation/connection.
 - Vercel's `CRON_SECRET` authenticates automatic scheduled GET requests; `MAINTENANCE_SECRET` remains a fallback for manually scheduled POST/GET requests. Configure both to the same strong secret on Vercel for consistency with the full config checker.
 - `/api/v1/health` reports database/schema readiness and boolean authentication/storage configuration flags. A 200 response means the database schema is ready, not that real OAuth or storage calls have been verified. It returns 503 for missing/unreachable/unmigrated database state, with no credential/error details.
 - Missing Google configuration produces an explicit 503 `AUTH_UNAVAILABLE` on private/API authentication entry points while public browsing remains usable.
-- `.github/workflows/verify.yml` performs typecheck, lint, formatting, real PostgreSQL tests and production build for PRs/main. It uses a disposable runner-local PostgreSQL 17 service, with no production secrets. Local equivalents have been verified; GitHub Actions itself cannot run until the repository is pushed.
+- `.github/workflows/verify.yml` performs typecheck, lint, formatting, real PostgreSQL tests and production build for PRs/main. It uses a disposable runner-local PostgreSQL 17 service, with no production secrets. Local equivalents have been verified. The first remote CI run reached container initialization and failed on Docker health-check quoting; the workflow was corrected to use double quotes, and its next remote outcome must be recorded rather than inferred.
 - `.vercel/`, all populated `.env` files, build output and dependencies are ignored. `.vercelignore` also excludes tests and local secret files from uploaded deployment context.
 
 ## Cost and ownership decisions
@@ -31,7 +35,7 @@ No paid plan, card, upgrade, domain purchase or metered resource has been enable
 
 ## Repository and PR sequence
 
-After the new private repository is accessible:
+Completed source-publication sequence (repository currently public as created by its owner):
 
 1. Add its URL as `origin` and push the accepted planning `main` baseline.
 2. Push the existing focused backend branches and the `chore/backend-preview-deployment` branch. No force push is needed.
@@ -85,10 +89,10 @@ Use additive schema migrations. Before any future migration of nonempty producti
 
 ## Verification of this preparation
 
-Local `npm run typecheck`, `npm run lint`, `npm run format:check` and `npm run build` passed. The updated isolated PostgreSQL test suite passed **35 tests** (the prior 33 plus readiness/unconfigured-auth and Vercel scheduled-GET tests). On the production-built local server, health/categories/adverts returned 200; private adverts and auth providers returned the intended 503 without Google configuration; maintenance returned 503 without a configured scheduler secret. Tests do not establish cloud connectivity. GitHub CI, Neon migrations and Vercel deployment remain unexecuted until the account connections and repository write permission are available.
+Local `npm run typecheck`, `npm run lint`, `npm run format:check` and `npm run build` passed. The updated isolated PostgreSQL test suite passed **35 tests** (the prior 33 plus readiness/unconfigured-auth and Vercel scheduled-GET tests). On the production-built local server, health/categories/adverts returned 200; private adverts and auth providers returned the intended 503 without Google configuration; maintenance returned 503 without a configured scheduler secret. Tests do not establish cloud connectivity. GitHub CI was triggered; its initial container-initialization failure is recorded above. Hosted Neon migrations and Vercel deployment remain unexecuted until those account connections are available.
 
-## Connection recheck after owner confirmation
+## Authorization history
 
-GitHub now exposes the `britechinc18` connection, and the repository owner has admin/push permissions. However, the connector's attempted README creation returned `403 Resource not accessible by integration`; no file or commit was created remotely. GitHub installation/account checks returned empty lists for this connection. The account identity is corrected, but the GitHub app must still be installed/authorized for `britechinc18/ucc-campus-advertising`. CLI credentials remain associated with the earlier account and were not used to attempt a push through that identity. A read-only remote-ref check still found no branches.
+Initial GitHub attempts failed because the CLI selected the earlier account, then because the correct owner connection lacked a repository app installation. The owner installed the ChatGPT Codex Connector, after which an actual file write succeeded. Source and PR publication are now complete; no further GitHub reconnection is requested.
 
-A fresh plugin-directory check still reported Neon and Vercel as not installed. No database, Vercel resource, deployment or paid account change has been made. The next required actions are repository-app authorization and Neon/Vercel installation/account authorization; reconnecting GitHub identity again is not the requested fix.
+Neon and Vercel still report as not installed in the latest directory check. No hosted database, Vercel resource, deployment or paid account change has been made. Their installation/account authorization is the remaining external dependency.
