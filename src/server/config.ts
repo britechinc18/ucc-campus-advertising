@@ -24,3 +24,9 @@ export function authConfig() {
   if (!parsed.success) throw new Error('Authentication configuration is missing or invalid');
   return parsed.data;
 }
+
+export function isAuthenticationConfigured() {
+  return schema
+    .pick({ AUTH_SECRET: true, AUTH_GOOGLE_ID: true, AUTH_GOOGLE_SECRET: true })
+    .safeParse(process.env).success;
+}

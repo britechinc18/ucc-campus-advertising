@@ -3,6 +3,8 @@ import { randomUUID, createHmac, timingSafeEqual } from 'node:crypto';
 import { z, ZodError } from 'zod';
 import { sql } from 'drizzle-orm';
 import { auth } from './auth';
+import { isAuthenticationConfigured } from './config';
+import { readiness } from './readiness';
 import { AppError, ensure } from './errors';
 import {
   createProfile,
@@ -78,7 +80,7 @@ export function sameOrigin(request: Request) {
   );
 }
 function scheduler(request: Request) {
-  const secret = process.env.MAINTENANCE_SECRET;
+  const secret = process.env.CRON_SECRET || process.env.MAINTENANCE_SECRET;
   ensure(secret && secret.length >= 32, 503, 'CONFIGURATION', 'Maintenance is not configured');
   const actual = Buffer.from(request.headers.get('authorization') ?? '');
   const expected = Buffer.from(`Bearer ${secret}`);
@@ -108,13 +110,17 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
     const method = request.method;
     const url = new URL(request.url);
     const route = path.join('/');
-    if (method === 'POST' && route === 'internal/maintenance') {
+    if (['GET', 'POST'].includes(method) && route === 'internal/maintenance') {
       scheduler(request);
       return Response.json(await maintenance(), { headers });
     }
     if (!['GET', 'HEAD'].includes(method)) sameOrigin(request);
     // Narrow allowlist for public reads: none consults authentication or needs an account.
     if (method === 'GET') {
+      if (route === 'health') {
+        const result = await readiness();
+        return Response.json(result.body, { status: result.status, headers });
+      }
       if (route === 'adverts')
         return Response.json(await listAdverts(Object.fromEntries(url.searchParams)), { headers });
       if (route === 'home') return Response.json(await home(), { headers });
@@ -135,6 +141,7 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
           bytes = await readMedia(undefined, path[1]);
         } catch (error) {
           if (!(error instanceof AppError) || error.status !== 404) throw error;
+          if (!isAuthenticationConfigured()) throw error;
           const session = await auth();
           bytes = await readMedia(session?.user?.id, path[1]);
         }
@@ -159,6 +166,12 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
         { headers, status: 202 },
       );
     }
+    ensure(
+      isAuthenticationConfigured(),
+      503,
+      'AUTH_UNAVAILABLE',
+      'Sign-in is not configured for this backend preview',
+    );
     const session = await auth();
     const userId = session?.user?.id;
     ensure(userId, 401, 'UNAUTHORIZED', 'Sign in to continue');

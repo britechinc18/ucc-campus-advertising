@@ -24,6 +24,7 @@ import {
 import { saveBusiness, moderateBusiness, listBusinesses } from '../src/server/businesses';
 import { signUpload, completeUpload, readMedia, type ObjectStorage } from '../src/server/storage';
 import { maintenance } from '../src/server/maintenance';
+import { readiness } from '../src/server/readiness';
 import sharp from 'sharp';
 const url = process.env.TEST_DATABASE_URL;
 // Only an explicitly designated test database may be reset.
@@ -68,6 +69,10 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     await pool.query('update platform_settings set max_active=5,daily_limit=3,duration_days=30');
     vi.mocked(auth).mockReset();
     process.env.APP_ORIGIN = 'https://campus.test';
+    process.env.AUTH_SECRET = 'synthetic-test-key-with-more-than-32-characters';
+    process.env.AUTH_GOOGLE_ID = 'test-only-client';
+    process.env.AUTH_GOOGLE_SECRET = 'test-only-client-secret';
+    delete process.env.CRON_SECRET;
     process.env.ABUSE_HASH_SECRET = 'test-abuse-key-with-more-than-32-characters';
     process.env.MAINTENANCE_SECRET = 'test-maintenance-with-more-than-32-characters';
     owner = randomUUID();
@@ -504,5 +509,41 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     const response = await dispatch(new Request('https://campus.test/api/v1/adverts'), ['adverts']);
     expect(response.status).toBe(200);
     expect(auth).not.toHaveBeenCalled();
+  });
+
+  it('exposes safe database readiness and a clear unavailable sign-in response', async () => {
+    const ready = await readiness();
+    expect(ready.status).toBe(200);
+    expect(ready.body.databaseReady).toBe(true);
+    delete process.env.AUTH_GOOGLE_SECRET;
+    const health = await dispatch(new Request('https://campus.test/api/v1/health'), ['health']);
+    expect(health.status).toBe(200);
+    const text = await health.text();
+    expect(JSON.parse(text).authenticationConfigured).toBe(false);
+    expect(text).not.toContain(process.env.AUTH_SECRET!);
+    expect(text).not.toContain(process.env.DATABASE_URL!);
+    const disabled = await dispatch(new Request('https://campus.test/api/v1/me/adverts'), [
+      'me',
+      'adverts',
+    ]);
+    expect(disabled.status).toBe(503);
+    expect((await disabled.json()).code).toBe('AUTH_UNAVAILABLE');
+  });
+  it('accepts authenticated Vercel scheduled GETs with the CRON_SECRET', async () => {
+    process.env.CRON_SECRET = 'synthetic-vercel-cron-key-at-least-32-characters';
+    const denied = await dispatch(
+      new Request('https://campus.test/api/v1/internal/maintenance', {
+        headers: { authorization: `Bearer ${process.env.MAINTENANCE_SECRET}` },
+      }),
+      ['internal', 'maintenance'],
+    );
+    expect(denied.status).toBe(401);
+    const allowed = await dispatch(
+      new Request('https://campus.test/api/v1/internal/maintenance', {
+        headers: { authorization: `Bearer ${process.env.CRON_SECRET}` },
+      }),
+      ['internal', 'maintenance'],
+    );
+    expect(allowed.status).toBe(200);
   });
 });
