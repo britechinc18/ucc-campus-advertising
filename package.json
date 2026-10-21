@@ -11,7 +11,11 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/migrate.ts",
-    "admin:grant": "tsx scripts/grant-admin.ts"
+    "admin:grant": "tsx scripts/grant-admin.ts",
+    "test:integration": "tsx scripts/test-integration.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check:config": "tsx scripts/check-config.ts"
   },
   "engines": {
     "node": ">=22"
@@ -40,6 +44,7 @@
     "drizzle-kit": "^0.31.11",
     "eslint": "^9.39.5",
     "eslint-config-next": "^16.4.2",
+    "prettier": "^3.9.10",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",

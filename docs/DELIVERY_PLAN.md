@@ -2,13 +2,13 @@
 
 ## Current status
 
-Phase 1 only: blueprint, decision register and delivery plan created in an independent local Git repository. No application implementation, migration, provider setup, deployment or contact with advertisers. No MedNexus files changed. No GitHub remote supplied; remote branches and pull requests remain pending.
+Phase 1 was completed and explicitly approved by the owner on 2026-10-21. Phase 2 backend implementation and local verification are recorded in [PHASE_2_STATUS.md](PHASE_2_STATUS.md). Phase 3 has not started. No cloud resources, remote repository, deployment or contact with advertisers. No MedNexus files changed. GitHub remote branches and pull requests remain pending a repository destination.
 
-**Gate: stop after Phase 1 and wait for explicit owner approval before Phase 2.** This gate comes directly from the owner's project instructions. Approval should confirm the blueprint and resolve implementation-blocking decisions in DECISIONS.md.
+**Phase 1 gate satisfied:** the owner explicitly confirmed approval of Phase 2 using recommended defaults ("Yes it does"). Work remains limited to Phase 2 in this delivery; Phases 3–5 are not bundled into it.
 
 ## Branch and PR workflow
 
-Use `main` as the reviewed baseline and short-lived focused branches. Do not combine all phases into one PR. Open draft PRs for review, explain behavior and validation, and record limitations. Merge with required review/checks; do not push directly to main. Do not claim a PR exists until a remote has been configured and the PR URL is available. The initial planning branch is `docs/phase-1-blueprint`; its files are currently local and uncommitted.
+Use `main` as the reviewed baseline and short-lived focused branches. Do not combine all phases into one PR. Open draft PRs for review, explain behavior and validation, and record limitations. Merge with required review/checks; do not push directly to main. Do not claim a PR exists until a remote has been configured and the PR URL is available. The initial planning branch is `docs/phase-1-blueprint`; its baseline is committed. Backend branches are stacked locally for review, with separate feature commits. No local feature branch has been merged into `main`.
 
 Suggested planning PR description:
 
@@ -40,4 +40,4 @@ Prepare GitHub PR/check workflow, Vercel project settings, Neon isolated preview
 
 ## Verification ledger
 
-Phase 1: documentation and local repository inspection only. No runtime tests, browser tests, database checks or deployment checks have been executed. Application verification remains assigned to later phases above. Any later result must name the executed command or manual check and its outcome; proposed checks are not results.
+Phase 1 performed documentation checks only. Phase 2 executed local static checks, a production build, real PostgreSQL integration tests and a public-API HTTP smoke check; see PHASE_2_STATUS.md for results and limitations. No live provider, browser journey or deployment validation is claimed. Proposed checks in later phases are not results.
