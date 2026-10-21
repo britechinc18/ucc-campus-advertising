@@ -1,6 +1,6 @@
 # Decisions for owner review
 
-All defaults below are proposals, not approved requirements. Phase 2 begins only after explicit owner approval. Resolve implementation-blocking choices at that boundary; branding and final content may be settled before Phase 3/launch.
+The owner explicitly approved Phase 2 using the recommended defaults on 2026-10-21 ("Yes it does"). These defaults now guide implementation. Account provisioning, GitHub destination, branding and launch policies remain outstanding; approval does not supply provider credentials.
 
 | Decision | Recommended default | When needed |
 | --- | --- | --- |
