@@ -1,0 +1,15 @@
+{
+  "artifact": "Design-review prototype only",
+  "passed": [
+    "Uses OS light preference initially",
+    "Manual dark override persists on reload",
+    "Mobile navigation opens Explore",
+    "Filter sheet blocks background, contains focus and restores trigger on Escape",
+    "Mobile detail uses contact bar without bottom tabs",
+    "Report action explicitly stays in preview mode",
+    "All three posting steps and Back navigation work",
+    "Status filters work and pending management excludes mark-sold",
+    "Mobile administration opens its menu",
+    "No external network, API or provider requests"
+  ]
+}
