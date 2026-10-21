@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>UCC Med Market · Design review</title>
+    <link rel="stylesheet" href="review.css" />
+    <script>
+      try {
+        document.documentElement.dataset.theme =
+          localStorage.getItem('ucc-design-theme') ||
+          (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+      } catch {}
+    </script>
+    <script src="photos.js" defer></script>
+    <script src="review.js" defer></script>
+  </head>
+  <body>
+    <aside class="review-tools" aria-label="Design review controls">
+      <span
+        ><strong>DESIGN PREVIEW</strong
+        ><span class="review-note"> Fictional content · No live actions</span></span
+      >
+      <label
+        >Screen
+        <select id="screen">
+          <option value="home">Home</option>
+          <option value="explore">Explore</option>
+          <option value="detail">Advert detail</option>
+          <option value="businesses">Businesses</option>
+          <option value="business">Business profile</option>
+          <option value="post">Post an advert</option>
+          <option value="adverts">My adverts</option>
+          <option value="admin">Admin overview</option>
+          <option value="queue">Moderation queue</option>
+          <option value="review">Review advert</option>
+          <option value="empty">Empty / unavailable</option>
+        </select></label
+      >
+    </aside>
+    <div id="app"></div>
+    <div id="notice" role="status" class="toast" hidden></div>
+  </body>
+</html>

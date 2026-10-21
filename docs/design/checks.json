@@ -1,0 +1,1178 @@
+{
+  "artifact": "Design-review prototype only; not production/frontend integration tests",
+  "browser": "Chromium",
+  "layoutCases": 130,
+  "pageErrors": [],
+  "checks": [
+    {
+      "theme": "light",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "light",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "light",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "light",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "light",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "light",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "light",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "light",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "light",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "light",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "light",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "light",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "light",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "light",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "light",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "light",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "light",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "light",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "light",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "light",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "light",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "light",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "light",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "light",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "light",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "light",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "light",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "light",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "light",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "light",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "light",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "light",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "light",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "light",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "light",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "light",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "light",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "light",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "light",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "light",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "light",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "light",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "light",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "dark",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "dark",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "dark",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "dark",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "dark",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "dark",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "dark",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 320,
+      "scrollWidth": 320,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "dark",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "dark",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "dark",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "dark",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "dark",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "dark",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "dark",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 390,
+      "scrollWidth": 390,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "dark",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "dark",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "dark",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "dark",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "dark",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "dark",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "dark",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 768,
+      "scrollWidth": 768,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "dark",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "dark",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "dark",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "dark",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "dark",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "dark",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "dark",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1024,
+      "scrollWidth": 1024,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "home",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Good finds. Right around campus.Find it on campus."
+    },
+    {
+      "theme": "dark",
+      "screen": "explore",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Explore adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "detail",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Wireless headphones"
+    },
+    {
+      "theme": "dark",
+      "screen": "businesses",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Local businesses"
+    },
+    {
+      "theme": "dark",
+      "screen": "business",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Campus Tech Corner"
+    },
+    {
+      "theme": "dark",
+      "screen": "post",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "adverts",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "My adverts"
+    },
+    {
+      "theme": "dark",
+      "screen": "admin",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Campus at a glance"
+    },
+    {
+      "theme": "dark",
+      "screen": "queue",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Pending queue"
+    },
+    {
+      "theme": "dark",
+      "screen": "review",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Review advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "empty",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "No finds just yet."
+    },
+    {
+      "theme": "dark",
+      "screen": "post-2",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Post an advert"
+    },
+    {
+      "theme": "dark",
+      "screen": "post-3",
+      "horizontalOverflow": false,
+      "brokenImages": 0,
+      "width": 1440,
+      "scrollWidth": 1440,
+      "h1": "Post an advert"
+    }
+  ]
+}

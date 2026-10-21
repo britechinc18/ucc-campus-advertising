@@ -2,8 +2,10 @@
 
 Campus classifieds for University of Cape Coast medical students and businesses. Independent of MedNexus. Visitors browse freely and contact sellers by WhatsApp or telephone; no carts, payments or in-app transactions.
 
-**Status: Phase 2 backend implemented and locally verified. Phase 3 frontend has not started.** The current page is a framework placeholder, not the public website. The backend source is published on GitHub in six draft review PRs. The [hosted backend preview](https://ucc-campus-advertising.vercel.app) is connected to an isolated Neon database. Google sign-in and image storage are not configured yet.
+**Status: Phase 2 backend implemented and locally verified. Phase 3 visual-review mockups prepared; production frontend implementation awaits the agreed visual review.** The current hosted page is a framework placeholder, not the public website. The backend source is published on GitHub in six draft review PRs. The [hosted backend preview](https://ucc-campus-advertising.vercel.app) is connected to an isolated Neon database. Google sign-in and image storage are not configured yet.
 
+- [Phase 3 mockups, PDF and offline prototype](docs/design/README.md)
+- [Frontend implementation blueprint](docs/PHASE_3_BLUEPRINT.md)
 - [Live preview, resource IDs and verification results](docs/HOSTED_PREVIEW.md)
 - [Deployment runbook](docs/DEPLOYMENT.md)
 - [Backend setup and API reference](docs/BACKEND.md)
