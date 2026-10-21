@@ -1,6 +1,6 @@
 # Phase 2 backend
 
-The owner approved recommended Phase 1 defaults on 2026-10-21. This phase supplies a backend and a minimal framework placeholder page. The public website and dashboards remain Phase 3; end-to-end frontend integration remains Phase 4. No external accounts, billing, GitHub remote, Neon database or Vercel deployment have been provisioned.
+The owner approved recommended Phase 1 defaults on 2026-10-21. This phase supplies a backend and a minimal framework placeholder page. The public website and dashboards remain Phase 3; end-to-end frontend integration remains Phase 4. A subsequent owner-authorized delivery published GitHub branches and deployed the isolated Neon/Vercel backend preview; see HOSTED_PREVIEW.md. Google OAuth and image storage remain unconfigured, and no paid-plan upgrade was enabled.
 
 ## Local setup
 
@@ -91,4 +91,4 @@ Reports are deduplicated per advert/hash/day and never automatically hide an adv
 
 `npm run typecheck`, `npm run lint`, `npm run format:check`, `npm run build` and `npm test` are local checks. `npm test` explicitly skips PostgreSQL integration tests unless `TEST_DATABASE_URL` is supplied; skipped tests must never be described as passed. For the full database suite, run `npm run test:integration` with an **isolated disposable** PostgreSQL URL whose database name ends in `_test`. The script migrates that database then runs tests, and the suite truncates its application tables. Never point it at shared or production data. Do not enable a production reset command.
 
-The integration suite tests actual PostgreSQL transactions and migrations, with mocked login sessions for HTTP boundary tests. Google OAuth and real object storage remain separate manual provider checks. Test evidence and branch history are recorded in PHASE_2_STATUS.md. The GitHub branch stack is published with six draft PRs; Neon/Vercel provisioning remains blocked on those account connections. See DEPLOYMENT.md for current remote links.
+The integration suite tests actual PostgreSQL transactions and migrations, with mocked login sessions for HTTP boundary tests. Google OAuth and real object storage remain separate manual provider checks. Test evidence and branch history are recorded in PHASE_2_STATUS.md. The GitHub branch stack is published with six draft PRs; a Neon-connected backend preview is live. See DEPLOYMENT.md for current remote links.

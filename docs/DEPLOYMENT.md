@@ -2,7 +2,11 @@
 
 The owner requested deploying the current backend before frontend work. This is an explicit change in delivery order: perform deployment preparation now, while Phases 3 (frontend) and 4 (browser integration) remain outstanding. A successful backend preview is not a launch-ready classifieds website.
 
-## Current access and blockers
+## Current deployment status
+
+The backend preview is now live and connected to Neon. See [HOSTED_PREVIEW.md](HOSTED_PREVIEW.md) for current URLs, resource IDs, 35 passing tests, GitHub CI and 14 hosted smoke assertions. The authorization/provisioning notes below describe the earlier setup sequence and the repeatable deployment runbook.
+
+## Source access and setup history
 
 GitHub access is working through the owner connection `britechinc18`, with the ChatGPT Codex Connector installation authorized. The [repository](https://github.com/britechinc18/ucc-campus-advertising) now contains the planning baseline and all backend source branches. The owner created it public; its visibility has not been changed. No MedNexus repository was touched.
 
@@ -10,7 +14,7 @@ Six draft PRs are open in order: [foundation #1](https://github.com/britechinc18
 
 Publication used GitHub's account-scoped Git API because workspace CLI credentials still select the earlier account. Every remote source tree was verified identical to its local branch snapshot. The API generated new commit identities; original local histories are preserved under `refs/archive/ucc-pre-publication/`, and working branches now track their corresponding published remote branches. Future writes must continue using the `britechinc18` account connection.
 
-Neon and Vercel integrations were found and offered for installation/connection. Neither connection has been confirmed. No Neon project, database branch, Vercel project or deployment exists yet. No connection strings, API keys or billing changes have been requested in chat. Use account authorization and protected environment-variable configuration instead of posting credentials.
+Neon and Vercel are now authorized. Dedicated resources and an isolated database were provisioned, and the backend preview was verified. Credentials were written only to protected runtime configuration; none were requested in chat. Hosted Google OAuth/image storage and Vercel Git repository authorization remain outstanding.
 
 ## Prepared configuration
 
@@ -95,4 +99,4 @@ Local `npm run typecheck`, `npm run lint`, `npm run format:check` and `npm run b
 
 Initial GitHub attempts failed because the CLI selected the earlier account, then because the correct owner connection lacked a repository app installation. The owner installed the ChatGPT Codex Connector, after which an actual file write succeeded. Source and PR publication are now complete; no further GitHub reconnection is requested.
 
-Neon and Vercel still report as not installed in the latest directory check. No hosted database, Vercel resource, deployment or paid account change has been made. Their installation/account authorization is the remaining external dependency.
+Subsequently, the owner connected Neon and Vercel. Their project/branch creation, environment configuration, migration and deployment results are recorded in HOSTED_PREVIEW.md. No paid-plan upgrade was enabled.
