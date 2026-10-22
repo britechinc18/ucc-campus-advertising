@@ -61,13 +61,7 @@ export default async function HomePage() {
       ]
     : [];
   return (
-    <main id="main" className="container">
-      <div className="market-intro">
-        <span>THE UNIVERSITY OF CAPE COAST COMMUNITY</span>
-        <Link href="/help">
-          Good finds. Safer connections. <Icon name="arrow" />
-        </Link>
-      </div>
+    <main id="main" className="container live-home-cleanup">
       <section className="premium-hero" aria-labelledby="hero-heading">
         <div className="hero-story">
           <p className="eyebrow">A CAMPUS FULL OF POSSIBILITIES</p>
@@ -125,8 +119,7 @@ export default async function HomePage() {
       <section className="category-section" aria-label="Browse categories">
         <div className="section-head">
           <div>
-            <p className="eyebrow">FIND YOUR THING</p>
-            <h2>Around campus.</h2>
+            <h2>Find your thing around campus</h2>
           </div>
           <Link className="text-link" href="/explore#filters">
             All categories <Icon name="arrow" />
@@ -134,14 +127,6 @@ export default async function HomePage() {
         </div>
         <CategoryChips categories={categories} />
       </section>
-      <div className="market-promise">
-        <span>
-          <Icon name="shield" /> Reviewed before publishing
-        </span>
-        <span>
-          <Icon name="chat" /> Connect directly with advertisers
-        </span>
-      </div>
       {failed ? (
         <>
           <ErrorMessage message="We couldn’t load the latest adverts. Please refresh in a moment." />
@@ -288,6 +273,14 @@ export default async function HomePage() {
           </Link>
         )}
       </section>
+      <div className="market-promise">
+        <span>
+          <Icon name="shield" /> Reviewed before publishing
+        </span>
+        <span>
+          <Icon name="chat" /> Connect directly with advertisers
+        </span>
+      </div>
     </main>
   );
 }
