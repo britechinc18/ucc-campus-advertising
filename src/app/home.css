@@ -825,3 +825,7 @@
     gap: 16px;
   }
 }
+/* Cached public images can finish before hydration; keep real photos visible. */
+.medstash-home .media-image.is-loading {
+  opacity: 1;
+}
