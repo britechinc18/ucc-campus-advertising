@@ -1,0 +1,84 @@
+name: Verify marketplace
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: verify-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: ucc_ci_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ucc_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # Disposable runner-local database only; no production credentials.
+      TEST_DATABASE_URL: postgresql://postgres@localhost:5432/ucc_ci_test
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run test:integration
+      - run: npm run build
+
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: ucc_browser_ci_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ucc_browser_ci_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      # All identities and provider settings below are synthetic, disposable CI fixtures.
+      TEST_DATABASE_URL: postgresql://postgres@localhost:5432/ucc_browser_ci_test
+      DATABASE_URL: postgresql://postgres@localhost:5432/ucc_browser_ci_test
+      MIGRATION_DATABASE_URL: postgresql://postgres@localhost:5432/ucc_browser_ci_test
+      APP_ORIGIN: http://localhost:3000
+      AUTH_URL: http://localhost:3000
+      AUTH_TRUST_HOST: 'true'
+      AUTH_SECRET: synthetic-browser-test-key-with-more-than-32-characters
+      AUTH_GOOGLE_ID: local-browser-fixture-only
+      AUTH_GOOGLE_SECRET: local-browser-fixture-only
+      ABUSE_HASH_SECRET: synthetic-browser-abuse-key-with-more-than-32-characters
+      MAINTENANCE_SECRET: synthetic-browser-maintenance-key-with-more-than-32-characters
+      NEXT_TELEMETRY_DISABLED: '1'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run db:migrate
+      - run: npm run test:browser:seed
+      - run: npm run build
+      - run: npm run test:browser

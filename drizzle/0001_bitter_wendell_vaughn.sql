@@ -1,0 +1,1 @@
+ALTER TABLE "advert_revisions" ADD COLUMN "quota_charged" boolean DEFAULT false NOT NULL;

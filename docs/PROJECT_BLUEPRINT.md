@@ -33,10 +33,10 @@ flowchart LR
 
 ## 3. Roles and ownership
 
-| Role | Permissions |
-| --- | --- |
-| Visitor | Read published unexpired adverts and public business profiles; search, share, contact, report with abuse controls |
-| Advertiser | Visitor permissions plus manage own drafts, submit revisions, withdraw adverts, mark fulfilled and view moderation feedback |
+| Role          | Permissions                                                                                                                                              |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Visitor       | Read published unexpired adverts and public business profiles; search, share, contact, report with abuse controls                                        |
+| Advertiser    | Visitor permissions plus manage own drafts, submit revisions, withdraw adverts, mark fulfilled and view moderation feedback                              |
 | Administrator | Review submissions and reports; create on behalf of advertisers; suspend accounts/listings; manage categories, features and limits; inspect audit events |
 
 Separate authenticated users from advertiser profiles. An administrator may create an unclaimed profile with consent and verified seller contact; `created_by` records the admin while `advertiser_id` identifies the actual seller. Never display the admin's contact as the seller. Unclaimed profiles have no login access. Later claiming requires verified contact and an audited administrator-approved transfer, not matching a submitted phone number. Quotas apply to the advertiser even when an admin submits. Any override must be explicit, reasoned and audited.
@@ -47,23 +47,23 @@ Business directory profiles and their edits require moderation. A business label
 
 Use UUID identifiers, UTC `timestamptz`, foreign keys, required-field constraints and nonnegative price checks. Use integer pesewas for GHS values; never floating point money. Store phone numbers in E.164 format, normalize Ghana numbers with a phone library, and keep WhatsApp and telephone availability explicit.
 
-| Entity | Key data and purpose |
-| --- | --- |
-| users, auth_accounts, sessions | Identity-provider identifiers, role, suspension, session lifecycle; schema follows selected auth adapter |
-| advertisers | Optional unique linked user, student/business type, display name, verification/trust flags, claimed state and suspension |
-| business_profiles and revisions | Public directory data, location, contact, approval state; retain approved version during edits |
-| categories | Name, slug, active flag, ordering; deactivate used categories rather than deleting references |
-| adverts | Advertiser, creator, category, product/service/wanted kind, lifecycle state, approved revision ID, published/expiry timestamps, fulfilled flag |
-| advert_revisions | Immutable submitted title, description, price mode/value, condition, location and contact snapshot; draft/pending/approved/rejected state and normalized duplicate fingerprint |
-| media_assets, revision_media | Object keys, uploader/advertiser ownership, byte size, detected MIME, checksum, processing state and ordered revision association |
-| moderation_events | Actor, action, revision, reason and timestamp; append-only application access |
-| reports | Advert, reason, optional detail/contact, deduplication token, triage state and resolution |
-| platform_settings | Versioned limits, duration, image constraints and future trusted-publishing toggle; updated by admins only |
-| advertiser_daily_usage | Advertiser + Africa/Accra calendar date unique key; accepted submission count |
-| rate_limit_buckets | Hashed identity/IP bucket, route purpose, time window, count and expiry |
-| audit_events | Administrative role, settings, quota override, ownership and suspension changes; no secrets or raw tokens |
-| daily_advert_metrics | Aggregate eligible views/contact clicks for trending; no claim that a click equals a completed sale |
-| featured_adverts | Admin-selected advert, order and start/end window; subject to ordinary public visibility rules |
+| Entity                          | Key data and purpose                                                                                                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| users, auth_accounts, sessions  | Identity-provider identifiers, role, suspension, session lifecycle; schema follows selected auth adapter                                                                       |
+| advertisers                     | Optional unique linked user, student/business type, display name, verification/trust flags, claimed state and suspension                                                       |
+| business_profiles and revisions | Public directory data, location, contact, approval state; retain approved version during edits                                                                                 |
+| categories                      | Name, slug, active flag, ordering; deactivate used categories rather than deleting references                                                                                  |
+| adverts                         | Advertiser, creator, category, product/service/wanted kind, lifecycle state, approved revision ID, published/expiry timestamps, fulfilled flag                                 |
+| advert_revisions                | Immutable submitted title, description, price mode/value, condition, location and contact snapshot; draft/pending/approved/rejected state and normalized duplicate fingerprint |
+| media_assets, revision_media    | Object keys, uploader/advertiser ownership, byte size, detected MIME, checksum, processing state and ordered revision association                                              |
+| moderation_events               | Actor, action, revision, reason and timestamp; append-only application access                                                                                                  |
+| reports                         | Advert, reason, optional detail/contact, deduplication token, triage state and resolution                                                                                      |
+| platform_settings               | Versioned limits, duration, image constraints and future trusted-publishing toggle; updated by admins only                                                                     |
+| advertiser_daily_usage          | Advertiser + Africa/Accra calendar date unique key; accepted submission count                                                                                                  |
+| rate_limit_buckets              | Hashed identity/IP bucket, route purpose, time window, count and expiry                                                                                                        |
+| audit_events                    | Administrative role, settings, quota override, ownership and suspension changes; no secrets or raw tokens                                                                      |
+| daily_advert_metrics            | Aggregate eligible views/contact clicks for trending; no claim that a click equals a completed sale                                                                            |
+| featured_adverts                | Admin-selected advert, order and start/end window; subject to ordinary public visibility rules                                                                                 |
 
 Indexes: public eligibility/expiry/published time; advertiser/state; category and price; pending review time; unique daily usage key; report triage status; revision search vector with GIN index. Use weighted title/description full-text search with prefix handling; evaluate trigram search after measuring relevance and Neon extension availability. Public search indexes only approved text. Never index unapproved revisions into public results.
 
@@ -89,23 +89,23 @@ Duplicate protection: reject exact normalized repeats by the same advertiser acr
 
 Version routes under `/api/v1`; use shared Zod validation and consistent errors (`code`, safe `message`, optional field errors, request ID). Return 401/403 for authentication/authorization, 404 for nonpublic resources on public routes, 409 for state/duplicate/quota conflicts, 422 for invalid input and 429 with retry guidance for rate limits. Mutations require server-side authorization; hiding UI controls is insufficient.
 
-| Routes | Purpose |
-| --- | --- |
-| GET /adverts, /adverts/:id | Public pagination/search/filter/detail over eligible adverts only |
-| GET /categories, /businesses, /businesses/:slug, /home | Public categories, approved directory and curated/discovery sections |
-| POST /adverts/:id/reports | Anonymous abuse-controlled report; deduplicate repeated reports |
-| POST /adverts/:id/events | Bounded anonymous view/contact aggregate collection; never redirects to arbitrary URLs |
-| GET /me/adverts; POST /me/adverts | Owner listing and draft creation |
-| PATCH /me/adverts/:id | Save draft or create editable revision with ownership checks |
-| POST /me/adverts/:id/submit | Submit immutable revision; idempotency and atomic quotas |
-| POST /me/adverts/:id/withdraw, /fulfill, /renew | Explicit guarded owner actions |
-| POST /uploads/sign, /uploads/complete | Authorize staged upload, then verify object and association |
-| GET /admin/submissions, /admin/reports | Moderation queues |
-| POST /admin/submissions/:id/approve, /reject | Guarded moderation decision with audit |
-| POST /admin/adverts; POST /admin/adverts/:id/suspend | Admin-assisted draft and enforcement actions |
-| PATCH /admin/settings, /admin/advertisers/:id | Limits and advertiser status/trust with validation and audit |
-| Admin category/business/feature routes | Moderated directory, taxonomy and feature management |
-| POST /internal/maintenance | Scheduler-only authenticated, idempotent bounded housekeeping |
+| Routes                                                 | Purpose                                                                                |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| GET /adverts, /adverts/:id                             | Public pagination/search/filter/detail over eligible adverts only                      |
+| GET /categories, /businesses, /businesses/:slug, /home | Public categories, approved directory and curated/discovery sections                   |
+| POST /adverts/:id/reports                              | Anonymous abuse-controlled report; deduplicate repeated reports                        |
+| POST /adverts/:id/events                               | Bounded anonymous view/contact aggregate collection; never redirects to arbitrary URLs |
+| GET /me/adverts; POST /me/adverts                      | Owner listing and draft creation                                                       |
+| PATCH /me/adverts/:id                                  | Save draft or create editable revision with ownership checks                           |
+| POST /me/adverts/:id/submit                            | Submit immutable revision; idempotency and atomic quotas                               |
+| POST /me/adverts/:id/withdraw, /fulfill, /renew        | Explicit guarded owner actions                                                         |
+| POST /uploads/sign, /uploads/complete                  | Authorize staged upload, then verify object and association                            |
+| GET /admin/submissions, /admin/reports                 | Moderation queues                                                                      |
+| POST /admin/submissions/:id/approve, /reject           | Guarded moderation decision with audit                                                 |
+| POST /admin/adverts; POST /admin/adverts/:id/suspend   | Admin-assisted draft and enforcement actions                                           |
+| PATCH /admin/settings, /admin/advertisers/:id          | Limits and advertiser status/trust with validation and audit                           |
+| Admin category/business/feature routes                 | Moderated directory, taxonomy and feature management                                   |
+| POST /internal/maintenance                             | Scheduler-only authenticated, idempotent bounded housekeeping                          |
 
 Search parameters: bounded text query, category, kind, location, condition, price range, business and sort (fresh, price ascending/descending, trending). Stable cursor pagination uses a tie-breaking advert ID. Cap page size and validate enum values. Prices marked wanted budget, free, negotiable or contact-for-price must have deliberate filter behavior; proposed under-GH₵100 section includes only offered items/services with known price strictly below 10,000 pesewas.
 
