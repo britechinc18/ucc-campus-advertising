@@ -4,7 +4,7 @@ import { Shell } from '@/components/shell';
 import { viewer } from '@/server/viewer';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
-  title: { default: 'UCC Med Market · Find it on campus', template: '%s · UCC Med Market' },
+  title: { default: 'MedStash · Find it on campus', template: '%s · MedStash' },
   description:
     'Products, services and wanted adverts for the University of Cape Coast medical-student community. Browse freely and contact advertisers directly.',
 };

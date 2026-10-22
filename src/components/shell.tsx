@@ -5,12 +5,12 @@ import { useEffect } from 'react';
 import { Icon } from './icon';
 export function Wordmark() {
   return (
-    <Link className="wordmark" href="/" aria-label="UCC Med Market home">
+    <Link className="wordmark" href="/" aria-label="MedStash home">
       <span className="mark">
         <Icon name="bag" />
       </span>
       <span>
-        UCC <span className="med">Med</span> Market
+        <span className="med">Med</span>Stash
       </span>
     </Link>
   );

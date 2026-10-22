@@ -1,8 +1,8 @@
-# UCC Campus Advertising Platform
+# MedStash
 
 Campus classifieds for University of Cape Coast medical students and businesses. Independent of MedNexus. Visitors browse freely and contact sellers by WhatsApp or telephone; no carts, payments or in-app transactions.
 
-**Status: Phase 3 frontend implemented and deployed to the existing isolated preview.** [Open UCC Med Market](https://ucc-campus-advertising.vercel.app). The public marketplace, advertiser dashboard and admin dashboard use the Phase 2 backend. Google sign-in and image storage still need provider configuration; private pages show a clear unavailable sign-in state until then. No sample adverts are seeded into the hosted database.
+**Status: Phase 3 frontend implemented and deployed to the existing isolated preview.** [Open MedStash](https://ucc-campus-advertising.vercel.app). The public marketplace, advertiser dashboard and admin dashboard use the Phase 2 backend. Private Neon image storage is configured; Google sign-in still needs provider configuration. Private pages show a clear unavailable sign-in state until then. No sample adverts are seeded into the hosted database.
 
 - [Phase 3 implementation, verification and remaining provider setup](docs/PHASE_3_STATUS.md)
 - [Phase 3 mockups, PDF and offline prototype](docs/design/README.md)

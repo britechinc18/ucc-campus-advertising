@@ -18,7 +18,7 @@ export default async function SignInPage({
     <main id="main" className="container">
       <section className="narrow panel auth-panel">
         <p className="eyebrow">YOUR CAMPUS CORNER</p>
-        <h1>{v.configured ? 'Welcome to UCC Med Market.' : 'Sign-in temporarily unavailable'}</h1>
+        <h1>{v.configured ? 'Welcome to MedStash.' : 'Sign-in temporarily unavailable'}</h1>
         <p>
           {v.configured
             ? 'Sign in to post adverts and manage your listings. Browsing and contacting advertisers are always open to everyone.'

@@ -7,8 +7,8 @@ export default function Help() {
         <p className="eyebrow">A SAFER CAMPUS MARKETPLACE</p>
         <h1>Good connections. Sensible precautions.</h1>
         <p>
-          UCC Med Market connects advertisers with the University of Cape Coast medical-student
-          community. Buyers contact advertisers directly. We do not process payments or guarantee a
+          MedStash connects advertisers with the University of Cape Coast medical-student community.
+          Buyers contact advertisers directly. We do not process payments or guarantee a
           transaction.
         </p>
         <h2>When buying or arranging a service</h2>
