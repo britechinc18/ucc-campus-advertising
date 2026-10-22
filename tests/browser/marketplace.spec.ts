@@ -538,7 +538,7 @@ test('brand icons, buyer menu, seller avatar and real notification panels work',
   await expect(page.getByLabel('Menu', { exact: true })).toBeVisible();
   await expect(page.locator('.seller-avatar')).toHaveCount(0);
   await page.getByRole('link', { name: 'Search MedStash', exact: true }).click();
-  await expect(page.locator('#market-search')).toBeFocused();
+  await expect(page.locator('#home-search')).toBeFocused();
   const bell = page.locator('.notification-menu > summary');
   await bell.click();
   await expect(page.locator('.notification-content')).toHaveAttribute('aria-busy', 'false');

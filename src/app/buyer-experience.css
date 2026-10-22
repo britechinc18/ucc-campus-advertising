@@ -1,0 +1,397 @@
+/* Buyer reference: photography leads; controls remain compact and familiar. */
+.home-header .header-search,
+.market-header .header-search {
+  display: none;
+}
+.footer .brand-logo {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 50%;
+}
+.campus-hero {
+  position: relative;
+  isolation: isolate;
+  margin-top: 20px;
+  min-height: 430px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--canvas);
+}
+.campus-hero > img {
+  object-fit: cover;
+  object-position: 68% 70%;
+  z-index: -2;
+}
+.campus-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    var(--canvas) 0%,
+    color-mix(in srgb, var(--canvas) 95%, transparent) 30%,
+    color-mix(in srgb, var(--canvas) 65%, transparent) 48%,
+    transparent 76%
+  );
+}
+.campus-hero-copy {
+  padding: 64px 48px 60px;
+  max-width: 700px;
+}
+.campus-hero h1 {
+  margin: 0;
+  font-size: 58px;
+  font-weight: 500;
+  letter-spacing: -2.7px;
+  line-height: 1.04;
+}
+.campus-hero-copy > p {
+  max-width: 430px;
+  margin: 20px 0 28px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.campus-hero .search {
+  margin: 0;
+  border-radius: 999px;
+  background: var(--surface);
+  padding: 6px 7px 6px 18px;
+  min-width: 0;
+}
+.campus-hero .search input {
+  min-width: 0;
+}
+.campus-hero .search .btn {
+  border-radius: 999px;
+  padding-inline: 18px;
+}
+.categories {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 18px;
+  overflow-x: auto;
+  padding: 8px 0 14px;
+  scrollbar-width: thin;
+}
+.categories .chip.category-tile,
+.live-home-cleanup .categories .chip.category-tile {
+  flex: 0 0 80px;
+  min-width: 0;
+  width: 80px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  border-radius: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: none;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 500;
+}
+.categories .chip.category-tile > svg,
+.live-home-cleanup .categories .chip.category-tile > svg {
+  width: 48px;
+  height: 48px;
+  padding: 14px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--ink);
+  transition: background 0.15s;
+}
+.categories .chip.category-tile[aria-current='page'] > svg {
+  color: var(--on-action);
+  background: var(--action);
+}
+.categories .chip.category-tile:hover > svg {
+  outline: 1px solid var(--brand);
+}
+.categories .chip.category-tile span {
+  max-width: 100%;
+  white-space: normal;
+  text-align: center;
+  overflow: visible;
+  font-size: inherit;
+  line-height: 1.35;
+}
+.live-home-cleanup .category-section {
+  padding-top: 22px;
+}
+.live-home-cleanup .category-section .section-head {
+  display: none;
+}
+.live-home-cleanup .category-section .categories {
+  margin-top: 0;
+  justify-content: space-between;
+}
+.explore-page .page-head {
+  margin-bottom: 18px;
+}
+.explore-page .page-head h1 {
+  font-size: 31px;
+  letter-spacing: -1px;
+}
+.market-toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin: 0 0 18px;
+}
+.market-toolbar .search {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  border-radius: 999px;
+  padding: 7px 14px;
+}
+.market-toolbar .search .btn {
+  border-radius: 999px;
+}
+.market-filter-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto;
+  padding: 0 20px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 500;
+}
+.market-filter-button svg {
+  width: 18px;
+  height: 18px;
+}
+.explore-page > .categories {
+  margin: 0 0 18px;
+}
+.explore-page .explore-layout {
+  display: block;
+}
+.public-detail .description {
+  margin: 20px 0;
+  padding: 0;
+  border: 0;
+}
+.public-detail .description h2 {
+  font-size: 14px;
+  letter-spacing: -0.2px;
+  margin-bottom: 8px;
+}
+.public-detail .description p {
+  font-size: 13px;
+  line-height: 1.85;
+}
+@media (min-width: 1500px) {
+  .campus-hero h1 {
+    font-size: 64px;
+  }
+}
+@media (max-width: 1023px) {
+  .campus-hero-copy {
+    padding: 54px 32px;
+    max-width: 610px;
+  }
+  .campus-hero h1 {
+    font-size: 50px;
+  }
+}
+@media (max-width: 767px) {
+  .campus-hero {
+    min-height: 355px;
+    margin: 0 -20px;
+    border-radius: 0;
+  }
+  .campus-hero > img {
+    object-position: 60% 50%;
+  }
+  .campus-hero::after {
+    background: linear-gradient(
+      90deg,
+      var(--canvas) 0%,
+      color-mix(in srgb, var(--canvas) 94%, transparent) 32%,
+      color-mix(in srgb, var(--canvas) 55%, transparent) 62%,
+      transparent 100%
+    );
+  }
+  .campus-hero-copy {
+    padding: 40px 20px 32px;
+    max-width: none;
+  }
+  .campus-hero h1 {
+    font-size: 42px;
+    letter-spacing: -2px;
+    max-width: 340px;
+  }
+  .campus-hero-copy > p {
+    font-size: 12px;
+    max-width: 230px;
+    margin: 20px 0 28px;
+  }
+  .campus-hero .search .btn {
+    font-size: 0;
+    width: 38px;
+    min-height: 38px;
+    padding: 10px;
+  }
+  .campus-hero .search .btn svg {
+    display: block;
+    width: 17px;
+    height: 17px;
+  }
+  .campus-hero .search .btn::after {
+    content: none;
+  }
+  .live-home-cleanup .category-section {
+    margin: 0 -20px;
+    padding: 14px 20px 0;
+    background: var(--canvas);
+    border-radius: 22px 22px 0 0;
+    position: relative;
+  }
+  .categories .chip.category-tile,
+  .live-home-cleanup .categories .chip.category-tile {
+    flex-basis: 58px;
+    width: 58px;
+    font-size: 10px;
+  }
+  .categories {
+    gap: 12px;
+  }
+  .categories .chip.category-tile > svg,
+  .live-home-cleanup .categories .chip.category-tile > svg {
+    width: 42px;
+    height: 42px;
+    padding: 12px;
+  }
+  .explore-page .page-head {
+    padding-top: 22px;
+    margin-bottom: 18px;
+  }
+  .explore-page .page-head h1 {
+    font-size: 27px;
+  }
+  .market-toolbar .search .btn {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .market-toolbar .search .btn:focus-visible {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 8px;
+    clip-path: none;
+  }
+  .market-filter-button {
+    width: 46px;
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .market-filter-button span {
+    display: none;
+  }
+  .advert-header {
+    display: none;
+  }
+  .container.detail-bottom-space {
+    width: 100%;
+    padding-top: 0;
+  }
+  .detail-bottom-space > .breadcrumbs {
+    position: absolute;
+    top: 18px;
+    left: 16px;
+    z-index: 5;
+    margin: 0;
+  }
+  .detail-bottom-space > .breadcrumbs a {
+    display: inline-flex;
+    padding: 9px 12px;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 12px;
+  }
+  .detail-grid.public-detail {
+    gap: 0;
+  }
+  .public-detail .gallery-main {
+    border-radius: 0;
+  }
+  .public-detail .gallery {
+    padding-bottom: 22px;
+    background: var(--soft);
+  }
+  .public-detail .gallery-caption {
+    margin: 8px 20px 0;
+    font-size: 10px;
+  }
+  .public-detail .gallery-thumbnails {
+    padding: 0 20px;
+  }
+  .public-detail .detail-content {
+    position: relative;
+    margin-top: -22px;
+    padding: 24px 20px;
+    border-radius: 24px 24px 0 0;
+    background: var(--canvas);
+  }
+  .public-detail .detail-content > .eyebrow {
+    display: none;
+  }
+  .public-detail .detail-content h1 {
+    font-size: 30px;
+    margin-top: 0;
+  }
+  .public-detail .detail-content .price {
+    font-size: 29px;
+  }
+  .public-detail .description p {
+    font-size: 12px;
+  }
+  .detail-bottom-space > .section {
+    padding-inline: 20px;
+  }
+}
+@media (max-width: 360px) {
+  .campus-hero h1 {
+    font-size: 36px;
+  }
+  .campus-hero-copy > p {
+    max-width: 205px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .categories .chip.category-tile > svg {
+    transition: none;
+  }
+}
+
+.public-detail .gallery {
+  position: relative;
+}
+.public-detail .gallery > .save-control {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 3;
+}
+.public-detail .gallery > .save-control .save-button {
+  width: 38px;
+  height: 38px;
+  background: var(--surface);
+  color: var(--ink);
+}

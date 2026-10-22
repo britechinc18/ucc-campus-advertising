@@ -6,7 +6,7 @@ import { home } from '@/server/discovery';
 import { query } from '@/server/store';
 import { db } from '@/server/db';
 import type { Category, Listing } from '@/lib/market';
-import { ListingGrid, CategoryChips } from '@/components/listings';
+import { ListingGrid, Search, CategoryChips } from '@/components/listings';
 import Image from 'next/image';
 import { Icon } from '@/components/icon';
 import { EmptyState, ErrorMessage } from '@/components/ui';
@@ -62,10 +62,28 @@ export default async function HomePage() {
     : [];
   return (
     <main id="main" className="container live-home-cleanup">
+      <section className="campus-hero" aria-labelledby="home-heading">
+        <Image
+          src="/editorial/workspace.webp"
+          alt="A sunlit desk with laptops, books, a chair and plants"
+          fill
+          priority
+          sizes="(max-width: 767px) 100vw, 1360px"
+        />
+        <div className="campus-hero-copy">
+          <h1 id="home-heading">
+            Everything you need
+            <br />
+            on campus.
+          </h1>
+          <p>Buy, discover and connect within the UCC community.</p>
+          <Search id="home-search" placeholder="Search for books, gadgets, rooms…" />
+        </div>
+      </section>
       <section className="category-section" aria-label="Browse categories">
         <div className="section-head">
           <div>
-            <h1>Find your thing around campus</h1>
+            <h2>Find your thing around campus</h2>
           </div>
           <Link className="text-link" href="/explore#filters">
             All categories <Icon name="arrow" />

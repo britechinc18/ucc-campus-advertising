@@ -51,11 +51,13 @@ export function ListingGrid({ items, featured = false }: { items: Listing[]; fea
   );
 }
 export function Search({
+  id,
   value = '',
   placeholder = 'Search phones, books, services…',
   action = '/explore',
   params = {},
 }: {
+  id?: string;
   value?: string;
   placeholder?: string;
   action?: string;
@@ -71,12 +73,12 @@ export function Search({
       <Icon name="search" />
       <label
         className="sr-only"
-        htmlFor={action.startsWith('/campus-360') ? 'campus-search' : 'market-search'}
+        htmlFor={id ?? (action.startsWith('/campus-360') ? 'campus-search' : 'market-search')}
       >
         {action.startsWith('/campus-360') ? 'Search Campus 360' : 'Search the marketplace'}
       </label>
       <SearchInput
-        id={action.startsWith('/campus-360') ? 'campus-search' : 'market-search'}
+        id={id ?? (action.startsWith('/campus-360') ? 'campus-search' : 'market-search')}
         value={value}
         placeholder={placeholder}
       />
@@ -86,11 +88,39 @@ export function Search({
     </form>
   );
 }
-export function CategoryChips({ categories }: { categories: Category[] }) {
+export function CategoryChips({
+  categories,
+  selected,
+  params = {},
+}: {
+  categories: Category[];
+  selected?: string;
+  params?: Record<string, string>;
+}) {
+  const categoryHref = (id?: string) => {
+    const next = new URLSearchParams(params);
+    next.delete('cursor');
+    if (id) next.set('category', id);
+    else next.delete('category');
+    return `/explore?${next}`;
+  };
   return (
     <div className="categories" aria-label="Categories">
+      <Link
+        className="chip category-tile"
+        href={categoryHref()}
+        aria-current={!selected ? 'page' : undefined}
+      >
+        <Icon name="grid" />
+        <span>All</span>
+      </Link>
       {categories.map((c) => (
-        <Link key={c.id} className="chip category-tile" href={`/explore?category=${c.id}`}>
+        <Link
+          key={c.id}
+          className="chip category-tile"
+          href={categoryHref(c.id)}
+          aria-current={selected === c.id ? 'page' : undefined}
+        >
           <Icon
             name={
               /book/i.test(c.name)
