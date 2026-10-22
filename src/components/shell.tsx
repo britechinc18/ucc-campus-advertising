@@ -1,0 +1,166 @@
+'use client';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { useEffect } from 'react';
+import { Icon } from './icon';
+export function Wordmark() {
+  return (
+    <Link className="wordmark" href="/" aria-label="UCC Med Market home">
+      <span className="mark">
+        <Icon name="bag" />
+      </span>
+      <span>
+        UCC <span className="med">Med</span> Market
+      </span>
+    </Link>
+  );
+}
+export function ThemeButton() {
+  useEffect(() => {
+    const media = matchMedia('(prefers-color-scheme: dark)');
+    const sync = () => {
+      try {
+        if (!localStorage.getItem('ucc-theme'))
+          document.documentElement.dataset.theme = media.matches ? 'dark' : 'light';
+      } catch {}
+    };
+    media.addEventListener('change', sync);
+    return () => media.removeEventListener('change', sync);
+  }, []);
+  return (
+    <button
+      className="icon-btn theme-toggle"
+      aria-label="Toggle light and dark theme"
+      onClick={() => {
+        const theme = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        document.documentElement.dataset.theme = theme;
+        try {
+          localStorage.setItem('ucc-theme', theme);
+        } catch {}
+      }}
+    >
+      <span className="theme-sun">
+        <Icon name="sun" />
+      </span>
+      <span className="theme-moon">
+        <Icon name="moon" />
+      </span>
+    </button>
+  );
+}
+export function Shell({
+  children,
+  user,
+}: {
+  children: React.ReactNode;
+  user: { name: string | null; role: string } | null;
+}) {
+  const path = usePathname();
+  const admin = path.startsWith('/admin');
+  const detail = /^\/adverts\/[^/]+$/.test(path);
+  if (admin) return <>{children}</>;
+  const nav = [
+    ['/', 'home', 'Home'],
+    ['/explore', 'compass', 'Explore'],
+    ['/post', 'plus', 'Post'],
+    ['/businesses', 'store', 'Businesses'],
+    ['/my-adverts', 'list', 'My Adverts'],
+  ];
+  return (
+    <>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      <header className="site-header">
+        <div className="container header-inner">
+          <Wordmark />
+          <nav className="desktop-nav" aria-label="Main navigation">
+            <Link href="/explore">Explore</Link>
+            <Link href="/explore#filters">Categories</Link>
+            <Link href="/businesses">Businesses</Link>
+          </nav>
+          <div className="header-actions">
+            <ThemeButton />
+            <Link className="btn" href="/post">
+              <Icon name="plus" />
+              <span>
+                Post<span className="hide-mobile"> advert</span>
+              </span>
+            </Link>
+            <details className="account-menu">
+              <summary className="icon-btn" aria-label="Account menu">
+                <Icon name="users" />
+              </summary>
+              <div className="account-dropdown">
+                <p>{user?.name ?? 'Your campus corner'}</p>
+                <Link href="/my-adverts">My adverts</Link>
+                <Link href="/my-business">Business profile</Link>
+                {user?.role === 'admin' ? <Link href="/admin">Administration</Link> : null}
+                {user ? (
+                  <form
+                    action="/sign-out"
+                    method="post"
+                    onSubmit={() => {
+                      try {
+                        Object.keys(sessionStorage)
+                          .filter((k) => k.startsWith('ucc-draft-v1:'))
+                          .forEach((k) => sessionStorage.removeItem(k));
+                      } catch {}
+                    }}
+                  >
+                    <button type="submit">Sign out</button>
+                  </form>
+                ) : (
+                  <Link href="/sign-in">Sign in</Link>
+                )}
+                <button
+                  onClick={() => {
+                    try {
+                      localStorage.removeItem('ucc-theme');
+                    } catch {}
+                    document.documentElement.dataset.theme = matchMedia(
+                      '(prefers-color-scheme: dark)',
+                    ).matches
+                      ? 'dark'
+                      : 'light';
+                  }}
+                >
+                  Use system theme
+                </button>
+              </div>
+            </details>
+          </div>
+        </div>
+      </header>
+      {children}
+      <footer className="container footer">
+        <Wordmark />
+        <p>
+          For the UCC medical-student community.
+          <br />
+          Browse freely. Contact advertisers directly.
+        </p>
+        <Link className="text-link" href="/help">
+          Safe trading & help <Icon name="arrow" />
+        </Link>
+      </footer>
+      {!detail ? (
+        <nav className="bottom-nav" aria-label="Mobile navigation">
+          {nav.map(([href, glyph, label]) => (
+            <Link
+              key={href}
+              href={href}
+              className={`${(href === '/' ? path === '/' : path.startsWith(href)) ? 'active' : ''} ${href === '/post' ? 'post-nav' : ''}`}
+              aria-current={
+                (href === '/' ? path === '/' : path.startsWith(href)) ? 'page' : undefined
+              }
+            >
+              <Icon name={glyph} />
+              <span>{label}</span>
+            </Link>
+          ))}
+        </nav>
+      ) : null}
+    </>
+  );
+}

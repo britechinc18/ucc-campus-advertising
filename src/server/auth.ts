@@ -30,6 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
           await db().update(users).set({ emailVerified: new Date() }).where(eq(users.id, user.id));
       },
     },
+    pages: { signIn: '/sign-in', error: '/sign-in' },
     session: { strategy: 'database', maxAge: 60 * 60 * 24 * 7 },
     callbacks: {
       signIn: async ({ profile }) => profile?.email_verified === true,
