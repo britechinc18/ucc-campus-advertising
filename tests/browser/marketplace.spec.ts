@@ -727,3 +727,73 @@ test('admin selects an assisted advertiser by name and sees real protected syste
     }
   }
 });
+
+test('shared cards and galleries preserve responsive geometry in both themes', async ({ page }) => {
+  test.setTimeout(240000);
+  const sharp = (await import('sharp')).default;
+  const { flyerIds } = fixture as unknown as { flyerIds: Record<string, string> };
+  // Exercise real photograph bytes at three aspect ratios without changing stored media.
+  const source = readFileSync('public/editorial/books.webp');
+  let photograph = await sharp(source).resize(900, 600, { fit: 'cover' }).webp().toBuffer();
+  await page.route('**/api/v1/media/*', (route) =>
+    route.fulfill({ contentType: 'image/webp', body: photograph }),
+  );
+  await page.addInitScript((id) => {
+    localStorage.setItem('medstash:saved:v1', JSON.stringify([id]));
+  }, fixture.publicId);
+  for (const width of [320, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    for (const theme of ['light', 'dark']) {
+      await page.addInitScript((value) => localStorage.setItem('ucc-theme', value), theme);
+      for (const path of ['/', '/explore', '/saved']) {
+        await page.goto(path);
+        await expect(page.locator('.listing').first()).toBeVisible();
+        await page.evaluate(() => document.fonts.ready);
+        const grid = page.locator('.listing-grid').first();
+        const columns = await grid.evaluate(
+          (element) => getComputedStyle(element).gridTemplateColumns.split(' ').length,
+        );
+        expect(columns).toBe(width < 600 ? 2 : width < 1024 ? 3 : 4);
+        const photo = await grid.locator('.listing-photo').first().boundingBox();
+        expect(photo).not.toBeNull();
+        expect(photo!.width / photo!.height).toBeCloseTo(
+          width < 600 ? 1 : width < 1024 ? 1.06 : 1.13,
+          1,
+        );
+        await expect(grid.locator('.listing-location').first()).not.toBeEmpty();
+        await expect(grid.locator('time').first()).toHaveAttribute('datetime', /\d{4}-/);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+          true,
+        );
+        expect(
+          await page.locator('body').evaluate((element) => getComputedStyle(element).fontFamily),
+        ).toContain('DM Sans');
+      }
+      for (const [w, h] of [
+        [600, 900],
+        [900, 600],
+        [800, 800],
+      ]) {
+        photograph = await sharp(source).resize(w, h, { fit: 'cover' }).webp().toBuffer();
+        await page.goto(`/adverts/${flyerIds.event}`);
+        const image = page.locator('.gallery-main img');
+        await expect(image).toBeVisible();
+        await expect(image).toHaveJSProperty('naturalWidth', w);
+        const geometry = await image.evaluate((element) => {
+          const image = element as HTMLImageElement;
+          const box = image.getBoundingClientRect();
+          return {
+            ratio: box.width / box.height,
+            naturalRatio: image.naturalWidth / image.naturalHeight,
+            band: image.parentElement!.getBoundingClientRect().height - box.height,
+          };
+        });
+        expect(geometry.ratio).toBeCloseTo(geometry.naturalRatio, 2);
+        expect(Math.abs(geometry.band)).toBeLessThan(2);
+        await page.getByRole('button', { name: 'Enlarge advert photograph' }).click();
+        await expect(page.locator('.enlarged-image img')).toHaveCSS('object-fit', 'contain');
+        await page.keyboard.press('Escape');
+      }
+    }
+  }
+});

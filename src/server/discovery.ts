@@ -26,6 +26,7 @@ const searchSchema = z
     'Minimum price exceeds maximum',
   );
 interface PublicAdvert {
+  category_name: string | null;
   id: string;
   advertiser_id: string;
   seller: string;
@@ -38,7 +39,7 @@ interface PublicAdvert {
   cursor_published_at: string;
 }
 const base = sql`from adverts a join advert_revisions r on r.id=a.approved_revision_id join advertisers p on p.id=a.advertiser_id left join users u on u.id=p.user_id`;
-const select = sql`a.id,a.advertiser_id,p.name as seller,p.kind as seller_kind,a.published_at,to_char(a.published_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as cursor_published_at,a.expires_at,r.data,(r.data->>'pricePesewas')::int as price,
+const select = sql`a.id,a.advertiser_id,(select c.name from categories c where c.id=r.category_id) as category_name,p.name as seller,p.kind as seller_kind,a.published_at,to_char(a.published_at at time zone 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') as cursor_published_at,a.expires_at,r.data,(r.data->>'pricePesewas')::int as price,
  coalesce((select sum(least(m.views,1000)+least(m.contacts,100)*3)::int from daily_advert_metrics m where m.advert_id=a.id and m.day>=to_char(now()-interval '7 days','YYYY-MM-DD')),0)::int as score`;
 function escapeLike(s: string) {
   return s.replace(/[\\%_]/g, '\\$&');

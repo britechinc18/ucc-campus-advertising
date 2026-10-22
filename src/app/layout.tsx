@@ -1,6 +1,7 @@
 import './globals.css';
 import './premium.css';
 import './campus.css';
+import './marketplace.css';
 import type { Metadata } from 'next';
 import { Shell } from '@/components/shell';
 import { viewer } from '@/server/viewer';
@@ -25,6 +26,20 @@ export default async function Layout({ children }: { children: React.ReactNode }
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <link
+          rel="preload"
+          href="/fonts/dm-sans-400.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="preload"
+          href="/fonts/dm-sans-500.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>

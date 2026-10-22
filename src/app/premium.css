@@ -1,9 +1,30 @@
 /* MedStash — shared visual language. Layout fallbacks remain in globals.css. */
 @font-face {
-  font-family: Manrope;
-  src: url('/fonts/manrope-variable.ttf') format('truetype');
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-400.ttf') format('truetype');
   font-style: normal;
-  font-weight: 400 800;
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-500.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-600.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-700.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 700;
   font-display: swap;
 }
 :root {
@@ -21,12 +42,7 @@
   --radius-small: 12px;
   --shadow: 0 12px 40px -24px #17342638;
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
-  font-family:
-    Manrope,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  font-family: 'DM Sans', Arial, sans-serif;
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -57,7 +73,7 @@ body {
 h1,
 h2,
 h3 {
-  font-weight: 650;
+  font-weight: 600;
   text-wrap: balance;
 }
 h1 {
@@ -73,7 +89,7 @@ h3 {
 .eyebrow {
   font-size: 10px;
   letter-spacing: 0.15em;
-  font-weight: 750;
+  font-weight: 700;
 }
 .btn,
 .chip,
@@ -153,7 +169,7 @@ a,
   font-size: 24px;
   letter-spacing: -0.065em;
   gap: 9px;
-  font-weight: 800;
+  font-weight: 700;
 }
 .wordmark-period {
   color: var(--brand);
@@ -169,7 +185,7 @@ a,
   margin: auto;
   gap: 30px;
   font-size: 12px;
-  font-weight: 650;
+  font-weight: 600;
 }
 .desktop-nav a {
   min-height: 44px;
@@ -207,7 +223,7 @@ a,
   padding: 22px 2px;
   font-size: 10px;
   letter-spacing: 0.12em;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--muted);
 }
 .market-intro a {
@@ -246,7 +262,7 @@ a,
   line-height: 1.06;
   letter-spacing: -0.065em;
   margin: 26px 0 20px;
-  font-weight: 650;
+  font-weight: 600;
 }
 .hero-story h1 > span {
   color: #d8e6b9;
@@ -333,7 +349,7 @@ a,
   display: block;
   font-size: 37px;
   letter-spacing: -0.05em;
-  font-weight: 550;
+  font-weight: 500;
   line-height: 1.13;
   margin-top: 13px;
 }
@@ -494,7 +510,7 @@ a,
   color: var(--ink);
   font-size: 17px;
   margin-top: 5px;
-  font-weight: 750;
+  font-weight: 700;
 }
 .listing .meta {
   font-size: 10px;
@@ -592,7 +608,7 @@ a,
   align-items: center;
   justify-content: space-between;
   font-size: 11px;
-  font-weight: 650;
+  font-weight: 600;
 }
 .business-editorial {
   padding: 30px;
@@ -893,7 +909,7 @@ textarea.field-input {
 }
 .stat strong {
   font-size: 32px;
-  font-weight: 550;
+  font-weight: 500;
   margin-top: 10px;
 }
 .stat span {
