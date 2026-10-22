@@ -16,6 +16,7 @@ import { db } from './db';
 import { actor, advertiser, limits, one, query, visible } from './store';
 import { id } from './validation';
 import { ensure } from './errors';
+import { imageObjectCache } from './media-delivery';
 export interface ObjectStorage {
   sign(key: string, type: string, bytes: number): Promise<string>;
   read(key: string, maxBytes: number): Promise<Buffer>;
@@ -56,25 +57,31 @@ export function storage(): ObjectStorage {
         expiresIn: 300,
       }),
     async read(Key, maxBytes) {
-      const object = await s3.send(new GetObjectCommand({ Bucket, Key }));
-      ensure(object.Body, 422, 'INVALID_IMAGE', 'Empty image');
-      if ((object.ContentLength ?? 0) > maxBytes) {
-        if (object.Body instanceof Readable) object.Body.destroy();
-        ensure(false, 422, 'IMAGE_TOO_LARGE', 'Image too large');
-      }
-      const chunks: Buffer[] = [];
-      let size = 0;
-      for await (const chunk of object.Body as AsyncIterable<Uint8Array>) {
-        size += chunk.length;
-        if (size > maxBytes) {
+      const load = async () => {
+        const object = await s3.send(new GetObjectCommand({ Bucket, Key }));
+        ensure(object.Body, 422, 'INVALID_IMAGE', 'Empty image');
+        if ((object.ContentLength ?? 0) > maxBytes) {
           if (object.Body instanceof Readable) object.Body.destroy();
           ensure(false, 422, 'IMAGE_TOO_LARGE', 'Image too large');
         }
-        chunks.push(Buffer.from(chunk));
-      }
-      return Buffer.concat(chunks);
+        const chunks: Buffer[] = [];
+        let size = 0;
+        for await (const chunk of object.Body as AsyncIterable<Uint8Array>) {
+          size += chunk.length;
+          if (size > maxBytes) {
+            if (object.Body instanceof Readable) object.Body.destroy();
+            ensure(false, 422, 'IMAGE_TOO_LARGE', 'Image too large');
+          }
+          chunks.push(Buffer.from(chunk));
+        }
+        return Buffer.concat(chunks);
+      };
+      return Key.startsWith('derived/')
+        ? imageObjectCache.read(`${process.env.S3_ENDPOINT}:${Bucket}:${Key}`, load)
+        : load();
     },
     async write(Key, Body) {
+      imageObjectCache.delete(`${process.env.S3_ENDPOINT}:${Bucket}:${Key}`);
       await s3.send(
         new PutObjectCommand({
           Bucket,

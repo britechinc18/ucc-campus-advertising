@@ -695,6 +695,10 @@ test('admin selects an assisted advertiser by name and sees real protected syste
   await expect(page.getByText('Connected database size', { exact: true })).toBeVisible();
   await expect(page.getByText('Tracked ready image size', { exact: true })).toBeVisible();
   await expect(
+    page.getByRole('heading', { name: 'Your free-tier allowances', exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('table')).toContainText('100 CU-hours');
+  await expect(
     page.getByRole('heading', { name: 'Connect provider usage', exact: true }),
   ).toBeVisible();
   const response = await page.request.get('/api/v1/admin/system');

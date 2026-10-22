@@ -36,6 +36,7 @@ export function FlyerGrid({ items }: { items: Listing[] }) {
           <Link href={`/adverts/${a.id}`} className="flyer-link">
             <div className="flyer-art">
               <MediaImage
+                variant="card"
                 id={a.data.mediaIds[0]}
                 alt={`${a.data.title} — advertiser supplied flyer`}
               />

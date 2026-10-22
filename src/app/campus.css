@@ -1082,3 +1082,36 @@
   color: var(--text);
   background: var(--soft);
 }
+
+.budget-reference table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-block: 20px;
+  table-layout: fixed;
+}
+.budget-reference th,
+.budget-reference td {
+  text-align: left;
+  vertical-align: top;
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+.budget-reference th:first-child {
+  width: 30%;
+}
+.budget-reference .budget-provider {
+  padding-top: 24px;
+  color: var(--brand);
+}
+.budget-reference p {
+  margin-top: 12px;
+}
+@media (max-width: 599px) {
+  .budget-reference th,
+  .budget-reference td {
+    font-size: 11px;
+    padding-inline: 5px;
+  }
+}

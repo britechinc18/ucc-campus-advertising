@@ -1095,7 +1095,11 @@ function Settings({ data, onSaved }: { data: Row; onSaved: () => void }) {
         }
       }}
     >
-      <h2>Posting limits</h2>
+      <h2>Standard advertiser limits</h2>
+      <p className="helper">
+        These daily and active-advert limits apply to standard advertisers. Administrator
+        submissions are exempt, including adverts posted for others.
+      </p>
       <p className="helper">
         All adverts require review. Automatic publishing is currently disabled.
       </p>

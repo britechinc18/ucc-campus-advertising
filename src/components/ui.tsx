@@ -1,5 +1,5 @@
 'use client';
-/* eslint-disable @next/next/no-img-element -- Visibility-checked private media must bypass image caching. */
+/* eslint-disable @next/next/no-img-element -- Visibility-checked media uses native images and private revalidation. */
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Icon } from './icon';
@@ -7,18 +7,28 @@ export function MediaImage({
   id,
   alt,
   className = '',
+  variant = 'full',
   ...rest
 }: {
   id?: string;
   alt: string;
   className?: string;
   loading?: 'lazy' | 'eager';
+  variant?: 'card' | 'full';
 }) {
   const [failed, setFailed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   return id && !failed ? (
     <img
-      src={`/api/v1/media/${id}`}
+      src={`/api/v1/media/${id}${variant === 'card' ? '?width=720' : ''}`}
+      srcSet={
+        variant === 'card'
+          ? `/api/v1/media/${id}?width=360 360w, /api/v1/media/${id}?width=720 720w`
+          : undefined
+      }
+      sizes={
+        variant === 'card' ? '(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 25vw' : undefined
+      }
       alt={alt}
       className={`${className} media-image ${loaded ? 'is-loaded' : 'is-loading'}`}
       onLoad={() => setLoaded(true)}

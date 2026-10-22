@@ -11,7 +11,7 @@ export function ListingCard({ advert, featured = false }: { advert: Listing; fea
     <article className="listing">
       <ListingLink className="listing-link" href={`/adverts/${advert.id}`}>
         <div className="listing-photo">
-          <MediaImage key={d.mediaIds[0]} id={d.mediaIds[0]} alt={d.title} />
+          <MediaImage variant="card" key={d.mediaIds[0]} id={d.mediaIds[0]} alt={d.title} />
           {featured ? (
             <span className="photo-tag">FEATURED</span>
           ) : d.kind === 'wanted' ? (
