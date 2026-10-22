@@ -1,0 +1,831 @@
+.medstash-home {
+  padding-top: 22px;
+  padding-bottom: 12px;
+}
+.home-hero {
+  display: grid;
+  grid-template-columns: 1.04fr 1fr;
+  overflow: hidden;
+  border-radius: 24px;
+  background: var(--surface);
+  min-height: 440px;
+}
+.home-hero-copy {
+  padding: clamp(28px, 3.3vw, 48px) clamp(24px, 3.8vw, 56px);
+  align-self: center;
+  position: relative;
+  z-index: 1;
+}
+.home-hero .eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  margin: 0 0 22px;
+  color: var(--muted);
+}
+.home-hero h1 {
+  font-size: clamp(34px, 3.6vw, 52px);
+  line-height: 1.04;
+  letter-spacing: -0.065em;
+  margin: 0;
+  font-weight: 800;
+}
+.home-hero h1 span {
+  color: var(--brand);
+}
+.home-hero-description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--muted);
+  max-width: 430px;
+  margin: 22px 0 26px;
+}
+.home-hero-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.home-hero-actions .btn {
+  min-height: 48px;
+  padding: 13px 22px;
+  font-size: 12px;
+  border-radius: 10px;
+}
+.home-hero-notes {
+  display: flex;
+  gap: 24px;
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.home-hero-notes span {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.home-hero-notes svg {
+  width: 16px;
+  height: 16px;
+  color: var(--brand);
+}
+.home-hero-art {
+  position: relative;
+  min-height: 400px;
+  background: #dce9df;
+}
+.home-hero-art img {
+  object-fit: cover;
+  object-position: center;
+}
+.home-search-band {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+  background: #103f34;
+  padding: 20px 28px;
+  border-radius: 16px;
+  margin: 12px 0 44px;
+  color: #fff;
+}
+.home-search-band form {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 11px;
+  min-width: 0;
+}
+.home-search-input {
+  flex: 1;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding-left: 12px;
+  min-width: 0;
+}
+.home-search-input svg {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
+  flex-shrink: 0;
+}
+.home-search-input input {
+  width: 100%;
+  min-width: 0;
+  height: 40px;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font-size: 12px;
+  outline: none;
+}
+.home-search-band form:focus-within {
+  outline: 2px solid #bde4d1;
+  outline-offset: 4px;
+}
+.home-category-select {
+  position: relative;
+  flex-shrink: 0;
+  max-width: 180px;
+  border-left: 1px solid var(--border);
+}
+.home-category-select > svg {
+  display: none;
+}
+.home-category-select select {
+  width: 100%;
+  height: 44px;
+  padding: 8px 12px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 0;
+  border-radius: 6px;
+  font-size: 11px;
+}
+.home-search-band .btn {
+  border-radius: 8px;
+  font-size: 12px;
+  min-height: 44px;
+  padding: 10px 20px;
+}
+.home-search-place {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  font-size: 11px;
+}
+.home-search-place svg {
+  width: 17px;
+  height: 17px;
+}
+.home-search-selection {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 11px;
+}
+.home-section {
+  margin: 0 0 46px;
+}
+.home-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 24px;
+}
+.home-section-heading h2 {
+  font-size: 24px;
+  letter-spacing: -0.045em;
+  line-height: 1.2;
+  margin: 0;
+}
+.home-section-heading p {
+  font-size: 12px;
+  color: var(--muted);
+  margin: 6px 0 0;
+}
+.home-section-heading .text-link {
+  font-size: 11px;
+  white-space: nowrap;
+}
+.home-category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+  gap: 12px;
+}
+.home-category-grid a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  font-size: 11px;
+  padding: 4px 4px 10px;
+  min-width: 0;
+}
+.home-category-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  color: #244e66;
+  background: #eaf0f3;
+  transition:
+    transform 180ms,
+    background 180ms;
+}
+.home-category-icon svg {
+  width: 26px;
+  height: 26px;
+}
+.home-category-icon.tone-food {
+  color: #82601e;
+  background: #f7f0df;
+}
+.home-category-icon.tone-tools,
+.home-category-icon.tone-home {
+  color: #17624f;
+  background: #e8f1ec;
+}
+:root[data-theme='dark'] .home-category-icon {
+  color: #b7d7ea;
+  background: #263b43;
+}
+:root[data-theme='dark'] .home-category-icon.tone-food {
+  color: #efcc8a;
+  background: #3e3524;
+}
+:root[data-theme='dark'] .home-category-icon.tone-tools,
+:root[data-theme='dark'] .home-category-icon.tone-home {
+  color: #a9dec9;
+  background: #253e35;
+}
+.home-listing-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+.home-listing-card {
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 15px;
+  background: var(--surface);
+  overflow: hidden;
+  transition:
+    transform 180ms,
+    box-shadow 180ms;
+  min-width: 0;
+}
+.medstash-home .home-listing-card .listing {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+}
+.medstash-home .home-listing-card .listing-photo {
+  aspect-ratio: 4/3;
+  border-radius: 0;
+  margin: 0 0 14px;
+}
+.medstash-home .home-listing-card .listing-title {
+  margin: 0 14px 6px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+.medstash-home .home-listing-card .price {
+  margin: 0 14px 6px;
+  font-size: 15px;
+  color: var(--brand);
+}
+.medstash-home .home-listing-card .meta {
+  margin: 0 14px;
+  font-size: 10px;
+  gap: 5px;
+}
+.medstash-home .home-listing-card .save-control {
+  top: 10px;
+  right: 10px;
+}
+.home-seller {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: var(--muted);
+  margin: 14px;
+  min-width: 0;
+}
+.home-seller > span:nth-child(2) {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.home-seller-initial {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--brand);
+  font-size: 9px;
+  font-weight: 700;
+}
+.home-seller time {
+  margin-left: auto;
+  white-space: nowrap;
+  font-size: 9px;
+}
+.home-demo-tag {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  color: #fff;
+  background: #123e34;
+  font-size: 9px;
+  font-weight: 700;
+  pointer-events: none;
+}
+.home-demo-note,
+.home-editorial-note {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 12px 0 0;
+}
+.home-business-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--soft);
+  min-height: 300px;
+  margin: 0 0 36px;
+}
+.home-business-image {
+  position: absolute;
+  inset: 0 0 0 28%;
+  z-index: -2;
+}
+.home-business-image img {
+  object-fit: cover;
+  object-position: 66% center;
+}
+.home-business-banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(90deg, var(--soft) 0%, var(--soft) 29%, transparent 73%);
+}
+.home-business-copy {
+  padding: 36px 40px;
+  width: 48%;
+}
+.home-business-copy .eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  margin: 0 0 14px;
+  color: var(--muted);
+}
+.home-business-copy h2 {
+  font-size: 34px;
+  line-height: 1.05;
+  letter-spacing: -0.055em;
+  margin: 0 0 14px;
+}
+.home-business-copy > p:not(.eyebrow) {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--muted);
+  max-width: 290px;
+  margin: 0 0 20px;
+}
+.home-business-copy .btn {
+  font-size: 11px;
+  border-radius: 9px;
+  min-height: 46px;
+}
+.home-trust {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 28px;
+  padding: 16px 0 22px;
+  border-bottom: 1px solid var(--border);
+}
+.home-trust > div {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.home-trust-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--brand);
+}
+.home-trust-icon svg {
+  width: 20px;
+  height: 20px;
+}
+.home-trust h3 {
+  font-size: 12px;
+  margin: 0 0 5px;
+}
+.home-trust p {
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--muted);
+  margin: 0;
+}
+.home-editorial-note {
+  margin: 12px 0 0;
+  text-align: center;
+}
+.homepage-header .home-header-theme {
+  display: flex;
+}
+.homepage-header .home-header-signin {
+  font-size: 11px;
+  white-space: nowrap;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px;
+}
+@media (hover: hover) and (pointer: fine) {
+  .home-listing-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 9px 24px #0000000c;
+  }
+  .home-category-grid a:hover .home-category-icon {
+    transform: translateY(-3px);
+    background: var(--soft);
+  }
+}
+@media (min-width: 1600px) {
+  .medstash-home {
+    max-width: 1440px;
+  }
+  .home-hero {
+    min-height: 490px;
+  }
+  .home-hero h1 {
+    font-size: 66px;
+  }
+  .home-listing-grid {
+    gap: 24px;
+  }
+  .home-search-band {
+    padding-inline: 36px;
+  }
+}
+@media (max-width: 1100px) and (min-width: 700px) {
+  .home-hero-copy {
+    padding: 30px 24px;
+  }
+  .home-hero {
+    min-height: 360px;
+  }
+  .home-hero-art {
+    min-height: 360px;
+  }
+  .home-hero h1 {
+    font-size: 40px;
+  }
+  .home-hero-description {
+    font-size: 12px;
+  }
+  .home-hero-actions {
+    gap: 8px;
+  }
+  .home-hero-actions .btn {
+    padding: 11px 15px;
+    font-size: 11px;
+  }
+  .home-hero-notes {
+    gap: 12px;
+    font-size: 9px;
+  }
+  .home-search-place {
+    display: none;
+  }
+  .home-listing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .home-seller {
+    flex-wrap: wrap;
+  }
+  .home-seller time {
+    margin-left: 0;
+  }
+  .home-business-copy {
+    width: 55%;
+    padding: 30px;
+  }
+  .home-business-copy h2 {
+    font-size: 30px;
+  }
+}
+@media (max-width: 899px) {
+  .homepage-header .home-header-theme,
+  .homepage-header .home-header-signin {
+    display: none;
+  }
+}
+@media (max-width: 699px) {
+  .medstash-home {
+    padding-top: 14px;
+  }
+  .home-hero {
+    grid-template-columns: 1fr;
+    min-height: 0;
+    border-radius: 18px;
+  }
+  .home-hero-copy {
+    padding: 26px 20px 18px;
+    text-align: center;
+  }
+  .home-hero .eyebrow {
+    font-size: 8px;
+    letter-spacing: 0.12em;
+    margin-bottom: 14px;
+  }
+  .home-hero h1 {
+    font-size: clamp(29px, 7.6vw, 44px);
+    line-height: 1.08;
+    letter-spacing: -0.06em;
+  }
+  .home-hero-description {
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 14px auto 18px;
+    max-width: 360px;
+  }
+  .home-hero-actions {
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+  .home-hero-actions .btn {
+    padding: 11px 14px;
+    font-size: 10px;
+    min-height: 44px;
+    gap: 8px;
+  }
+  .home-hero-notes {
+    justify-content: center;
+    margin-top: 18px;
+    font-size: 9px;
+    gap: 20px;
+  }
+  .home-hero-art {
+    min-height: 0;
+    height: clamp(170px, 48vw, 260px);
+  }
+  .home-hero-art img {
+    object-fit: cover;
+    object-position: center 56%;
+  }
+  .home-search-band {
+    padding: 10px;
+    border-radius: 13px;
+    margin: 10px 0 30px;
+    gap: 8px;
+  }
+  .home-search-band form {
+    gap: 0;
+    padding: 4px;
+    border-radius: 8px;
+  }
+  .home-search-input {
+    gap: 7px;
+    padding-left: 7px;
+  }
+  .home-search-input input {
+    font-size: 11px;
+    height: 38px;
+  }
+  .home-search-input > svg {
+    width: 15px;
+    height: 15px;
+  }
+  .home-category-select {
+    width: 44px;
+    max-width: 44px;
+    border: 0;
+  }
+  .home-category-select > svg {
+    display: block;
+    position: absolute;
+    inset: 14px auto auto 12px;
+    width: 16px;
+    height: 16px;
+    pointer-events: none;
+    color: var(--ink);
+  }
+  .home-category-select select {
+    width: 44px;
+    color: transparent;
+    appearance: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .home-category-select option {
+    color: var(--ink);
+  }
+  .home-search-band .btn {
+    width: 44px;
+    min-width: 44px;
+    padding: 10px;
+    border-radius: 7px;
+  }
+  .home-search-band .btn span,
+  .home-search-place {
+    display: none;
+  }
+  .home-section {
+    margin-bottom: 30px;
+  }
+  .home-section-heading {
+    gap: 10px;
+    margin-bottom: 18px;
+    align-items: flex-start;
+  }
+  .home-section-heading h2 {
+    font-size: 21px;
+  }
+  .home-section-heading p {
+    font-size: 10px;
+    line-height: 1.6;
+    max-width: 210px;
+  }
+  .home-section-heading .text-link {
+    font-size: 9px;
+    gap: 4px;
+    min-height: 44px;
+  }
+  .home-section-heading .text-link svg {
+    width: 12px;
+    height: 12px;
+  }
+  .home-category-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px 5px;
+  }
+  .home-category-grid a {
+    font-size: 10px;
+    line-height: 1.4;
+    padding: 2px 0;
+    gap: 8px;
+  }
+  .home-category-icon {
+    width: 46px;
+    height: 46px;
+  }
+  .home-category-icon svg {
+    width: 22px;
+    height: 22px;
+  }
+  .home-listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .medstash-home .home-listing-card .listing-title {
+    font-size: 11px;
+    margin-inline: 10px;
+  }
+  .medstash-home .home-listing-card .price {
+    font-size: 13px;
+    margin-inline: 10px;
+  }
+  .medstash-home .home-listing-card .meta {
+    font-size: 9px;
+    margin-inline: 10px;
+    flex-wrap: wrap;
+  }
+  .home-seller {
+    margin: 12px 10px;
+    gap: 5px;
+    font-size: 9px;
+    flex-wrap: wrap;
+  }
+  .home-seller time {
+    margin-left: 0;
+  }
+  .home-seller-initial {
+    width: 20px;
+    height: 20px;
+    font-size: 8px;
+  }
+  .home-business-banner {
+    display: flex;
+    flex-direction: column-reverse;
+    min-height: 0;
+    margin-bottom: 24px;
+    border-radius: 16px;
+  }
+  .home-business-banner::before {
+    display: none;
+  }
+  .home-business-image {
+    position: relative;
+    inset: auto;
+    height: 185px;
+    width: 100%;
+    z-index: 0;
+  }
+  .home-business-image img {
+    object-position: center 43%;
+  }
+  .home-business-copy {
+    padding: 24px;
+    width: 100%;
+  }
+  .home-business-copy h2 {
+    font-size: 30px;
+  }
+  .home-business-copy > p:not(.eyebrow) {
+    max-width: 330px;
+  }
+  .home-trust {
+    grid-template-columns: 1fr;
+    gap: 18px;
+    padding: 4px 8px 22px;
+  }
+  .home-trust h3 {
+    font-size: 12px;
+  }
+  .home-trust p {
+    font-size: 11px;
+  }
+  .home-editorial-note {
+    font-size: 9px;
+  }
+}
+@media (max-width: 359px) {
+  .home-hero-copy {
+    padding-inline: 14px;
+  }
+  .home-hero h1 {
+    font-size: 29px;
+  }
+  .home-hero-actions .btn {
+    padding-inline: 11px;
+    font-size: 9px;
+  }
+  .home-section-heading h2 {
+    font-size: 19px;
+  }
+  .home-section-heading .text-link {
+    font-size: 8px;
+  }
+  .home-category-grid a {
+    font-size: 9px;
+  }
+  .home-listing-grid {
+    gap: 9px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .home-category-icon,
+  .home-listing-card {
+    transition: none;
+  }
+  .home-listing-card:hover,
+  .home-category-grid a:hover .home-category-icon {
+    transform: none;
+  }
+}
+@media (min-width: 900px) {
+  .homepage-header .header-actions > .btn {
+    order: 5;
+    margin-left: 8px;
+    margin-right: 0;
+  }
+  .homepage-header .home-header-theme {
+    order: 1;
+  }
+  .homepage-header .notification-menu {
+    order: 2;
+  }
+  .homepage-header .account-menu,
+  .homepage-header .home-header-signin {
+    order: 3;
+  }
+  .homepage-header .home-guest-menu {
+    display: none;
+  }
+  .homepage-header .desktop-nav {
+    gap: 18px;
+  }
+  .homepage-header .header-inner {
+    gap: 18px;
+  }
+}
+@media (min-width: 1250px) {
+  .homepage-header .header-search {
+    width: 180px;
+  }
+  .homepage-header .desktop-nav {
+    gap: 16px;
+  }
+}
+/* Cached public images can finish before hydration; keep real photos visible. */
+.medstash-home .media-image.is-loading {
+  opacity: 1;
+}
