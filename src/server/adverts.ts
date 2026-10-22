@@ -205,7 +205,7 @@ export async function submitAdvert(
         sql`select ${a.state}='published' and ${a.expires_at}::timestamptz>clock_timestamp() as live`,
       );
       ensure(live.live, 409, 'EXPIRED', 'Inactive advert must be renewed');
-    } else
+    } else if (user.role !== 'admin')
       ensure(
         (await activeCount(tx, seller.id)) < settings.max_active,
         409,
@@ -222,7 +222,7 @@ export async function submitAdvert(
       'DUPLICATE',
       'A matching advert or image is already pending or published',
     );
-    if (r.purpose !== 'edit' && !r.quota_charged) {
+    if (user.role !== 'admin' && r.purpose !== 'edit' && !r.quota_charged) {
       const day = await one<{ day: string }>(
         tx,
         sql`select to_char(clock_timestamp() at time zone 'Africa/Accra','YYYY-MM-DD') as day`,
@@ -245,11 +245,15 @@ export async function submitAdvert(
       );
     }
     await tx.execute(
-      sql`update advert_revisions set status='pending',submitted_at=now(),quota_charged=true where id=${r.id}`,
+      sql`update advert_revisions set status='pending',submitted_at=now(),quota_charged=${user.role !== 'admin' || r.quota_charged} where id=${r.id}`,
     );
     if (r.purpose !== 'edit')
       await tx.execute(sql`update adverts set state='pending' where id=${a.id}`);
-    await audit(tx, userId, 'advert_submitted', a.id, { revisionId: r.id, purpose: r.purpose });
+    await audit(tx, userId, 'advert_submitted', a.id, {
+      revisionId: r.id,
+      purpose: r.purpose,
+      postingLimitExempt: user.role === 'admin',
+    });
     const response = { advertId: a.id, revisionId: r.id, status: 'pending' };
     await tx.execute(
       sql`insert into idempotency_keys(advertiser_id,key,request_hash,response) values(${seller.id},${key},${hash},${JSON.stringify(response)}::jsonb)`,
@@ -297,13 +301,20 @@ export async function moderate(
           sql`select ${a.state}='published' and ${a.expires_at}::timestamptz>clock_timestamp() as live`,
         );
         ensure(live.live, 409, 'EXPIRED', 'Edit cannot republish an inactive advert');
-      } else
-        ensure(
-          (await activeCount(tx, seller.id)) <= settings.max_active,
-          409,
-          'ACTIVE_LIMIT',
-          'Active reservations exceed current limit',
+      } else {
+        // Only a server-recorded admin submission is exempt; ordinary approvals retain limits.
+        const exemption = await query(
+          tx,
+          sql`select id from audit_events where target_id=${a.id} and action='advert_submitted' and detail->>'revisionId'=${r.id} and detail->>'postingLimitExempt'='true' limit 1`,
         );
+        if (!exemption.length)
+          ensure(
+            (await activeCount(tx, seller.id)) <= settings.max_active,
+            409,
+            'ACTIVE_LIMIT',
+            'Active reservations exceed current limit',
+          );
+      }
       await tx.execute(
         sql`update advert_revisions set status='approved',reviewed_at=now(),reason=${reason} where id=${r.id}`,
       );

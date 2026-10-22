@@ -1,5 +1,6 @@
 import 'server-only';
 import { cache } from 'react';
+import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { auth } from './auth';
 import { isAuthenticationConfigured } from './config';
@@ -23,7 +24,10 @@ export const viewer = cache(async () => {
       db(),
       sql`select u.id,u.name,u.image,u.role,u.suspended,exists(select 1 from advertisers p where p.user_id=u.id and not p.suspended) as seller_active from users u where u.id=${session.user.id}`,
     );
-    return { configured, user: rows[0] ?? null };
+    const user = rows[0];
+    if (!user) return { configured, user: null };
+    const preference = (await cookies()).get('medstash-mode')?.value;
+    return { configured, user: { ...user, buyer_mode: preference === `${user.id}:buyer` } };
   } catch {
     return { configured, user: null };
   }

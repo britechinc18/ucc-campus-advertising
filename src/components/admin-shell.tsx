@@ -7,6 +7,8 @@ import { Dialog } from './ui';
 import { Icon } from './icon';
 export const adminLinks = [
   ['/admin', 'grid', 'Overview'],
+  ['/admin/post', 'plus', 'Post for someone'],
+  ['/admin/system', 'settings', 'System check'],
   ['/admin/submissions', 'clock', 'Pending queue'],
   ['/admin/adverts', 'list', 'All adverts'],
   ['/admin/reports', 'flag', 'Reports'],

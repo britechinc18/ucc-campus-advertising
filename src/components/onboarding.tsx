@@ -21,6 +21,7 @@ export function Onboarding({ name, next }: { name: string; next: string }) {
             kind: f.get('kind'),
             consent: true,
           });
+          await api('me/mode', 'POST', { mode: 'seller' });
           router.replace(safeReturn(next));
           router.refresh();
         } catch (e) {

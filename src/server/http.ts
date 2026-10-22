@@ -6,6 +6,7 @@ import { auth } from './auth';
 import { isAuthenticationConfigured } from './config';
 import { notificationFeed } from './notifications';
 import { readiness } from './readiness';
+import { systemCheck } from './monitoring';
 import { AppError, ensure } from './errors';
 import {
   createProfile,
@@ -203,8 +204,33 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
     const userId = session?.user?.id;
     ensure(userId, 401, 'UNAUTHORIZED', 'Sign in to continue');
     // Fast rejection plus a second check under transaction in each domain service.
-    await db().transaction((tx) => actor(tx, userId, path[0] === 'admin'));
-    if (method !== 'GET') await rateLimit(`write:${userId}`, 60, 3600);
+    const currentActor = await db().transaction((tx) => actor(tx, userId, path[0] === 'admin'));
+    if (method !== 'GET' && currentActor.role !== 'admin')
+      await rateLimit(`write:${userId}`, 60, 3600);
+    if (method === 'POST' && route === 'me/mode') {
+      const data = z
+        .object({ mode: z.enum(['buyer', 'seller']) })
+        .strict()
+        .parse(await body(request));
+      const context = await accountContext(userId);
+      ensure(
+        context.profile && !context.profile.suspended,
+        403,
+        'SELLER_REQUIRED',
+        'Activate your seller profile first',
+      );
+      return Response.json(
+        { mode: data.mode },
+        {
+          headers: {
+            ...headers,
+            'Set-Cookie': `medstash-mode=${userId}:${data.mode}; Path=/; HttpOnly; SameSite=Lax; Max-Age=31536000${new URL(process.env.APP_ORIGIN!).protocol === 'https:' ? '; Secure' : ''}`,
+          },
+        },
+      );
+    }
+    if (method === 'GET' && route === 'admin/system')
+      return Response.json(await systemCheck(userId), { headers });
     if (method === 'GET' && route === 'me/context')
       return Response.json(await accountContext(userId), { headers });
     if (method === 'GET' && route === 'me/business')
@@ -282,7 +308,7 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
         return Response.json(await saveAdvert(userId, path[2], await body(request)), { headers });
       if (method === 'POST' && path.length === 4) {
         if (path[3] === 'submit') {
-          await rateLimit(`submit:${userId}`, 20, 3600);
+          if (currentActor.role !== 'admin') await rateLimit(`submit:${userId}`, 20, 3600);
           const data = z
             .object({ revisionId: id })
             .strict()
@@ -309,7 +335,7 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
       }
     }
     if (method === 'POST' && route === 'uploads/sign') {
-      await rateLimit(`upload:${userId}`, 30, 86400);
+      if (currentActor.role !== 'admin') await rateLimit(`upload:${userId}`, 30, 86400);
       return Response.json(await signUpload(userId, await body(request)), { headers });
     }
     if (method === 'POST' && route === 'uploads/complete') {
