@@ -8,6 +8,7 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import sharp from 'sharp';
 import { randomUUID, createHash } from 'node:crypto';
 import { Readable } from 'node:stream';
+import { Agent } from 'node:https';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from './db';
@@ -31,6 +32,13 @@ export function storage(): ObjectStorage {
   const Bucket = process.env.S3_BUCKET!;
   const s3 = new S3Client({
     endpoint: process.env.S3_ENDPOINT,
+    // Neon and other S3-compatible services require path-style requests.
+    forcePathStyle: true,
+    requestChecksumCalculation: 'WHEN_REQUIRED',
+    // Honor managed-environment proxies without changing normal Vercel networking.
+    requestHandler: process.env.HTTPS_PROXY
+      ? { httpsAgent: new Agent({ proxyEnv: process.env }) }
+      : undefined,
     region: process.env.S3_REGION ?? 'auto',
     credentials: {
       accessKeyId: process.env.S3_ACCESS_KEY_ID!,
