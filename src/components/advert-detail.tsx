@@ -118,11 +118,6 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
               ))}
             </div>
           ) : null}
-          <p className="gallery-caption">
-            {d.mediaIds.length
-              ? `${index + 1} of ${d.mediaIds.length} · Photos supplied by advertiser`
-              : 'No photograph supplied'}
-          </p>
         </div>
         <section className="detail-content">
           <p className="eyebrow">
@@ -232,6 +227,11 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
             {contact('whatsapp')}
             {contact('phone')}
           </div>
+          <p className="gallery-caption">
+            {d.mediaIds.length
+              ? `${index + 1} of ${d.mediaIds.length} · Photos supplied by advertiser`
+              : 'No photograph supplied'}
+          </p>
           <p className="contact-note">Contact the advertiser directly. No checkout required.</p>
           <SafeNote />
           <p className="meta" style={{ marginTop: 16 }}>
