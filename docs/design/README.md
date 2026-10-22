@@ -1,6 +1,6 @@
 # Phase 3 visual review — UCC Med Market
 
-This is the **visual-review checkpoint**, before production frontend implementation, in the accepted Phase 3 plan. The primary reference is the owner's _Campus Market Complete Design System V2_ (13 pages). The brand remains **UCC Med Market**.
+This records the **visual-review checkpoint** from the accepted Phase 3 plan. The owner subsequently approved implementation; see [current implementation and deployment status](../PHASE_3_STATUS.md). The primary reference is the owner's _Campus Market Complete Design System V2_ (13 pages). The brand remains **UCC Med Market**.
 
 ## Review the designs
 
@@ -53,4 +53,4 @@ The exporter starts a loopback-only temporary HTTP server, renders the screen se
 
 ## Checkpoint
 
-Review the visual direction before production frontend coding. The requested checkpoint comes from the accepted plan's statement: **“Before implementation, prepare branded mobile and desktop high-fidelity mockups for visual review.”** After visual approval, implementation continues in small feature branches and PRs, with real API integration and provider-dependent tests tracked explicitly.
+Review the visual direction before production frontend coding. The requested checkpoint comes from the accepted plan's statement: **“Before implementation, prepare branded mobile and desktop high-fidelity mockups for visual review.”** The owner subsequently approved implementation, delivered in PRs #8–#11. These design artifacts remain the visual reference; current readiness is recorded in PHASE_3_STATUS.md.

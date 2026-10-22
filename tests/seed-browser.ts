@@ -14,6 +14,11 @@ try {
   await pool.query(
     'TRUNCATE users,advertisers,adverts,advert_revisions,advertiser_daily_usage,idempotency_keys,audit_events,reports,media_assets,revision_media,business_profiles,featured_adverts,daily_advert_metrics,rate_limit_buckets CASCADE',
   );
+  await pool.query(
+    'update platform_settings set max_active=5,daily_limit=3,duration_days=30,max_images=5,max_image_bytes=5242880,version=1',
+  );
+  const businessUser = randomUUID();
+  const businessToken = randomBytes(24).toString('hex');
   const owner = randomUUID(),
     admin = randomUUID(),
     stranger = randomUUID(),
@@ -23,21 +28,22 @@ try {
     adminToken = randomBytes(24).toString('hex'),
     strangerToken = randomBytes(24).toString('hex');
   await pool.query(
-    "insert into users(id,name,email,email_verified,role) values($1,'Browser Test Student','browser-student@test.invalid',now(),'advertiser'),($2,'Browser Test Admin','browser-admin@test.invalid',now(),'admin'),($3,'Browser Test Visitor','browser-visitor@test.invalid',now(),'advertiser')",
-    [owner, admin, stranger],
+    "insert into users(id,name,email,email_verified,role) values($1,'Browser Test Student','browser-student@test.invalid',now(),'advertiser'),($2,'Browser Test Admin','browser-admin@test.invalid',now(),'admin'),($3,'Browser Test Visitor','browser-visitor@test.invalid',now(),'advertiser'),($4,'Browser Test Business','browser-business@test.invalid',now(),'advertiser')",
+    [owner, admin, stranger, businessUser],
   );
   for (const [user, token] of [
     [owner, ownerToken],
     [admin, adminToken],
     [stranger, strangerToken],
+    [businessUser, businessToken],
   ])
     await pool.query(
       "insert into sessions(session_token,user_id,expires) values($1,$2,now()+interval '1 day')",
       [token, user],
     );
   await pool.query(
-    "insert into advertisers(id,user_id,name,kind,consent_at,created_by) values($1,$2,'Browser Test Student','student',now(),$2),($3,null,'Browser Test Campus Services','business',now(),$4)",
-    [seller, owner, businessSeller, admin],
+    "insert into advertisers(id,user_id,name,kind,consent_at,created_by) values($1,$2,'Browser Test Student','student',now(),$2),($3,$5,'Browser Test Campus Services','business',now(),$4)",
+    [seller, owner, businessSeller, admin, businessUser],
   );
   const category = (
     await pool.query('select id from categories where active order by name limit 1')
@@ -98,6 +104,7 @@ try {
       admin,
       stranger,
       ownerToken,
+      businessToken,
       adminToken,
       strangerToken,
       seller,

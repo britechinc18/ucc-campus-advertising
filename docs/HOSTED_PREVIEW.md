@@ -1,5 +1,7 @@
 # Hosted backend preview
 
+> **2026-10-22 update:** The stable alias now serves the Phase 3 frontend. Current deployment, PRs, verification and remaining OAuth/storage setup are in [PHASE_3_STATUS.md](PHASE_3_STATUS.md). Resource IDs and Phase 2 evidence below remain historical context.
+
 Verified on 2026-10-21. The owner requested a live backend preview before frontend implementation. This is a development preview, not a completed classifieds website or verified commercial launch.
 
 ## Open the current build

@@ -1,6 +1,6 @@
 # Phase 3 — frontend implementation blueprint
 
-Status: visual-review artifacts prepared; production frontend implementation awaits the agreed visual review. Primary visual reference: owner's _Campus Market Complete Design System V2_. Review source and handoff: [design/README.md](design/README.md).
+Status: implemented and deployed to the existing isolated preview after owner approval on 2026-10-22. See [implementation status and actual verification](PHASE_3_STATUS.md). Primary visual reference: owner's _Campus Market Complete Design System V2_. Review source and handoff: [design/README.md](design/README.md).
 
 ## Product and design invariants
 

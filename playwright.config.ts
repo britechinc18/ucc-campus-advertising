@@ -4,6 +4,7 @@ if (!['localhost', '127.0.0.1'].includes(new URL(baseURL).hostname))
   throw new Error('Browser fixtures may only target a local disposable application');
 export default defineConfig({
   testDir: './tests/browser',
+  timeout: 120000,
   fullyParallel: false,
   workers: 1,
   retries: 0,

@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 const fixture = JSON.parse(
   readFileSync(process.env.BROWSER_FIXTURE_FILE ?? '/tmp/ucc-browser-fixtures.json', 'utf8'),
 ) as Record<string, string>;
-async function session(context: BrowserContext, role: 'owner' | 'admin' | 'stranger') {
+async function session(context: BrowserContext, role: 'owner' | 'admin' | 'stranger' | 'business') {
   await context.addCookies([
     {
       name: 'authjs.session-token',
@@ -245,4 +245,72 @@ test('responsive pages and both themes have no serious/critical automated access
       ),
     ).toEqual([]);
   }
+});
+
+test('business edits remain private until approved and upload failure never looks successful', async ({
+  page,
+  browser,
+}) => {
+  await session(page.context(), 'business');
+  await page.goto('/my-business');
+  await page
+    .getByLabel('About your business')
+    .fill('Browser business profile updated through the real moderation workflow.');
+  await page.getByLabel('WhatsApp (optional)').fill('0241234567');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Submit for approval' }).click();
+  await expect(page.getByRole('status')).toContainText('submitted');
+  const publicContext = await browser.newContext({ baseURL: 'http://localhost:3000' });
+  const pub = await publicContext.newPage();
+  await pub.goto('/businesses/browser-test-services');
+  await expect(pub.locator('.description')).not.toContainText(
+    'updated through the real moderation',
+  );
+  const adminContext = await browser.newContext({ baseURL: 'http://localhost:3000' });
+  await session(adminContext, 'admin');
+  const admin = await adminContext.newPage();
+  await admin.goto('/admin/businesses');
+  await admin
+    .locator('.data-row')
+    .filter({ hasText: 'Browser Test Campus Services' })
+    .getByRole('button', { name: 'Approve', exact: true })
+    .click();
+  await admin
+    .getByRole('dialog')
+    .getByLabel('Reason for the audit trail')
+    .fill('Reviewed business contact changes in local browser test.');
+  await admin.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(admin.getByRole('dialog')).toHaveCount(0);
+  await pub.reload();
+  await expect(pub.locator('.description')).toContainText('updated through the real moderation');
+  await expect(pub.getByRole('link', { name: 'WhatsApp', exact: true })).toHaveAttribute(
+    'href',
+    'https://wa.me/233241234567',
+  );
+  await page.goto('/post');
+  await page.getByLabel('What are you posting?').selectOption('wanted');
+  await page.getByLabel('Advert title').fill('Browser wanted study supplies');
+  await page
+    .getByRole('combobox', { name: 'Category', exact: true })
+    .selectOption(fixture.category);
+  await page.getByLabel('Budget (GH₵)').fill('75');
+  await page
+    .getByLabel('Description')
+    .fill('Browser fixture wanted request for study supplies in good condition.');
+  await page.getByLabel('Campus location').fill('UCC campus');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Select photographs').setInputFiles({
+    name: 'test.png',
+    mimeType: 'image/png',
+    buffer: Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lWQAAAAASUVORK5CYII=',
+      'base64',
+    ),
+  });
+  await expect(page.getByRole('alert').filter({ hasText: 'Photo uploads' })).toContainText(
+    'temporarily unavailable',
+  );
+  await expect(page.locator('.uploaded-photo')).toHaveCount(0);
+  await adminContext.close();
+  await publicContext.close();
 });

@@ -1,5 +1,7 @@
 # Phase 2 backend
 
+> **Phase 3 update:** Additive account/owner/admin reads, owner pagination, report-status/advertiser search and moderated business logo/contact fields are implemented. Existing route shapes remain supported; see [PHASE_3_STATUS.md](PHASE_3_STATUS.md) and `src/server/frontend.ts` for the additions.
+
 The owner approved recommended Phase 1 defaults on 2026-10-21. This phase supplies a backend and a minimal framework placeholder page. The public website and dashboards remain Phase 3; end-to-end frontend integration remains Phase 4. A subsequent owner-authorized delivery published GitHub branches and deployed the isolated Neon/Vercel backend preview; see HOSTED_PREVIEW.md. Google OAuth and image storage remain unconfigured, and no paid-plan upgrade was enabled.
 
 ## Local setup
