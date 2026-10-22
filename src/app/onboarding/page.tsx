@@ -1,0 +1,27 @@
+import { requireViewer } from '@/server/viewer';
+import { accountContext } from '@/server/frontend';
+import { redirect } from 'next/navigation';
+import { safeReturn } from '@/lib/market';
+import { Onboarding } from '@/components/onboarding';
+export const metadata = { title: 'Create advertiser profile' };
+export default async function OnboardingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const params = await searchParams;
+  const next = safeReturn(params.next);
+  const u = await requireViewer('/onboarding');
+  const context = await accountContext(u.id);
+  if (context.profile) redirect(next);
+  return (
+    <main id="main" className="container">
+      <section className="narrow panel auth-panel">
+        <p className="eyebrow">BEFORE YOUR FIRST ADVERT</p>
+        <h1>Your campus identity.</h1>
+        <p>Tell people who they are connecting with.</p>
+        <Onboarding name={u.name ?? ''} next={next} />
+      </section>
+    </main>
+  );
+}
