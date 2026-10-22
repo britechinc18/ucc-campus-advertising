@@ -24,6 +24,7 @@ import {
 import { saveBusiness, moderateBusiness, listBusinesses } from '../src/server/businesses';
 import { signUpload, completeUpload, readMedia, type ObjectStorage } from '../src/server/storage';
 import { maintenance } from '../src/server/maintenance';
+import { notificationFeed } from '../src/server/notifications';
 import { readiness } from '../src/server/readiness';
 import { accountContext, ownedAdverts, adminView } from '../src/server/frontend';
 import sharp from 'sharp';
@@ -89,6 +90,32 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
   afterAll(async () => {
     await pool.end();
     await db().$client.end();
+  });
+  it('restricts seller activity to its owner and keeps public notifications anonymous', async () => {
+    const approved = await submit('Private seller approval update');
+    await moderate(admin, approved.revisionId, 'approve', 'Reviewed');
+    const rejected = await submit('Private seller rejected advert');
+    await moderate(admin, rejected.revisionId, 'reject', 'Improve the description');
+    await pool.query("update adverts set expires_at=now()-interval '1 hour' where id=$1", [
+      approved.advertId,
+    ]);
+    const mine = await notificationFeed(owner);
+    expect(mine.audience).toBe('seller');
+    expect(mine.items.map((i) => i.title)).toEqual(
+      expect.arrayContaining(['Advert approved', 'Changes requested', 'Advert expired']),
+    );
+    expect(mine.items.every((i) => i.href.startsWith('/my-adverts/'))).toBe(true);
+    expect(await notificationFeed()).toEqual({ audience: 'public', items: [] });
+    expect(await notificationFeed(stranger)).toEqual({ audience: 'public', items: [] });
+    vi.mocked(auth).mockResolvedValue(null as never);
+    const publicResponse = await dispatch(
+      new Request('https://campus.test/api/v1/notifications?userId=' + owner),
+      ['notifications'],
+    );
+    expect(publicResponse.headers.get('cache-control')).toBe('private, no-store');
+    expect(await publicResponse.json()).toEqual({ audience: 'public', items: [] });
+    await pool.query('update users set suspended=true where id=$1', [owner]);
+    await expect(notificationFeed(owner)).rejects.toThrow('Account suspended');
   });
   it('keeps submissions private until approval and starts 30 days on approval', async () => {
     const d = await submit();

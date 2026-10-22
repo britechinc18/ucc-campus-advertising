@@ -7,6 +7,14 @@ import { viewer } from '@/server/viewer';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: { default: 'MedStash · Find it on campus', template: '%s · MedStash' },
+  manifest: '/manifest.webmanifest',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/icons/icon-32.png', sizes: '32x32', type: 'image/png' },
+    ],
+    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
+  },
   description:
     'Products, services and wanted adverts for the University of Cape Coast medical-student community. Browse freely and contact advertisers directly.',
 };
@@ -23,7 +31,12 @@ export default async function Layout({ children }: { children: React.ReactNode }
         <Shell
           user={
             v.user
-              ? { name: v.user.name, role: v.user.role, sellerActive: v.user.seller_active }
+              ? {
+                  name: v.user.name,
+                  image: v.user.image,
+                  role: v.user.role,
+                  sellerActive: v.user.seller_active,
+                }
               : null
           }
         >

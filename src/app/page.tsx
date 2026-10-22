@@ -141,9 +141,6 @@ export default async function HomePage() {
         <span>
           <Icon name="chat" /> Connect directly with advertisers
         </span>
-        <span>
-          <Icon name="users" /> Built around your community
-        </span>
       </div>
       {failed ? (
         <>

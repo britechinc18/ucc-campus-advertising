@@ -42,10 +42,6 @@ export function OwnerDashboard({
           <h1>My adverts</h1>
           <p>Your items, services and Campus 360 adverts, all in one place.</p>
         </div>
-        <Link className="btn" href="/post">
-          <Icon name="plus" />
-          Post advert
-        </Link>
       </div>
       {submitted ? (
         <p className="form-success" role="status">
