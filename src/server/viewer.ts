@@ -15,12 +15,13 @@ export const viewer = cache(async () => {
     const rows = await query<{
       id: string;
       name: string | null;
+      image: string | null;
       role: string;
       suspended: boolean;
       seller_active: boolean;
     }>(
       db(),
-      sql`select u.id,u.name,u.role,u.suspended,exists(select 1 from advertisers p where p.user_id=u.id and not p.suspended) as seller_active from users u where u.id=${session.user.id}`,
+      sql`select u.id,u.name,u.image,u.role,u.suspended,exists(select 1 from advertisers p where p.user_id=u.id and not p.suspended) as seller_active from users u where u.id=${session.user.id}`,
     );
     return { configured, user: rows[0] ?? null };
   } catch {

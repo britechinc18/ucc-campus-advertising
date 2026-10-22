@@ -143,7 +143,9 @@ test('admin reviews reports, settings and account permissions', async ({ page, b
 
 test('theme override, dialog focus and onboarding work', async ({ page }) => {
   await page.goto('/explore');
+  await page.getByLabel('Menu', { exact: true }).click();
   await page.getByRole('button', { name: 'Toggle light and dark theme' }).click();
+  await page.keyboard.press('Escape');
   const theme = await page.locator('html').getAttribute('data-theme');
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('data-theme', theme!);
@@ -326,12 +328,12 @@ test('search keeps active filters and account menu dismisses with Escape and out
   await page.getByRole('link', { name: 'Remove Up to GH₵100.00 filter' }).click();
   await expect(page).toHaveURL(/q=tutoring/);
   await expect(page).not.toHaveURL(/max=/);
-  await page.getByLabel('Account menu').click();
+  await page.getByLabel('Menu', { exact: true }).click();
   await expect(page.locator('.account-menu')).toHaveAttribute('open', '');
   await page.keyboard.press('Escape');
   await expect(page.locator('.account-menu')).not.toHaveAttribute('open');
-  await expect(page.getByLabel('Account menu')).toBeFocused();
-  await page.getByLabel('Account menu').click();
+  await expect(page.getByLabel('Menu', { exact: true })).toBeFocused();
+  await page.getByLabel('Menu', { exact: true }).click();
   await page.getByRole('heading', { level: 1 }).click();
   await expect(page.locator('.account-menu')).not.toHaveAttribute('open');
 });
@@ -524,4 +526,80 @@ test('new buyer screens are responsive, accessible and honor reduced motion in b
       .first()
       .evaluate((e) => getComputedStyle(e).transitionDuration),
   ).toBe('0s');
+});
+
+test('brand icons, buyer menu, seller avatar and real notification panels work', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await expect(page.locator('.site-header .wordmark')).toHaveText('medstash.');
+  await expect(page.locator('.site-header .mark')).toHaveCount(0);
+  await expect(page.getByLabel('Menu', { exact: true })).toBeVisible();
+  await expect(page.locator('.seller-avatar')).toHaveCount(0);
+  await page.getByRole('link', { name: 'Search MedStash', exact: true }).click();
+  await expect(page.locator('#market-search')).toBeFocused();
+  const bell = page.locator('.notification-menu > summary');
+  await bell.click();
+  await expect(page.locator('.notification-content')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.locator('.notification-content')).toContainText('Campus announcement');
+  await expect(page.locator('.notification-panel')).not.toContainText('Advert approved');
+  await page.keyboard.press('Escape');
+  await expect(bell).toBeFocused();
+  await expect(page.locator('.notification-menu')).not.toHaveAttribute('open');
+  await page.route('**/api/v1/notifications', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    await route.fulfill({ status: 503, json: { message: 'Unavailable' } });
+  });
+  await bell.click();
+  await expect(page.getByText('Loading notifications')).toBeAttached();
+  await expect(page.getByText('We couldn’t load your updates.')).toBeVisible();
+  await page.unroute('**/api/v1/notifications');
+  await page.getByRole('button', { name: 'Try again', exact: true }).click();
+  await expect(page.locator('.notification-content')).toContainText('Campus announcement');
+  await page.getByLabel('Menu', { exact: true }).click();
+  await expect(page.locator('.notification-menu')).not.toHaveAttribute('open');
+  await page.keyboard.press('Escape');
+  await page.route('**/api/v1/notifications', (route) =>
+    route.fulfill({ json: { audience: 'public', items: [] } }),
+  );
+  await bell.click();
+  await expect(page.getByText('No updates yet.')).toBeVisible();
+  await page.mouse.click(3, 400);
+  await expect(page.locator('.notification-menu')).not.toHaveAttribute('open');
+  await page.unroute('**/api/v1/notifications');
+  const manifest = await (await page.request.get('/manifest.webmanifest')).json();
+  expect(manifest.name).toBe('MedStash');
+  for (const icon of manifest.icons) expect((await page.request.get(icon.src)).status()).toBe(200);
+  expect((await page.request.get('/favicon.ico')).status()).toBe(200);
+  expect(await page.locator('link[rel="apple-touch-icon"]').getAttribute('href')).toBe(
+    '/icons/apple-touch-icon.png',
+  );
+  await session(page.context(), 'owner');
+  await page.goto('/my-adverts');
+  await expect(page.getByLabel('Account menu')).toBeVisible();
+  await expect(page.locator('.seller-avatar')).toBeVisible();
+  await page.locator('.notification-menu > summary').click();
+  await expect(page.locator('.notification-content')).toHaveAttribute('aria-busy', 'false');
+  await expect(page.locator('.notification-content')).toContainText('Advert approved');
+  await page.keyboard.press('Escape');
+  for (const width of [320, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.locator('.notification-menu > summary').click();
+    await expect(page.locator('.notification-content')).toHaveAttribute('aria-busy', 'false');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    const box = await page.locator('.notification-panel').boundingBox();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+    const violations = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+      .analyze();
+    expect(
+      violations.violations.filter((v) => ['serious', 'critical'].includes(v.impact ?? '')),
+    ).toEqual([]);
+    if (width === 390 || width === 1440)
+      await page.screenshot({ path: '/tmp/medstash-header-' + width + '.png' });
+    await page.keyboard.press('Escape');
+  }
 });

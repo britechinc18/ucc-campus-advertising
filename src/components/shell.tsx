@@ -1,16 +1,16 @@
 'use client';
+/* eslint-disable @next/next/no-img-element -- Google avatars use native loading and an initials fallback without caching identity images. */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { Notifications } from './notifications';
+import { initials } from '@/lib/market';
 import { Icon } from './icon';
 export function Wordmark() {
   return (
     <Link className="wordmark" href="/" aria-label="MedStash home">
-      <span className="mark">
-        <Icon name="bag" />
-      </span>
       <span>
-        MedStash<span className="wordmark-period">.</span>
+        medstash<span className="wordmark-period">.</span>
       </span>
     </Link>
   );
@@ -53,9 +53,10 @@ export function Shell({
   user,
 }: {
   children: React.ReactNode;
-  user: { name: string | null; role: string; sellerActive?: boolean } | null;
+  user: { name: string | null; role: string; sellerActive?: boolean; image?: string | null } | null;
 }) {
   const path = usePathname();
+  const [avatarFailed, setAvatarFailed] = useState(false);
   const accountMenu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const close = (e: PointerEvent) => {
@@ -137,17 +138,63 @@ export function Shell({
             />
           </form>
           <div className="header-actions">
-            <ThemeButton />
+            <Link
+              className="icon-btn header-search-trigger"
+              href={
+                path.startsWith('/campus-360')
+                  ? '/campus-360#campus-search'
+                  : '/explore#market-search'
+              }
+              aria-label="Search MedStash"
+              onClick={() =>
+                document
+                  .getElementById(
+                    path.startsWith('/campus-360') ? 'campus-search' : 'market-search',
+                  )
+                  ?.focus()
+              }
+            >
+              <Icon name="search" />
+            </Link>
             <Link className="btn" href={seller ? '/post' : '/sell'}>
               <Icon name={seller ? 'plus' : 'store'} />
               <span>{seller ? 'Post advert' : 'Start Selling'}</span>
             </Link>
-            <details className="account-menu" ref={accountMenu}>
-              <summary className="icon-btn" aria-label="Account menu">
-                <Icon name="users" />
+            <Notifications
+              key={`${user?.name ?? 'anonymous'}:${!!user?.sellerActive}:${path}`}
+              scope={path}
+            />
+            <details
+              className="account-menu"
+              ref={accountMenu}
+              onToggle={(e) => {
+                if (e.currentTarget.open)
+                  document.querySelector('.notification-menu[open]')?.removeAttribute('open');
+              }}
+            >
+              <summary className="icon-btn" aria-label={seller ? 'Account menu' : 'Menu'}>
+                {seller ? (
+                  <span className="seller-avatar">
+                    {user?.image?.startsWith('https://') && !avatarFailed ? (
+                      <img
+                        src={user.image}
+                        alt=""
+                        width={32}
+                        height={32}
+                        referrerPolicy="no-referrer"
+                        onError={() => setAvatarFailed(true)}
+                      />
+                    ) : (
+                      initials(user?.name ?? 'Seller')
+                    )}
+                  </span>
+                ) : (
+                  <Icon name="menu" />
+                )}
               </summary>
               <div className="account-dropdown">
-                <p>{user?.name ?? 'Your campus corner'}</p>
+                {seller ? <p>{user?.name ?? 'Your seller account'}</p> : null}
+                <Link href="/help">Help & safe trading</Link>
                 <Link href="/saved">Saved adverts</Link>
                 {seller ? (
                   <>
@@ -172,9 +219,11 @@ export function Shell({
                   >
                     <button type="submit">Sign out</button>
                   </form>
-                ) : (
-                  <Link href="/sign-in">Sign in</Link>
-                )}
+                ) : null}
+                <div className="menu-theme">
+                  <span>Appearance</span>
+                  <ThemeButton />
+                </div>
                 <button
                   onClick={() => {
                     try {
@@ -200,7 +249,7 @@ export function Shell({
         <p>
           For the UCC medical-student community.
           <br />
-          Browse freely. Contact advertisers directly.
+          Contact advertisers directly.
         </p>
         <Link className="text-link" href="/help">
           Safe trading & help <Icon name="arrow" />

@@ -4,6 +4,7 @@ import { z, ZodError } from 'zod';
 import { sql } from 'drizzle-orm';
 import { auth } from './auth';
 import { isAuthenticationConfigured } from './config';
+import { notificationFeed } from './notifications';
 import { readiness } from './readiness';
 import { AppError, ensure } from './errors';
 import {
@@ -121,6 +122,10 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
       if (route === 'health') {
         const result = await readiness();
         return Response.json(result.body, { status: result.status, headers });
+      }
+      if (route === 'notifications') {
+        const session = isAuthenticationConfigured() ? await auth() : null;
+        return Response.json(await notificationFeed(session?.user?.id), { headers });
       }
       if (route === 'saved') {
         const ids = z

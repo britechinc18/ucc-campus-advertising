@@ -737,3 +737,221 @@
     transition: none;
   }
 }
+
+/* Final brand and header refinements. */
+.site-header .wordmark {
+  font-size: 25px;
+  letter-spacing: -0.065em;
+  white-space: nowrap;
+}
+.site-header .header-inner {
+  gap: 24px;
+}
+.site-header .header-actions {
+  gap: 6px;
+}
+.site-header .header-actions > .btn {
+  margin-right: 8px;
+}
+.site-header .icon-btn {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  padding: 10px;
+}
+.site-header summary {
+  list-style: none;
+  cursor: pointer;
+}
+.site-header summary::-webkit-details-marker {
+  display: none;
+}
+.site-header .seller-avatar {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--soft);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+}
+.seller-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.site-header .account-menu:has(.seller-avatar) > summary {
+  padding: 6px;
+}
+.menu-theme {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-left: 14px;
+  font-size: 12px;
+}
+.notification-menu {
+  position: relative;
+}
+.notification-panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  box-shadow: 0 16px 48px #0002;
+  overflow: hidden;
+  animation: notification-enter 180ms ease-out;
+}
+.notification-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 16px 14px 22px;
+  border-bottom: 1px solid var(--border);
+}
+.notification-heading h2 {
+  font-size: 18px;
+  margin: 0;
+  letter-spacing: -0.04em;
+}
+.notification-heading p {
+  font-size: 11px;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+.notification-content {
+  max-height: min(520px, 65dvh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.notification-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+.notification-content li + li {
+  border-top: 1px solid var(--border);
+}
+.notification-content li a {
+  display: grid;
+  gap: 5px;
+  padding: 18px 22px;
+  font-size: 12px;
+  line-height: 1.5;
+  transition: background 180ms;
+  overflow-wrap: anywhere;
+}
+.notification-content li a:hover {
+  background: var(--soft);
+}
+.notification-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brand);
+}
+.notification-content time {
+  font-size: 10px;
+  color: var(--muted);
+}
+.notification-empty {
+  padding: 32px 24px;
+  text-align: center;
+}
+.notification-empty > svg {
+  width: 26px;
+  height: 26px;
+  color: var(--muted);
+  margin: 0 auto 12px;
+}
+.notification-empty h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+.notification-empty p {
+  font-size: 12px;
+  color: var(--muted);
+}
+.notification-loading {
+  display: grid;
+  gap: 12px;
+  padding: 22px;
+}
+.notification-loading .skeleton {
+  height: 58px;
+  border-radius: 8px;
+}
+@keyframes notification-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@media (min-width: 1250px) {
+  .site-header .header-search-trigger {
+    display: none;
+  }
+  .site-header .desktop-nav {
+    gap: 20px;
+  }
+  .site-header .header-inner {
+    gap: 20px;
+  }
+  .header-search {
+    width: 190px;
+  }
+}
+@media (max-width: 1249px) and (min-width: 900px) {
+  .site-header .desktop-nav {
+    gap: 16px;
+  }
+  .site-header .header-inner {
+    gap: 18px;
+  }
+}
+@media (max-width: 899px) {
+  .site-header .header-inner {
+    min-height: 68px;
+    gap: 12px;
+  }
+  .site-header .header-actions {
+    margin-left: auto;
+    gap: 0;
+  }
+  .site-header .header-actions > .btn {
+    display: none;
+  }
+  .notification-panel {
+    position: fixed;
+    top: 76px;
+    left: 12px;
+    right: 12px;
+    width: auto;
+    max-width: none;
+  }
+  .site-header .wordmark {
+    font-size: 24px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .notification-panel {
+    animation: none;
+  }
+  .notification-content li a {
+    transition: none;
+  }
+}

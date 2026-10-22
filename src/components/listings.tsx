@@ -1,3 +1,4 @@
+import { SearchInput } from './search-input';
 import Link from 'next/link';
 import { SaveButton } from './bookmark-button';
 import { Icon } from './icon';
@@ -65,16 +66,16 @@ export function Search({
           <input key={key} type="hidden" name={key} value={value} />
         ))}
       <Icon name="search" />
-      <label className="sr-only" htmlFor="market-search">
-        Search the marketplace
+      <label
+        className="sr-only"
+        htmlFor={action.startsWith('/campus-360') ? 'campus-search' : 'market-search'}
+      >
+        {action.startsWith('/campus-360') ? 'Search Campus 360' : 'Search the marketplace'}
       </label>
-      <input
-        id="market-search"
-        type="search"
-        name="q"
-        defaultValue={value}
+      <SearchInput
+        id={action.startsWith('/campus-360') ? 'campus-search' : 'market-search'}
+        value={value}
         placeholder={placeholder}
-        maxLength={100}
       />
       <button className="btn" type="submit">
         Search <Icon name="arrow" />
