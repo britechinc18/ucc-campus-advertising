@@ -667,3 +667,73 @@
     font-size: clamp(14px, 4vw, 24px);
   }
 }
+
+.seller-launch {
+  margin: 0 0 36px;
+  padding: clamp(20px, 4vw, 36px);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+.seller-launch h2 {
+  margin: 8px 0;
+}
+.seller-formats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+.seller-formats a {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  transition: background 180ms;
+}
+.seller-formats a:hover {
+  background: var(--soft);
+}
+.seller-formats a span {
+  flex: 1;
+}
+.seller-formats a > svg {
+  flex-shrink: 0;
+}
+.flyer-photo img,
+.flyer-photos img {
+  object-fit: contain;
+}
+.seller-metadata {
+  margin: 24px 0;
+}
+.seller-metadata > div {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+.seller-metadata dt {
+  font-size: 0.8rem;
+  margin-bottom: 6px;
+  color: var(--muted);
+}
+.seller-metadata dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 899px) {
+  .seller-formats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .seller-formats {
+    grid-template-columns: 1fr;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .seller-formats a {
+    transition: none;
+  }
+}

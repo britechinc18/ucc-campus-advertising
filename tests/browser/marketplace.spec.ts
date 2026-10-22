@@ -395,6 +395,15 @@ test('existing seller gets flat navigation and can draft every supported advert 
   await page.goto('/');
   await expect(page.locator('.seller-nav')).toContainText('My Ads');
   await expect(page.locator('.buyer-nav')).toHaveCount(0);
+  await page.goto('/my-adverts');
+  await expect(
+    page.getByRole('region', { name: 'Create an advert' }).getByRole('link'),
+  ).toHaveCount(7);
+  await page.getByRole('link', { name: 'Share an event' }).click();
+  await expect(page.getByLabel('What are you posting?')).toHaveValue('event');
+  await expect(page.getByLabel('Event start (Ghana time)')).toBeVisible();
+  await page.goto('/post?kind=invalid');
+  await expect(page.getByLabel('What are you posting?')).toHaveValue('product');
   let uploaded = 0;
   await page.route('**/api/v1/uploads/sign', (route) =>
     route.fulfill({

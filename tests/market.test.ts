@@ -28,6 +28,8 @@ describe('marketplace presentation boundaries', () => {
     expect(stateLabel('fulfilled', 'wanted')).toBe('Found');
     expect(stateLabel('fulfilled', 'service')).toBe('Completed');
     expect(stateLabel('fulfilled', 'product')).toBe('Sold');
+    for (const kind of ['event', 'promotion', 'announcement', 'business_ad'])
+      expect(stateLabel('fulfilled', kind)).toBe('Completed');
   });
   it('accepts only local return paths', () => {
     expect(safeReturn('/post?edit=123')).toBe('/post?edit=123');

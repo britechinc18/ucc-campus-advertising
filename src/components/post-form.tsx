@@ -61,6 +61,7 @@ export function PostForm({
   userId,
   renew = false,
   advertiserId,
+  initialKind = 'product',
 }: {
   account: Account;
   categories: Category[];
@@ -68,8 +69,24 @@ export function PostForm({
   userId: string;
   renew?: boolean;
   advertiserId?: string;
+  initialKind?: AdvertContent['kind'];
 }) {
-  const [form, setForm] = useState<DraftForm>(() => initialForm(advert));
+  const [form, setForm] = useState<DraftForm>(() =>
+    advert
+      ? initialForm(advert)
+      : {
+          ...initialForm(),
+          kind: initialKind,
+          priceMode: isFlyer(initialKind)
+            ? 'contact'
+            : initialKind === 'wanted'
+              ? 'budget'
+              : 'fixed',
+          categoryId: isFlyer(initialKind)
+            ? (categories.find((c) => c.slug === 'services')?.id ?? categories[0]?.id ?? '')
+            : '',
+        },
+  );
   const flyer = isFlyer(form.kind);
   const [step, setStep] = useState(1);
   const stepPanel = useRef<HTMLElement>(null);
@@ -148,7 +165,9 @@ export function PostForm({
       ...(flyer
         ? {
             details: {
-              ...(form.startsAt ? { startsAt: new Date(form.startsAt + 'Z').toISOString() } : {}),
+              ...(form.kind === 'event' && form.startsAt
+                ? { startsAt: new Date(form.startsAt + 'Z').toISOString() }
+                : {}),
               ...(form.endsAt ? { endsAt: new Date(form.endsAt + 'Z').toISOString() } : {}),
               ...(form.externalUrl.trim() ? { externalUrl: form.externalUrl.trim() } : {}),
               ...(form.kind === 'promotion' && form.offer.trim()
@@ -164,7 +183,7 @@ export function PostForm({
     setError('');
     setFields([]);
     if (step === 1) {
-      if (flyer && form.startsAt && form.endsAt && form.endsAt <= form.startsAt) {
+      if (form.kind === 'event' && form.startsAt && form.endsAt && form.endsAt <= form.startsAt) {
         setError('The end must be after the start.');
         return;
       }
