@@ -22,6 +22,7 @@ test('public search, filters, detail, contacts and reporting work without sign-i
 }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Fresh Finds', exact: true })).toBeVisible();
+  await page.getByRole('link', { name: 'Search MedStash', exact: true }).click();
   await page.getByRole('searchbox').fill('tutoring');
   await page.getByRole('searchbox').press('Enter');
   await expect(page).toHaveURL(/q=tutoring/);
