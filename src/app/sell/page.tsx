@@ -56,8 +56,10 @@ export default async function Sell() {
             <div>
               <h2>Post. Get reviewed. Connect.</h2>
               <p>
-                Products, services and Campus 360 flyers follow the same approval and posting
-                limits. Buyers WhatsApp or call you directly.
+                {v.user?.role === 'admin'
+                  ? 'Your admin submissions have no daily or active-advert limit. Content review still applies.'
+                  : 'Products, services and Campus 360 flyers follow the same approval and posting limits.'}{' '}
+                Buyers WhatsApp or call you directly.
               </p>
             </div>
           </li>

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { formatUsage, type SystemReport, type UsageSection } from '@/lib/monitoring';
 import { ErrorMessage, Loading } from './ui';
+import { BudgetReference } from './budget-reference';
 function UsageBlock({ title, section }: { title: string; section: UsageSection }) {
   return (
     <section className="panel usage-block">
@@ -94,6 +95,7 @@ export function SystemCheck() {
             <UsageBlock title="Neon project usage" section={report.neon} />
             <UsageBlock title="Vercel hosting usage" section={report.vercel} />
           </div>
+          <BudgetReference />
           <section className="panel admin-block system-information">
             <h2>Understand your usage</h2>
             <p>
@@ -122,11 +124,14 @@ export function SystemCheck() {
                 Configure <code>NEON_MONITORING_API_KEY</code> and{' '}
                 <code>VERCEL_MONITORING_TOKEN</code> in Vercel’s environment settings with access to
                 this project and billing usage. Never paste credentials into this page or a public
-                advert. Some metrics require provider plan support.
+                advert. Some metrics require provider plan support. The scoped Observability API
+                currently requires Observability Plus on Pro/Enterprise; a monitoring token does not
+                unlock it on Hobby.
               </p>
               <p>
-                Free-plan allowances and team-wide credits are not available from these project
-                counters. Confirm them in the provider dashboards before relying on a quota warning.
+                The allowance table uses verified official plan documentation. These project
+                counters do not establish remaining shared balances or team-wide credits; provider
+                usage can lag by minutes or hours.
               </p>
             </section>
           ) : null}

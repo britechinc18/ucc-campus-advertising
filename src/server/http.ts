@@ -7,6 +7,7 @@ import { isAuthenticationConfigured } from './config';
 import { notificationFeed } from './notifications';
 import { readiness } from './readiness';
 import { systemCheck } from './monitoring';
+import { mediaResponse } from './media-delivery';
 import { AppError, ensure } from './errors';
 import {
   createProfile,
@@ -163,6 +164,12 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
       if (path[0] === 'adverts' && path.length === 2)
         return Response.json(await advertDetail(path[1]), { headers });
       if (path[0] === 'media' && path.length === 2) {
+        const width = url.searchParams.has('width')
+          ? z.coerce
+              .number()
+              .pipe(z.union([z.literal(360), z.literal(720)]))
+              .parse(url.searchParams.get('width'))
+          : undefined;
         // Public media needs no session; auth is resolved only if necessary by the media handler below.
         let bytes: Buffer;
         try {
@@ -173,9 +180,8 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
           const session = await auth();
           bytes = await readMedia(session?.user?.id, path[1]);
         }
-        return new Response(new Uint8Array(bytes), {
-          headers: { ...headers, 'Content-Type': 'image/webp' },
-        });
+
+        return mediaResponse(bytes, width, request.headers.get('if-none-match'));
       }
     }
     if (
