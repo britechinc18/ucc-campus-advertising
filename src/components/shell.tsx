@@ -6,9 +6,12 @@ import { useEffect, useRef, useState } from 'react';
 import { Notifications } from './notifications';
 import { initials } from '@/lib/market';
 import { Icon } from './icon';
-export function Wordmark() {
+export function Wordmark({ showLogo = false }: { showLogo?: boolean }) {
   return (
     <Link className="wordmark" href="/" aria-label="MedStash home">
+      {showLogo ? (
+        <img className="brand-logo" src="/icons/icon-192.png" alt="" width={40} height={40} />
+      ) : null}
       <span>
         medstash<span className="wordmark-period">.</span>
       </span>
@@ -104,7 +107,7 @@ export function Shell({
       </a>
       <header className="site-header">
         <div className="container header-inner">
-          <Wordmark />
+          <Wordmark showLogo />
           <nav className="desktop-nav" aria-label="Main navigation">
             {[
               ['/', 'Home'],
