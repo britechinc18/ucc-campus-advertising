@@ -572,7 +572,7 @@ test('brand icons, buyer menu, seller avatar and real notification panels work',
   for (const icon of manifest.icons) expect((await page.request.get(icon.src)).status()).toBe(200);
   expect((await page.request.get('/favicon.ico')).status()).toBe(200);
   expect(await page.locator('link[rel="apple-touch-icon"]').getAttribute('href')).toBe(
-    '/icons/apple-touch-icon.png',
+    '/icons/apple-touch-icon.png?v=2',
   );
   await session(page.context(), 'owner');
   await page.goto('/my-adverts');

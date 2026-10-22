@@ -962,7 +962,7 @@
   flex: 0 0 40px;
   object-fit: contain;
   border-radius: 50%;
-  background: #fff;
+  background: transparent;
 }
 @media (max-width: 899px) {
   .site-header .brand-logo {

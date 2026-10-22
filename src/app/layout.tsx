@@ -7,13 +7,13 @@ import { viewer } from '@/server/viewer';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
   title: { default: 'MedStash · Find it on campus', template: '%s · MedStash' },
-  manifest: '/manifest.webmanifest',
+  manifest: '/manifest.webmanifest?v=2',
   icons: {
     icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/icons/icon-32.png', sizes: '32x32', type: 'image/png' },
+      { url: '/favicon.ico?v=2', sizes: 'any' },
+      { url: '/icons/icon-32.png?v=2', sizes: '32x32', type: 'image/png' },
     ],
-    apple: [{ url: '/icons/apple-touch-icon.png', sizes: '180x180' }],
+    apple: [{ url: '/icons/apple-touch-icon.png?v=2', sizes: '180x180' }],
   },
   description:
     'Products, services and wanted adverts for the University of Cape Coast medical-student community. Browse freely and contact advertisers directly.',
