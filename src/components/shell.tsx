@@ -10,7 +10,7 @@ export function Wordmark({ showLogo = false }: { showLogo?: boolean }) {
   return (
     <Link className="wordmark" href="/" aria-label="MedStash home">
       {showLogo ? (
-        <img className="brand-logo" src="/icons/icon-192.png" alt="" width={40} height={40} />
+        <img className="brand-logo" src="/icons/icon-192.png?v=2" alt="" width={40} height={40} />
       ) : null}
       <span>
         medstash<span className="wordmark-period">.</span>
