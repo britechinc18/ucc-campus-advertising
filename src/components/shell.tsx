@@ -105,16 +105,24 @@ export function Shell({
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <header className="site-header">
+      <header className={`site-header ${path === '/' ? 'homepage-header' : ''}`}>
         <div className="container header-inner">
           <Wordmark showLogo />
           <nav className="desktop-nav" aria-label="Main navigation">
-            {[
-              ['/', 'Home'],
-              ['/explore', 'Market'],
-              ['/campus-360', 'Campus 360'],
-              [seller ? '/my-adverts' : '/saved', seller ? 'My Ads' : 'Saved'],
-            ].map(([href, label]) => (
+            {(path === '/'
+              ? [
+                  ['/', 'Home'],
+                  ['/explore', 'Explore'],
+                  ['/businesses', 'Businesses'],
+                  ['/campus-360', 'Campus 360'],
+                ]
+              : [
+                  ['/', 'Home'],
+                  ['/explore', 'Market'],
+                  ['/campus-360', 'Campus 360'],
+                  [seller ? '/my-adverts' : '/saved', seller ? 'My Ads' : 'Saved'],
+                ]
+            ).map(([href, label]) => (
               <Link
                 key={href}
                 href={href}
@@ -161,14 +169,24 @@ export function Shell({
             </Link>
             <Link className="btn" href={seller ? '/post' : '/sell'}>
               <Icon name={seller ? 'plus' : 'store'} />
-              <span>{seller ? 'Post advert' : 'Start Selling'}</span>
+              <span>{seller || path === '/' ? 'Post Advert' : 'Start Selling'}</span>
             </Link>
+            {path === '/' ? (
+              <span className="home-header-theme">
+                <ThemeButton />
+              </span>
+            ) : null}
+            {path === '/' && !user ? (
+              <Link className="home-header-signin" href="/sign-in">
+                Sign In
+              </Link>
+            ) : null}
             <Notifications
               key={`${user?.name ?? 'anonymous'}:${!!user?.sellerActive}:${path}`}
               scope={path}
             />
             <details
-              className="account-menu"
+              className={`account-menu ${path === '/' && !user ? 'home-guest-menu' : ''}`}
               ref={accountMenu}
               onToggle={(e) => {
                 if (e.currentTarget.open)
