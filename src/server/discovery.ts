@@ -5,9 +5,12 @@ import { one, query, visible } from './store';
 import { id, contactLinks, type Content } from './validation';
 const searchSchema = z
   .object({
+    surface: z.enum(['market', 'campus', 'all']).default('market'),
     q: z.string().trim().max(100).default(''),
     category: id.optional(),
-    kind: z.enum(['product', 'service', 'wanted']).optional(),
+    kind: z
+      .enum(['product', 'service', 'wanted', 'event', 'promotion', 'announcement', 'business_ad'])
+      .optional(),
     condition: z.enum(['new', 'used', 'not_applicable']).optional(),
     location: z.string().max(120).optional(),
     business: id.optional(),
@@ -43,6 +46,9 @@ function escapeLike(s: string) {
 export async function listAdverts(input: unknown, extra?: SQL) {
   const s = searchSchema.parse(input);
   const filters: SQL[] = [visible];
+  if (s.surface === 'market') filters.push(sql`r.data->>'kind' in ('product','service','wanted')`);
+  if (s.surface === 'campus')
+    filters.push(sql`r.data->>'kind' in ('event','promotion','announcement','business_ad')`);
   if (extra) filters.push(extra);
   if (s.q)
     filters.push(
@@ -130,7 +136,7 @@ export async function home() {
     ),
     query<PublicAdvert>(
       db(),
-      sql`select ${select} ${base} join featured_adverts f on f.advert_id=a.id where ${visible} and f.starts_at<=now() and f.ends_at>now() order by f.position,a.id limit 12`,
+      sql`select ${select} ${base} join featured_adverts f on f.advert_id=a.id where ${visible} and r.data->>'kind' in ('product','service','wanted') and f.starts_at<=now() and f.ends_at>now() order by f.position,a.id limit 12`,
     ),
   ]);
   return {

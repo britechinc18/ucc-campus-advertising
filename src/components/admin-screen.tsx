@@ -822,6 +822,14 @@ function Submission({
           <h2>Description</h2>
           <p className="admin-description">{d.description}</p>
         </div>
+        {d.details
+          ? Object.entries(d.details).map(([label, value]) => (
+              <div className="summary-line" key={label}>
+                <span>{label}</span>
+                <strong>{value}</strong>
+              </div>
+            ))
+          : null}
         <div className="summary-line">
           <span>Phone</span>
           <strong>{d.phone ?? 'Not supplied'}</strong>

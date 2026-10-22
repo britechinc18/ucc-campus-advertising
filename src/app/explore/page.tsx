@@ -53,7 +53,7 @@ export default async function Explore({
       <div className="page-head">
         <div>
           <p className="eyebrow">DISCOVER ON CAMPUS</p>
-          <h1>{selectedCategory?.name ?? 'Explore adverts'}</h1>
+          <h1>{selectedCategory?.name ?? 'Market'}</h1>
           <p>Good finds, useful services and wanted items.</p>
         </div>
       </div>

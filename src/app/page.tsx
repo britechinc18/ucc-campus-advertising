@@ -1,5 +1,7 @@
 import Link from 'next/link';
 import { sql } from 'drizzle-orm';
+import { FlyerGrid } from '@/components/campus';
+import { listAdverts } from '@/server/discovery';
 import { home } from '@/server/discovery';
 import { query } from '@/server/store';
 import { db } from '@/server/db';
@@ -11,11 +13,13 @@ import { EmptyState, ErrorMessage } from '@/components/ui';
 export default async function HomePage() {
   let feeds: Awaited<ReturnType<typeof home>> | null = null;
   let categories: Category[] = [];
+  let campusItems: Listing[] = [];
   let failed = false;
   try {
-    [feeds, categories] = await Promise.all([
+    [feeds, categories, campusItems] = await Promise.all([
       home(),
       query<Category>(db(), sql`select id,name,slug from categories where active order by name`),
+      listAdverts({ surface: 'campus', limit: 4 }).then((r) => r.items as unknown as Listing[]),
     ]);
   } catch {
     failed = true;
@@ -164,7 +168,7 @@ export default async function HomePage() {
               <h2>Something to offer campus?</h2>
               <p>Give it a new home. Or help someone find what they need.</p>
             </div>
-            <Link href="/post" className="btn">
+            <Link href="/sell" className="btn">
               Post an advert <Icon name="arrow" />
             </Link>
           </div>
@@ -262,6 +266,30 @@ export default async function HomePage() {
         <p className="editorial-disclaimer">
           Editorial inspiration. Browse each collection for currently available adverts.
         </p>
+      </section>
+      <section className="section home-campus">
+        <div className="section-head">
+          <div>
+            <p className="eyebrow">BEYOND THE MARKET</p>
+            <h2>Campus, in full colour.</h2>
+            <p>Events, offers, announcements and the people behind them.</p>
+          </div>
+          <Link className="text-link" href="/campus-360">
+            Campus 360 <Icon name="arrow" />
+          </Link>
+        </div>
+        {campusItems.length ? (
+          <FlyerGrid items={campusItems} />
+        ) : (
+          <Link className="campus-home-invitation" href="/campus-360">
+            <Icon name="calendar" />
+            <div>
+              <h3>There’s more to campus.</h3>
+              <p>Explore the new Campus 360 discovery hub.</p>
+            </div>
+            <Icon name="arrow" />
+          </Link>
+        )}
       </section>
     </main>
   );

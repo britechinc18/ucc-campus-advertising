@@ -80,4 +80,4 @@ export async function rateLimit(key: string, limit: number, seconds: number) {
   );
 }
 // a,r,p,u aliases are fixed within public queries; never include unapproved revisions.
-export const visible = sql`a.state='published' and a.expires_at>now() and r.status='approved' and not p.suspended and (u.id is null or not u.suspended)`;
+export const visible = sql`a.state='published' and a.expires_at>now() and r.status='approved' and not p.suspended and (u.id is null or not u.suspended) and (r.data->'details'->>'endsAt' is null or (r.data->'details'->>'endsAt')::timestamptz>now())`;

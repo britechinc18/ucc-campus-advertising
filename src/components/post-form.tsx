@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { isFlyer, kindName } from '@/lib/campus';
 import { api, ApiError } from '@/lib/api';
 import {
   parseMoney,
@@ -15,6 +16,10 @@ import { Uploads } from './uploads';
 import { Icon } from './icon';
 import { ErrorMessage, MediaImage } from './ui';
 interface DraftForm {
+  startsAt: string;
+  endsAt: string;
+  externalUrl: string;
+  offer: string;
   title: string;
   description: string;
   categoryId: string;
@@ -31,6 +36,10 @@ interface DraftForm {
 function initialForm(advert?: OwnAdvert): DraftForm {
   const d = advert?.revisions[0]?.data;
   return {
+    startsAt: d?.details?.startsAt?.slice(0, 16) ?? '',
+    endsAt: d?.details?.endsAt?.slice(0, 16) ?? '',
+    externalUrl: d?.details?.externalUrl ?? '',
+    offer: d?.details?.offer ?? '',
     title: d?.title ?? '',
     description: d?.description ?? '',
     categoryId: d?.categoryId ?? '',
@@ -61,6 +70,7 @@ export function PostForm({
   advertiserId?: string;
 }) {
   const [form, setForm] = useState<DraftForm>(() => initialForm(advert));
+  const flyer = isFlyer(form.kind);
   const [step, setStep] = useState(1);
   const stepPanel = useRef<HTMLElement>(null);
   const previousStep = useRef(1);
@@ -122,9 +132,10 @@ export function PostForm({
       categoryId: form.categoryId,
       kind: form.kind,
       condition: form.kind === 'product' ? form.condition : 'not_applicable',
-      priceMode: form.kind === 'wanted' ? 'budget' : form.priceMode,
-      pricePesewas:
-        form.priceMode === 'free'
+      priceMode: flyer ? 'contact' : form.kind === 'wanted' ? 'budget' : form.priceMode,
+      pricePesewas: flyer
+        ? null
+        : form.priceMode === 'free'
           ? 0
           : form.priceMode === 'contact'
             ? null
@@ -134,6 +145,18 @@ export function PostForm({
       ...(form.whatsapp.trim() ? { whatsapp: form.whatsapp.trim() } : {}),
       contactConsent: true,
       mediaIds: form.mediaIds,
+      ...(flyer
+        ? {
+            details: {
+              ...(form.startsAt ? { startsAt: new Date(form.startsAt + 'Z').toISOString() } : {}),
+              ...(form.endsAt ? { endsAt: new Date(form.endsAt + 'Z').toISOString() } : {}),
+              ...(form.externalUrl.trim() ? { externalUrl: form.externalUrl.trim() } : {}),
+              ...(form.kind === 'promotion' && form.offer.trim()
+                ? { offer: form.offer.trim() }
+                : {}),
+            },
+          }
+        : {}),
     };
   }
   function advance(e: React.FormEvent<HTMLFormElement>) {
@@ -141,7 +164,12 @@ export function PostForm({
     setError('');
     setFields([]);
     if (step === 1) {
+      if (flyer && form.startsAt && form.endsAt && form.endsAt <= form.startsAt) {
+        setError('The end must be after the start.');
+        return;
+      }
       if (
+        !flyer &&
         form.priceMode !== 'free' &&
         form.priceMode !== 'contact' &&
         parseMoney(form.price) === null
@@ -151,7 +179,7 @@ export function PostForm({
       }
       setStep(2);
     } else if (step === 2) {
-      if (form.kind === 'product' && !form.mediaIds.length) {
+      if ((form.kind === 'product' || flyer) && !form.mediaIds.length) {
         setError('Add at least one completed photo for an item advert.');
         return;
       }
@@ -213,7 +241,19 @@ export function PostForm({
       setBusy(false);
     }
   }
-  const common = (key: 'title' | 'description' | 'location' | 'phone' | 'whatsapp' | 'price') => ({
+  const common = (
+    key:
+      | 'title'
+      | 'description'
+      | 'location'
+      | 'phone'
+      | 'whatsapp'
+      | 'price'
+      | 'startsAt'
+      | 'endsAt'
+      | 'externalUrl'
+      | 'offer',
+  ) => ({
     value: form[key],
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       update(key, e.target.value),
@@ -275,16 +315,18 @@ export function PostForm({
         </div>
       ) : null}
       <div className="steps">
-        {['Details', 'Photos & contact', 'Review & submit'].map((label, i) => (
-          <div
-            className={`step ${step === i + 1 ? 'current' : ''} ${step > i + 1 ? 'complete' : ''}`}
-            aria-current={step === i + 1 ? 'step' : undefined}
-            key={label}
-          >
-            <span>{step > i + 1 ? '✓' : i + 1}</span>
-            {label}
-          </div>
-        ))}
+        {['Details', flyer ? 'Artwork & contact' : 'Photos & contact', 'Review & submit'].map(
+          (label, i) => (
+            <div
+              className={`step ${step === i + 1 ? 'current' : ''} ${step > i + 1 ? 'complete' : ''}`}
+              aria-current={step === i + 1 ? 'step' : undefined}
+              key={label}
+            >
+              <span>{step > i + 1 ? '✓' : i + 1}</span>
+              {label}
+            </div>
+          ),
+        )}
       </div>
       <div className="post-columns">
         <section className="panel form-panel" ref={stepPanel}>
@@ -310,12 +352,26 @@ export function PostForm({
                   onChange={(e) => {
                     const kind = e.target.value as DraftForm['kind'];
                     update('kind', kind);
-                    update('priceMode', kind === 'wanted' ? 'budget' : 'fixed');
+                    update(
+                      'priceMode',
+                      isFlyer(kind) ? 'contact' : kind === 'wanted' ? 'budget' : 'fixed',
+                    );
+                    if (isFlyer(kind))
+                      update(
+                        'categoryId',
+                        categories.find((c) => c.slug === 'services')?.id ??
+                          categories[0]?.id ??
+                          '',
+                      );
                   }}
                 >
                   <option value="product">An item</option>
                   <option value="service">A service</option>
                   <option value="wanted">Wanted</option>
+                  <option value="event">Event or program flyer</option>
+                  <option value="promotion">Promotion or campaign</option>
+                  <option value="announcement">Announcement</option>
+                  <option value="business_ad">Business advertisement</option>
                 </select>
               </label>
               <label className="form-group">
@@ -330,68 +386,128 @@ export function PostForm({
                 />
                 {fieldError('title')}
               </label>
-              <label className="form-group">
-                <span className="form-label">Category</span>
-                <select
-                  required
-                  className="field-input"
-                  value={form.categoryId}
-                  onChange={(e) => update('categoryId', e.target.value)}
-                >
-                  <option value="">Choose a category</option>
-                  {categories.map((c) => (
-                    <option value={c.id} key={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="field-inline">
-                <label className="form-group">
-                  <span className="form-label">
-                    {form.kind === 'wanted' ? 'Budget' : 'Price'} (GH₵)
-                  </span>
-                  <input
-                    className="field-input"
-                    inputMode="decimal"
-                    disabled={['free', 'contact'].includes(form.priceMode)}
-                    required={!['free', 'contact'].includes(form.priceMode)}
-                    {...common('price')}
-                  />
-                </label>
-                <label className="form-group">
-                  <span className="form-label">Price type</span>
-                  <select
-                    className="field-input"
-                    value={form.priceMode}
-                    onChange={(e) => update('priceMode', e.target.value as DraftForm['priceMode'])}
-                  >
-                    {form.kind === 'wanted' ? (
-                      <option value="budget">Budget</option>
-                    ) : (
-                      <>
-                        <option value="fixed">Fixed price</option>
-                        <option value="negotiable">Negotiable</option>
-                        <option value="free">Free</option>
-                        <option value="contact">Contact for price</option>
-                      </>
-                    )}
-                  </select>
-                </label>
-              </div>
-              {form.kind === 'product' ? (
-                <label className="form-group">
-                  <span className="form-label">Condition</span>
-                  <select
-                    className="field-input"
-                    value={form.condition}
-                    onChange={(e) => update('condition', e.target.value as DraftForm['condition'])}
-                  >
-                    <option value="used">Used</option>
-                    <option value="new">New</option>
-                  </select>
-                </label>
-              ) : null}
+              {!flyer ? (
+                <>
+                  {' '}
+                  <label className="form-group">
+                    <span className="form-label">Category</span>
+                    <select
+                      required
+                      className="field-input"
+                      value={form.categoryId}
+                      onChange={(e) => update('categoryId', e.target.value)}
+                    >
+                      <option value="">Choose a category</option>
+                      {categories.map((c) => (
+                        <option value={c.id} key={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <div className="field-inline">
+                    <label className="form-group">
+                      <span className="form-label">
+                        {form.kind === 'wanted' ? 'Budget' : 'Price'} (GH₵)
+                      </span>
+                      <input
+                        className="field-input"
+                        inputMode="decimal"
+                        disabled={['free', 'contact'].includes(form.priceMode)}
+                        required={!['free', 'contact'].includes(form.priceMode)}
+                        {...common('price')}
+                      />
+                    </label>
+                    <label className="form-group">
+                      <span className="form-label">Price type</span>
+                      <select
+                        className="field-input"
+                        value={form.priceMode}
+                        onChange={(e) =>
+                          update('priceMode', e.target.value as DraftForm['priceMode'])
+                        }
+                      >
+                        {form.kind === 'wanted' ? (
+                          <option value="budget">Budget</option>
+                        ) : (
+                          <>
+                            <option value="fixed">Fixed price</option>
+                            <option value="negotiable">Negotiable</option>
+                            <option value="free">Free</option>
+                            <option value="contact">Contact for price</option>
+                          </>
+                        )}
+                      </select>
+                    </label>
+                  </div>
+                  {form.kind === 'product' ? (
+                    <label className="form-group">
+                      <span className="form-label">Condition</span>
+                      <select
+                        className="field-input"
+                        value={form.condition}
+                        onChange={(e) =>
+                          update('condition', e.target.value as DraftForm['condition'])
+                        }
+                      >
+                        <option value="used">Used</option>
+                        <option value="new">New</option>
+                      </select>
+                    </label>
+                  ) : null}
+                </>
+              ) : (
+                <div className="flyer-fields">
+                  <p className="inline-notice">
+                    This advert appears in Campus 360 after approval. No product price is required.
+                  </p>
+                  {form.kind === 'event' ? (
+                    <label className="form-group">
+                      <span className="form-label">Event start (Ghana time)</span>
+                      <input
+                        type="datetime-local"
+                        className="field-input"
+                        required
+                        {...common('startsAt')}
+                      />
+                    </label>
+                  ) : null}
+                  {form.kind === 'promotion' ? (
+                    <label className="form-group">
+                      <span className="form-label">Offer description</span>
+                      <input
+                        className="field-input"
+                        minLength={5}
+                        maxLength={500}
+                        required
+                        {...common('offer')}
+                        placeholder="For example, 20% off printing this week"
+                      />
+                    </label>
+                  ) : null}
+                  <label className="form-group">
+                    <span className="form-label">
+                      {form.kind === 'event' ? 'Event end' : 'Valid until'} (Ghana time, optional)
+                    </span>
+                    <input type="datetime-local" className="field-input" {...common('endsAt')} />
+                    <small>Otherwise the platform’s normal advert expiry applies.</small>
+                  </label>
+                  <label className="form-group">
+                    <span className="form-label">
+                      {form.kind === 'event' ? 'Registration link' : 'External link'} (optional)
+                    </span>
+                    <input
+                      className="field-input"
+                      type="url"
+                      pattern="https://.*"
+                      maxLength={1000}
+                      placeholder="https://…"
+                      {...common('externalUrl')}
+                    />
+                    <small>Use a full HTTPS link. Visitors will leave MedStash to open it.</small>
+                  </label>
+                </div>
+              )}
               <label className="form-group">
                 <span className="form-label">
                   Description <small>20–5,000 characters</small>
@@ -406,7 +522,9 @@ export function PostForm({
                 />
               </label>
               <label className="form-group">
-                <span className="form-label">Campus location</span>
+                <span className="form-label">
+                  {form.kind === 'event' ? 'Event venue' : 'Campus location'}
+                </span>
                 <input
                   required
                   minLength={2}
@@ -492,9 +610,22 @@ export function PostForm({
                 <p className="review-description">{form.description}</p>
               </div>
               {[
-                ['Category', categories.find((c) => c.id === form.categoryId)?.name],
+                [
+                  'Category',
+                  flyer
+                    ? `Campus 360 · ${kindName(form.kind)}`
+                    : categories.find((c) => c.id === form.categoryId)?.name,
+                ],
                 ['Type', form.kind],
                 ['Photos', String(form.mediaIds.length)],
+                ...(flyer
+                  ? [
+                      ['Starts (Ghana time)', form.startsAt || 'Not applicable'],
+                      ['Ends / valid until (Ghana time)', form.endsAt || 'Normal advert expiry'],
+                      ['Offer', form.offer || 'Not applicable'],
+                      ['External link', form.externalUrl || 'None'],
+                    ]
+                  : []),
                 ['Phone', form.phone || 'Not published'],
                 ['WhatsApp', form.whatsapp || 'Not published'],
               ].map(([k, v]) => (

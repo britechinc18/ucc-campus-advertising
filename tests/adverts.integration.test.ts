@@ -648,4 +648,98 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     });
     await expect(readMedia(undefined, mediaId, objects)).rejects.toMatchObject({ status: 404 });
   });
+  it.each(['event', 'promotion', 'announcement', 'business_ad'] as const)(
+    'moderates %s flyers with real media validation and separates Campus from Market',
+    async (kind) => {
+      const objectsMap = new Map<string, Buffer>();
+      const objects: ObjectStorage = {
+        sign: async (key) => key,
+        read: async (key) => objectsMap.get(key)!,
+        write: async (key, bytes) => {
+          objectsMap.set(key, bytes);
+        },
+        remove: async (key) => {
+          objectsMap.delete(key);
+        },
+      };
+      const raw = await sharp({
+        create: { width: 300, height: 500, channels: 3, background: '#19674f' },
+      })
+        .png()
+        .toBuffer();
+      const upload = await signUpload(
+        owner,
+        { contentType: 'image/png', bytes: raw.length },
+        objects,
+      );
+      objectsMap.set(upload.uploadUrl, raw);
+      await completeUpload(owner, upload.mediaId, objects);
+      const data = {
+        ...content(`Campus ${kind} flyer`),
+        kind,
+        priceMode: 'contact',
+        pricePesewas: null,
+        mediaIds: [upload.mediaId],
+        details: {
+          startsAt: new Date(Date.now() + 86400000).toISOString(),
+          endsAt: new Date(Date.now() + 172800000).toISOString(),
+          offer: 'Half price campus printing',
+          externalUrl: 'https://example.org/register',
+        },
+      };
+      const a = await createAdvert(owner, data);
+      await submitAdvert(owner, a.advertId, a.revisionId, randomUUID());
+      expect((await listAdverts({ surface: 'campus' })).items).toHaveLength(0);
+      await expect(
+        moderate(owner, a.revisionId, 'approve', 'Cannot self-moderate as advertiser'),
+      ).rejects.toMatchObject({ status: 403 });
+      await moderate(admin, a.revisionId, 'approve', 'Reviewed current flyer and external link');
+      expect((await listAdverts({})).items).toHaveLength(0);
+      expect((await listAdverts({ surface: 'campus', kind })).items.map((x) => x.id)).toEqual([
+        a.advertId,
+      ]);
+      expect((await advertDetail(a.advertId)).data.details?.externalUrl).toBe(
+        'https://example.org/register',
+      );
+      const dimensions = await sharp(
+        await readMedia(undefined, upload.mediaId, objects),
+      ).metadata();
+      expect(dimensions.width! / dimensions.height!).toBeCloseTo(0.6);
+      const bookmarks = await dispatch(
+        new Request(`https://campus.test/api/v1/saved?ids=${a.advertId},${randomUUID()}`),
+        ['saved'],
+      );
+      const saved = await bookmarks.json();
+      expect(saved.items).toHaveLength(1);
+      expect(saved.unavailable).toHaveLength(1);
+      await expect(saveAdvert(stranger, a.advertId, data)).rejects.toBeDefined();
+      await pool.query(
+        "update advert_revisions set data=jsonb_set(data,'{details,endsAt}',to_jsonb('2000-01-01T00:00:00Z'::text)) where id=$1",
+        [a.revisionId],
+      );
+      const expiredSaved = await dispatch(
+        new Request(`https://campus.test/api/v1/saved?ids=${a.advertId}`),
+        ['saved'],
+      );
+      expect((await expiredSaved.json()).unavailable).toEqual([a.advertId]);
+      await expect(advertDetail(a.advertId)).rejects.toMatchObject({ status: 404 });
+      await expect(readMedia(undefined, upload.mediaId, objects)).rejects.toMatchObject({
+        status: 404,
+      });
+    },
+  );
+  it('seller activation is repeatable and concurrency-safe without replacing identity', async () => {
+    const results = await Promise.all([
+      createProfile(stranger, { name: 'New campus seller', kind: 'student', consent: true }),
+      createProfile(stranger, { name: 'New campus seller', kind: 'student', consent: true }),
+    ]);
+    expect(results[0]).toEqual(results[1]);
+    expect(
+      await createProfile(stranger, { name: 'Changed request', kind: 'business', consent: true }),
+    ).toEqual(results[0]);
+    expect(
+      (await pool.query('select count(*)::int as n from advertisers where user_id=$1', [stranger]))
+        .rows[0].n,
+    ).toBe(1);
+  });
 });

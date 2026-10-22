@@ -61,3 +61,51 @@ it('re-encodes valid images and strips metadata', async () => {
   expect(metadata.format).toBe('webp');
   expect(metadata.exif).toBeUndefined();
 });
+
+it('validates flyer metadata, requires artwork and rejects unsafe external links', () => {
+  const flyer = {
+    ...base,
+    kind: 'event',
+    condition: 'not_applicable',
+    priceMode: 'contact',
+    pricePesewas: null,
+    mediaIds: [randomUUID()],
+    details: {
+      startsAt: '2030-01-01T10:00:00Z',
+      endsAt: '2030-01-01T12:00:00Z',
+      externalUrl: 'https://example.org/register',
+    },
+  };
+  expect(contentSchema.safeParse(flyer).success).toBe(true);
+  for (const patch of [
+    { mediaIds: [] },
+    { details: {} },
+    { details: { ...flyer.details, endsAt: '2029-12-31T12:00:00Z' } },
+    { details: { ...flyer.details, externalUrl: 'javascript:alert(1)' } },
+    { details: { ...flyer.details, externalUrl: 'https://user:password@example.org' } },
+    { pricePesewas: 1000 },
+    { condition: 'new' },
+  ])
+    expect(contentSchema.safeParse({ ...flyer, ...patch }).success).toBe(false);
+  expect(
+    contentSchema.safeParse({ ...flyer, kind: 'promotion', details: { offer: 'Student discount' } })
+      .success,
+  ).toBe(true);
+  expect(contentSchema.safeParse({ ...flyer, kind: 'promotion', details: {} }).success).toBe(false);
+  expect(
+    contentSchema.safeParse({ ...base, details: { externalUrl: 'https://example.org' } }).success,
+  ).toBe(false);
+});
+
+it('invalid flyer URLs report validation errors rather than throwing URL parser exceptions', () => {
+  expect(
+    contentSchema.safeParse({
+      ...base,
+      kind: 'announcement',
+      priceMode: 'contact',
+      pricePesewas: null,
+      mediaIds: [randomUUID()],
+      details: { externalUrl: 'not a link' },
+    }).success,
+  ).toBe(false);
+});

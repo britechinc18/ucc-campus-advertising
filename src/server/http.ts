@@ -122,6 +122,27 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
         const result = await readiness();
         return Response.json(result.body, { status: result.status, headers });
       }
+      if (route === 'saved') {
+        const ids = z
+          .array(id)
+          .max(40)
+          .parse((url.searchParams.get('ids') ?? '').split(',').filter(Boolean));
+        const unique = [...new Set(ids)];
+        const items = await Promise.all(
+          unique.map(async (value) => {
+            try {
+              return await advertDetail(value);
+            } catch (error) {
+              if (error instanceof AppError && error.status === 404) return null;
+              throw error;
+            }
+          }),
+        );
+        return Response.json(
+          { items: items.filter(Boolean), unavailable: unique.filter((_, i) => !items[i]) },
+          { headers },
+        );
+      }
       if (route === 'adverts')
         return Response.json(await listAdverts(Object.fromEntries(url.searchParams)), { headers });
       if (route === 'home') return Response.json(await home(), { headers });

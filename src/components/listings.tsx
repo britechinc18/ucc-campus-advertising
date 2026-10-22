@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SaveButton } from './bookmark-button';
 import { Icon } from './icon';
 import { MediaImage } from './ui';
 import { ListingLink } from './browse-link';
@@ -6,31 +7,34 @@ import { priceText, type Listing, type Category } from '@/lib/market';
 export function ListingCard({ advert, featured = false }: { advert: Listing; featured?: boolean }) {
   const d = advert.data;
   return (
-    <ListingLink className="listing" href={`/adverts/${advert.id}`}>
-      <div className="listing-photo">
-        <MediaImage key={d.mediaIds[0]} id={d.mediaIds[0]} alt={d.title} />
-        {featured ? (
-          <span className="photo-tag">FEATURED</span>
-        ) : d.kind === 'wanted' ? (
-          <span className="photo-tag">WANTED</span>
-        ) : null}
-      </div>
-      <h3 className="listing-title">{d.title}</h3>
-      <p className="price">{priceText(d)}</p>
-      <div className="meta">
-        <span>
-          {d.kind === 'product'
-            ? d.condition === 'new'
-              ? 'New'
-              : 'Used'
-            : d.kind === 'service'
-              ? 'Service'
-              : 'Wanted'}
-        </span>
-        <span className="dot" />
-        <span>{d.location}</span>
-      </div>
-    </ListingLink>
+    <article className="listing">
+      <ListingLink className="listing-link" href={`/adverts/${advert.id}`}>
+        <div className="listing-photo">
+          <MediaImage key={d.mediaIds[0]} id={d.mediaIds[0]} alt={d.title} />
+          {featured ? (
+            <span className="photo-tag">FEATURED</span>
+          ) : d.kind === 'wanted' ? (
+            <span className="photo-tag">WANTED</span>
+          ) : null}
+        </div>
+        <h3 className="listing-title">{d.title}</h3>
+        <p className="price">{priceText(d)}</p>
+        <div className="meta">
+          <span>
+            {d.kind === 'product'
+              ? d.condition === 'new'
+                ? 'New'
+                : 'Used'
+              : d.kind === 'service'
+                ? 'Service'
+                : 'Wanted'}
+          </span>
+          <span className="dot" />
+          <span>{d.location}</span>
+        </div>
+      </ListingLink>
+      <SaveButton id={advert.id} title={d.title} />
+    </article>
   );
 }
 export function ListingGrid({ items, featured = false }: { items: Listing[]; featured?: boolean }) {
