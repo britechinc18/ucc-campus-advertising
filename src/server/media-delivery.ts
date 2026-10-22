@@ -61,7 +61,7 @@ export async function mediaResponse(
     ? await variants.read(`${hash}:${width}`, () =>
         sharp(source)
           .resize({ width, withoutEnlargement: true, fit: 'inside' })
-          .webp({ quality: 80 })
+          .webp({ quality: 82, effort: 4, smartSubsample: true })
           .toBuffer(),
       )
     : source;

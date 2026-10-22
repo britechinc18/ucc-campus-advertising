@@ -1,0 +1,422 @@
+/* Shared marketplace geometry and type. Imported after the legacy theme layers. */
+:root {
+  font-family: 'DM Sans', Arial, sans-serif;
+  line-height: 1.55;
+}
+body,
+button,
+input,
+select,
+textarea {
+  font-family: 'DM Sans', Arial, sans-serif;
+  font-style: normal;
+}
+.container {
+  width: min(1234px, calc(100% - 96px));
+}
+body {
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.55;
+}
+button,
+input,
+select,
+textarea {
+  font-weight: 500;
+}
+h1,
+h2,
+h3 {
+  line-height: 1.15;
+  font-weight: 600;
+  letter-spacing: -0.035em;
+}
+.page-head h1 {
+  font-size: 40px;
+  font-weight: 600;
+}
+.hero-story h1 {
+  font-size: 64px;
+  font-weight: 500;
+  line-height: 1.04;
+  letter-spacing: -3.9px;
+}
+.hero-description {
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.7;
+}
+.eyebrow,
+.hero-story .eyebrow {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 1.8px;
+}
+.section-head h2 {
+  font-size: 27px;
+  font-weight: 600;
+  letter-spacing: -1px;
+  line-height: 1.15;
+}
+.desktop-nav a,
+.main-nav a {
+  font-size: 13px;
+  font-weight: 500;
+}
+.category-tile {
+  font-size: 12px;
+  font-weight: 500;
+}
+.btn {
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.field-input,
+input,
+select,
+textarea {
+  font-size: 13px;
+}
+.form-label {
+  font-size: 12px;
+  font-weight: 500;
+}
+.post-heading h1 {
+  font-size: 37px;
+  font-weight: 600;
+}
+.form-panel h2,
+.form-section h2 {
+  font-size: 23px;
+  font-weight: 600;
+}
+.listing-grid,
+.explore-layout .listing-grid,
+.explore-results .listing-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 30px 22px;
+}
+.listing {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+.listing-photo {
+  aspect-ratio: 1.13;
+  border-radius: 10px;
+}
+.listing-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+.listing-category {
+  margin: 13px 0 0;
+  font-size: 9px;
+  line-height: 1.55;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.85px;
+  color: var(--muted);
+}
+.listing-title {
+  margin-top: 5px;
+  min-height: 0;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.3px;
+  overflow-wrap: anywhere;
+  text-wrap: initial;
+  color: var(--ink);
+}
+.listing .price {
+  margin-top: 6px;
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.6px;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+.listing .listing-meta {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1.55;
+  color: var(--muted);
+}
+.listing-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  min-width: 0;
+}
+.listing-location span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.listing-location svg {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+  margin-top: 2px;
+}
+.listing-meta time {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+.condition-badge {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  padding: 4px 8px;
+  border-radius: 5px;
+  background: #fffffff2;
+  color: #202823;
+  font-size: 9px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.listing > .save-control {
+  top: 8px;
+  right: 8px;
+}
+.listing .save-button {
+  width: 32px;
+  height: 32px;
+  min-height: 32px;
+  box-shadow: none;
+  position: relative;
+}
+.listing .save-button::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+}
+.listing .save-button svg {
+  width: 16px;
+  height: 16px;
+}
+.listing .photo-tag {
+  top: 8px;
+  left: 8px;
+  padding: 4px 7px;
+  font-size: 8px;
+}
+/* Natural document flow eliminates the empty bands for every photograph shape. */
+.public-detail .gallery-main {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  line-height: 0;
+}
+.public-detail .gallery-main img {
+  display: block;
+  position: static;
+  width: 100%;
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  aspect-ratio: auto;
+  object-fit: initial;
+  animation: none;
+}
+.public-detail .gallery {
+  min-width: 0;
+  align-self: start;
+}
+.detail-grid.public-detail {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  align-items: start;
+}
+.detail-content {
+  min-width: 0;
+}
+.detail-content h1 {
+  font-size: 37px;
+  font-weight: 500;
+  line-height: 1.15;
+}
+.detail-content .price {
+  font-size: 32px;
+  font-weight: 600;
+  line-height: 1.35;
+  letter-spacing: -0.6px;
+}
+.detail-content .attributes,
+.detail-content .attributes .chip {
+  font-size: 11px;
+  font-weight: 400;
+}
+.seller h3 {
+  font-size: 13px;
+  font-weight: 500;
+}
+.description p {
+  font-size: 13px;
+  line-height: 1.85;
+  font-weight: 400;
+}
+.enlarged-image {
+  display: grid;
+  place-items: center;
+}
+.enlarged-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 65dvh;
+  object-fit: contain;
+}
+@media (min-width: 1500px) {
+  .hero-story h1 {
+    font-size: 70px;
+  }
+}
+@media (min-width: 1024px) and (max-width: 1199px) {
+  .hero-story h1 {
+    font-size: 58px;
+  }
+}
+@media (min-width: 600px) and (max-width: 1023px) {
+  .container {
+    width: calc(100% - 64px);
+  }
+  .listing-grid,
+  .explore-layout .listing-grid,
+  .explore-results .listing-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 28px 18px;
+  }
+  .listing-photo {
+    aspect-ratio: 1.06;
+  }
+  .hero-story h1 {
+    font-size: 50px;
+  }
+}
+@media (max-width: 767px) {
+  .detail-grid.public-detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+@media (max-width: 599px) {
+  body {
+    font-size: 14px;
+  }
+  .container {
+    width: calc(100% - 40px);
+  }
+  .listing-grid,
+  .explore-layout .listing-grid,
+  .explore-results .listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px 13px;
+  }
+  .listing-photo {
+    aspect-ratio: 1;
+    border-radius: 8px;
+  }
+  .listing-category {
+    margin-top: 10px;
+  }
+  .listing-title {
+    font-size: 13px;
+  }
+  .listing .price {
+    font-size: 16px;
+  }
+  .listing .listing-meta {
+    font-size: 10px;
+    gap: 4px;
+  }
+  .listing-meta time {
+    max-width: 48%;
+    white-space: normal;
+    text-align: right;
+  }
+  .hero-story h1 {
+    font-size: 46px;
+    letter-spacing: -2.5px;
+  }
+  .hero-description {
+    font-size: 12px;
+  }
+  .page-head h1 {
+    font-size: 31px;
+  }
+  .section-head h2 {
+    font-size: 23px;
+    letter-spacing: -0.8px;
+  }
+  .category-tile {
+    font-size: 10px;
+  }
+  .btn {
+    font-size: 12px;
+  }
+  .detail-content h1 {
+    font-size: 30px;
+  }
+  .detail-content .price {
+    font-size: 29px;
+  }
+  .detail-content .attributes,
+  .detail-content .attributes .chip {
+    font-size: 10px;
+  }
+  .description p {
+    font-size: 12px;
+  }
+  .post-heading h1 {
+    font-size: 30px;
+  }
+  .form-panel h2,
+  .form-section h2 {
+    font-size: 21px;
+  }
+  .form-label {
+    font-size: 11px;
+  }
+}
+@media (max-width: 360px) {
+  .container {
+    width: calc(100% - 32px);
+  }
+  .listing-grid,
+  .explore-layout .listing-grid,
+  .explore-results .listing-grid {
+    column-gap: 10px;
+  }
+  .hero-story h1 {
+    font-size: 40px;
+  }
+  .section-head h2 {
+    font-size: 21px;
+  }
+  .listing-title {
+    font-size: 12px;
+  }
+  .listing .listing-meta {
+    font-size: 9px;
+  }
+}

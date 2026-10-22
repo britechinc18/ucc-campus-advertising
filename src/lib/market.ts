@@ -15,6 +15,7 @@ export interface AdvertContent {
   mediaIds: string[];
 }
 export interface Listing {
+  category_name?: string;
   id: string;
   advertiser_id: string;
   seller: string;

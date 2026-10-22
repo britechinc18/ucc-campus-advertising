@@ -470,7 +470,7 @@
     min-height: 54px;
     color: var(--text);
     font-size: 9px;
-    font-weight: 650;
+    font-weight: 600;
     transition:
       background 180ms var(--ease),
       color 180ms var(--ease),

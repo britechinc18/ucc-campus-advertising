@@ -3,5 +3,15 @@
   "framework": "nextjs",
   "installCommand": "npm ci",
   "buildCommand": "npm run build",
-  "crons": [{ "path": "/api/v1/internal/maintenance", "schedule": "0 3 * * *" }]
+  "crons": [
+    {
+      "path": "/api/v1/internal/maintenance",
+      "schedule": "0 3 * * *"
+    }
+  ],
+  "git": {
+    "deploymentEnabled": {
+      "feat/listing-images-typography": false
+    }
+  }
 }

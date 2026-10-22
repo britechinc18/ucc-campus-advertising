@@ -27,7 +27,9 @@ export function MediaImage({
           : undefined
       }
       sizes={
-        variant === 'card' ? '(max-width: 600px) 50vw, (max-width: 1024px) 33vw, 25vw' : undefined
+        variant === 'card'
+          ? '(max-width: 360px) calc((100vw - 42px) / 2), (max-width: 599px) calc((100vw - 53px) / 2), (max-width: 1023px) calc((100vw - 100px) / 3), (max-width: 1330px) calc((100vw - 162px) / 4), 292px'
+          : undefined
       }
       alt={alt}
       className={`${className} media-image ${loaded ? 'is-loaded' : 'is-loading'}`}
