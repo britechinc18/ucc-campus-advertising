@@ -26,3 +26,11 @@ The requested 320, 390, 768, 1024 and 1440px checks in light/dark themes have **
 Use a configured local disposable database and the existing browser-test workflow to verify Home, Market and Saved; open portrait, landscape and square photographs. Check grid columns, actual thumbnail dimensions, full location readability, no horizontal overflow, correct font weights, natural gallery height, and save/navigation/contact behavior. Capture matched before/after screenshots on the same data. Temporary visual fixture routes were removed from the application and are absent from the production build.
 
 Changes are local on feat/listing-images-typography. They have not been deployed.
+
+## Product collection and image refresh
+
+The owner subsequently authorized publication, merge and deployment. Eight products now use natural titles and UCC campus locations, with sample-inventory disclosure and source links retained in their descriptions. The three existing product IDs were preserved using new approved revisions, and five products were added under the existing account. Their former approved revisions and original media remain available in history. The event flyers retain their archival context.
+
+Sources and image measurements are recorded in catalog/2026-10-22-products.json. Real Unsplash photographs were downloaded and inspected; the plant photograph was reused from the reference. Seven originals are capped at a 1600px long edge and one keeps its native 900px width; no upscaling is used. The eight delivered originals total 673,198 bytes versus 3,111,426 source bytes, approximately 78% smaller. WebP is lossy; measured PSNR against the equivalently resized source ranged from 39.75 to 45.05 dB, rather than claiming identical pixels or zero quality loss. Card responses remain separate 360px/720px WebP variants. Responsive image sizes now match the 4/3/2-column geometry more closely.
+
+New uploads use quality 86 WebP with smart chroma subsampling; thumbnail variants use quality 82. Existing private-media authorization, cache limits, metadata stripping, full-image aspect ratios, moderation limits and image-size limits remain intact. The hero and editorial photography were refreshed from the same licensed collection, and the hero alternative text was updated to match the chair photograph.

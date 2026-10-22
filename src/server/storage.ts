@@ -123,7 +123,7 @@ export async function normalizeImage(raw: Buffer) {
     return await image
       .rotate()
       .resize({ width: 1600, height: 1600, fit: 'inside', withoutEnlargement: true })
-      .webp({ quality: 80 })
+      .webp({ quality: 86, effort: 4, smartSubsample: true })
       .toBuffer();
   } catch (error) {
     if (error instanceof Error && error.name === 'Error' && 'status' in error) throw error;

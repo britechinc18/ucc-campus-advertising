@@ -1,0 +1,98 @@
+[
+  {
+    "title": "Wireless over-ear headphones",
+    "advertId": "8a6862f4-071b-4405-a747-26dd0c4a5b0e",
+    "mediaId": "9bd49d45-d91a-44df-82cf-f43e064866bf",
+    "sourceUrl": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=max&w=1800&q=95",
+    "license": "https://unsplash.com/license",
+    "sourceBytes": 247157,
+    "optimizedBytes": 68278,
+    "width": 1600,
+    "height": 1067,
+    "inventory": "sample; not offered for sale"
+  },
+  {
+    "title": "Red Nike running shoes",
+    "advertId": "81be84ad-b9b3-4a31-8bc8-bff8c7e010ba",
+    "mediaId": "86046e34-3d7a-47df-b869-3cb57f1ed10c",
+    "sourceUrl": "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=max&w=1800&q=95",
+    "license": "https://unsplash.com/license",
+    "sourceBytes": 371015,
+    "optimizedBytes": 157294,
+    "width": 1600,
+    "height": 1067,
+    "inventory": "sample; not offered for sale"
+  },
+  {
+    "title": "Milk and honey paperback",
+    "advertId": "9d3a437b-ea2c-4a9f-997e-8ab05ff2e2b1",
+    "mediaId": "85359e1f-07a0-4967-8f68-976bcf2910bd",
+    "sourceUrl": "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=max&w=1800&q=95",
+    "license": "https://unsplash.com/license",
+    "sourceBytes": 957205,
+    "optimizedBytes": 147520,
+    "width": 1067,
+    "height": 1600,
+    "inventory": "sample; not offered for sale"
+  },
+  {
+    "title": "Upholstered accent chair",
+    "advertId": "5cebc6fe-4657-4cd7-a12c-4aad2d66b9f2",
+    "mediaId": "484594fc-1274-47e5-81ee-395688830ff7",
+    "sourceUrl": "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=max&w=1800&q=95",
+    "license": "https://unsplash.com/license",
+    "sourceBytes": 436405,
+    "optimizedBytes": 24660,
+    "width": 1065,
+    "height": 1600,
+    "inventory": "sample; not offered for sale"
+  },
+  {
+    "title": "MacBook laptop",
+    "advertId": "72558855-e609-4e57-ada6-b3a3603a01ea",
+    "mediaId": "584fb2d1-af21-4182-a520-6edaad3f6cc0",
+    "sourceUrl": "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=max&w=1800&q=95",
+    "license": "https://unsplash.com/license",
+    "sourceBytes": 333426,
+    "optimizedBytes": 75490,
+    "width": 1600,
+    "height": 1280,
+    "inventory": "sample; not offered for sale"
+  },
+  {
+    "title": "A little green for your desk",
+    "advertId": "f5518409-ded4-469b-9d22-5536ac155a7b",
+    "mediaId": "5bcf8dc3-270b-4e82-a4e2-9a1be5b4692b",
+    "sourceUrl": "https://campus-market.rebeccaasaam.chatgpt.site/assets/plant.jpg",
+    "license": "https://unsplash.com/license",
+    "sourceBytes": 36139,
+    "optimizedBytes": 24220,
+    "width": 900,
+    "height": 599,
+    "inventory": "sample; not offered for sale"
+  },
+  {
+    "title": "Everyday white T-shirt",
+    "advertId": "2ac9f53f-03e6-4ca3-bf00-b479edec7794",
+    "mediaId": "fa480b70-ced1-4f45-a1d9-83fe086ce7bb",
+    "sourceUrl": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=max&w=1800&q=95",
+    "license": "https://unsplash.com/license",
+    "sourceBytes": 335927,
+    "optimizedBytes": 72598,
+    "width": 1600,
+    "height": 1600,
+    "inventory": "sample; not offered for sale"
+  },
+  {
+    "title": "Sony camera and lenses",
+    "advertId": "dd409ff2-ac7b-4e14-a680-990374bf57ac",
+    "mediaId": "e2395b7f-28f0-48d0-b6fc-6e853cbe4ce5",
+    "sourceUrl": "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?auto=format&fit=max&w=1800&q=95",
+    "license": "https://unsplash.com/license",
+    "sourceBytes": 394152,
+    "optimizedBytes": 103138,
+    "width": 1280,
+    "height": 1600,
+    "inventory": "sample; not offered for sale"
+  }
+]

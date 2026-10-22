@@ -92,7 +92,7 @@ export default async function HomePage() {
         <Link href="/explore" className="hero-editorial" aria-label="Explore campus essentials">
           <Image
             src="/editorial/study.webp"
-            alt="A laptop on a bright, uncluttered study desk"
+            alt="An upholstered chair in a light, uncluttered room"
             fill
             priority
             sizes="(max-width: 699px) 100vw, 50vw"
