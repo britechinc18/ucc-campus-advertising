@@ -1,4 +1,5 @@
 import './globals.css';
+import './premium.css';
 import type { Metadata } from 'next';
 import { Shell } from '@/components/shell';
 import { viewer } from '@/server/viewer';

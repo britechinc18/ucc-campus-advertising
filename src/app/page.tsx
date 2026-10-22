@@ -5,6 +5,7 @@ import { query } from '@/server/store';
 import { db } from '@/server/db';
 import type { Category, Listing } from '@/lib/market';
 import { ListingGrid, Search, CategoryChips } from '@/components/listings';
+import Image from 'next/image';
 import { Icon } from '@/components/icon';
 import { EmptyState, ErrorMessage } from '@/components/ui';
 export default async function HomePage() {
@@ -57,28 +58,89 @@ export default async function HomePage() {
     : [];
   return (
     <main id="main" className="container">
-      <section className="hero">
-        <div className="hero-main">
-          <div>
-            <p className="eyebrow">THE UCC CAMPUS MARKETPLACE</p>
-            <h1>
-              <span className="desktop-copy">Good finds. Right around campus.</span>
-              <span className="only-mobile">Find it on campus.</span>
-            </h1>
-            <p className="muted">Buy, sell and discover services within your campus community.</p>
-          </div>
-          <div className="campus-note">
-            <Icon name="shield" />
+      <div className="market-intro">
+        <span>THE UNIVERSITY OF CAPE COAST COMMUNITY</span>
+        <Link href="/help">
+          Good finds. Safer connections. <Icon name="arrow" />
+        </Link>
+      </div>
+      <section className="premium-hero" aria-labelledby="hero-heading">
+        <div className="hero-story">
+          <p className="eyebrow">A CAMPUS FULL OF POSSIBILITIES</p>
+          <h1 id="hero-heading">
+            Your campus.
+            <br />
             <span>
-              Adverts reviewed before publishing.
+              Good things,
               <br />
-              Contact advertisers directly.
+              closer.
+            </span>
+          </h1>
+          <p className="hero-description">
+            The everyday essentials. The unexpected finds. Discover what your campus has to offer.
+          </p>
+          <div className="hero-buttons">
+            <Link className="btn hero-primary" href="/explore">
+              Explore the marketplace <Icon name="arrow" />
+            </Link>
+            <Link className="hero-secondary" href="/post">
+              Have something to offer? <span>Post an advert ↗</span>
+            </Link>
+          </div>
+          <p className="hero-footnote">
+            <Icon name="pin" /> Made for the UCC medical-student community.
+          </p>
+        </div>
+        <Link href="/explore" className="hero-editorial" aria-label="Explore campus essentials">
+          <Image
+            src="/editorial/study.webp"
+            alt="A laptop on a bright, uncluttered study desk"
+            fill
+            priority
+            sizes="(max-width: 699px) 100vw, 50vw"
+          />
+          <div className="editorial-caption">
+            <span>STUDY. CONNECT. REPEAT.</span>
+            <strong>
+              A fresh start,
+              <br />
+              within reach.
+            </strong>
+            <span className="editorial-arrow">
+              <Icon name="arrow" />
             </span>
           </div>
-        </div>
+        </Link>
+      </section>
+      <div className="discovery-search">
         <Search />
+        <p>
+          <Icon name="pin" /> Cape Coast, Ghana
+        </p>
+      </div>
+      <section className="category-section" aria-label="Browse categories">
+        <div className="section-head">
+          <div>
+            <p className="eyebrow">FIND YOUR THING</p>
+            <h2>Around campus.</h2>
+          </div>
+          <Link className="text-link" href="/explore#filters">
+            All categories <Icon name="arrow" />
+          </Link>
+        </div>
         <CategoryChips categories={categories} />
       </section>
+      <div className="market-promise">
+        <span>
+          <Icon name="shield" /> Reviewed before publishing
+        </span>
+        <span>
+          <Icon name="chat" /> Connect directly with advertisers
+        </span>
+        <span>
+          <Icon name="users" /> Built around your community
+        </span>
+      </div>
       {failed ? (
         <>
           <ErrorMessage message="We couldn’t load the latest adverts. Please refresh in a moment." />
@@ -97,7 +159,7 @@ export default async function HomePage() {
               action={false}
             />
           </section>
-          <div className="feature-band">
+          <div className="feature-band seller-invitation">
             <div>
               <h2>Something to offer campus?</h2>
               <p>Give it a new home. Or help someone find what they need.</p>
@@ -123,7 +185,7 @@ export default async function HomePage() {
               </div>
               <ListingGrid items={s.items as unknown as Listing[]} featured={s.featured} />
               {i === 0 ? (
-                <div className="feature-band">
+                <div className="feature-band seller-invitation">
                   <div>
                     <h2>Something to offer campus?</h2>
                     <p>Give it a new home. Or help someone find what they need.</p>
@@ -136,6 +198,71 @@ export default async function HomePage() {
             </section>
           ))
       )}
+      <section className="section campus-edits" aria-labelledby="edits-heading">
+        <div className="section-head">
+          <div>
+            <p className="eyebrow">A LITTLE INSPIRATION</p>
+            <h2 id="edits-heading">For your kind of campus life.</h2>
+          </div>
+        </div>
+        <div className="edit-grid">
+          <Link
+            className="editorial-tile"
+            href={`/explore?${new URLSearchParams(categories.find((c) => /book/i.test(c.name)) ? { category: categories.find((c) => /book/i.test(c.name))!.id } : { q: 'books' })}`}
+          >
+            <div className="edit-image">
+              <Image
+                src="/editorial/books.webp"
+                alt="Books ready for a new chapter"
+                fill
+                sizes="(max-width: 599px) 100vw, 33vw"
+              />
+            </div>
+            <div className="edit-copy">
+              <p className="eyebrow">THE STUDY EDIT</p>
+              <h3>Big ideas. Fresh pages.</h3>
+              <span>
+                Browse books <Icon name="arrow" />
+              </span>
+            </div>
+          </Link>
+          <Link
+            className="editorial-tile"
+            href={`/explore?${new URLSearchParams(categories.find((c) => /electronic/i.test(c.name)) ? { category: categories.find((c) => /electronic/i.test(c.name))!.id } : { q: 'electronics' })}`}
+          >
+            <div className="edit-image">
+              <Image
+                src="/editorial/sound.webp"
+                alt="Headphones on a warm yellow background"
+                fill
+                sizes="(max-width: 599px) 100vw, 33vw"
+              />
+            </div>
+            <div className="edit-copy">
+              <p className="eyebrow">EVERYDAY UPGRADES</p>
+              <h3>Find your next favourite.</h3>
+              <span>
+                Explore electronics <Icon name="arrow" />
+              </span>
+            </div>
+          </Link>
+          <Link className="business-editorial" href="/businesses">
+            <p className="eyebrow">GOOD PEOPLE. GREAT IDEAS.</p>
+            <Icon name="store" />
+            <h3>
+              Small businesses.
+              <br />A bigger campus.
+            </h3>
+            <p>Discover the people making things happen around you.</p>
+            <span>
+              Meet local businesses <Icon name="arrow" />
+            </span>
+          </Link>
+        </div>
+        <p className="editorial-disclaimer">
+          Editorial inspiration. Browse each collection for currently available adverts.
+        </p>
+      </section>
     </main>
   );
 }

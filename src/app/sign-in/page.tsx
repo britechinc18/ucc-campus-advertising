@@ -15,7 +15,7 @@ export default async function SignInPage({
   const v = await viewer();
   if (v.user && !v.user.suspended) redirect(next);
   return (
-    <main id="main" className="container">
+    <main id="main" className="container sign-in-layout">
       <section className="narrow panel auth-panel">
         <p className="eyebrow">YOUR CAMPUS CORNER</p>
         <h1>{v.configured ? 'Welcome to MedStash.' : 'Sign-in temporarily unavailable'}</h1>
@@ -49,6 +49,31 @@ export default async function SignInPage({
           We only publish the contact information you explicitly consent to share on your adverts.
         </p>
       </section>
+      <aside className="sign-in-story">
+        <p className="eyebrow">YOUR NEXT CAMPUS CONNECTION</p>
+        <h2>
+          A good find.
+          <br />A familiar place.
+        </h2>
+        <p>
+          From a well-loved textbook to a brilliant local service. Find it here, then connect
+          directly.
+        </p>
+        <div className="sign-in-values">
+          <span>
+            <Icon name="shield" /> Every advert reviewed
+          </span>
+          <span>
+            <Icon name="chat" /> WhatsApp or call directly
+          </span>
+          <span>
+            <Icon name="users" /> Built for your community
+          </span>
+        </div>
+        <Link href="/explore">
+          Just browsing? Explore freely <Icon name="arrow" />
+        </Link>
+      </aside>
     </main>
   );
 }

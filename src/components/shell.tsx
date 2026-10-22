@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Icon } from './icon';
 export function Wordmark() {
   return (
@@ -10,7 +10,7 @@ export function Wordmark() {
         <Icon name="bag" />
       </span>
       <span>
-        <span className="med">Med</span>Stash
+        MedStash<span className="wordmark-period">.</span>
       </span>
     </Link>
   );
@@ -56,6 +56,28 @@ export function Shell({
   user: { name: string | null; role: string } | null;
 }) {
   const path = usePathname();
+  const accountMenu = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const close = (e: PointerEvent) => {
+      if (!accountMenu.current?.contains(e.target as Node))
+        accountMenu.current?.removeAttribute('open');
+    };
+    const escape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && accountMenu.current?.open) {
+        accountMenu.current.removeAttribute('open');
+        accountMenu.current.querySelector('summary')?.focus();
+      }
+    };
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', escape);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+      document.removeEventListener('keydown', escape);
+    };
+  }, []);
+  useEffect(() => {
+    accountMenu.current?.removeAttribute('open');
+  }, [path]);
   const admin = path.startsWith('/admin');
   const detail = /^\/adverts\/[^/]+$/.test(path);
   if (admin) return <>{children}</>;
@@ -75,9 +97,16 @@ export function Shell({
         <div className="container header-inner">
           <Wordmark />
           <nav className="desktop-nav" aria-label="Main navigation">
-            <Link href="/explore">Explore</Link>
-            <Link href="/explore#filters">Categories</Link>
-            <Link href="/businesses">Businesses</Link>
+            <Link href="/explore" aria-current={path.startsWith('/explore') ? 'page' : undefined}>
+              Discover
+            </Link>
+            <Link href="/explore?max=9999">Under GH₵100</Link>
+            <Link
+              href="/businesses"
+              aria-current={path.startsWith('/businesses') ? 'page' : undefined}
+            >
+              Businesses
+            </Link>
           </nav>
           <div className="header-actions">
             <ThemeButton />
@@ -87,7 +116,7 @@ export function Shell({
                 Post<span className="hide-mobile"> advert</span>
               </span>
             </Link>
-            <details className="account-menu">
+            <details className="account-menu" ref={accountMenu}>
               <summary className="icon-btn" aria-label="Account menu">
                 <Icon name="users" />
               </summary>

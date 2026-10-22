@@ -19,6 +19,21 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
       void api(`adverts/${advert.id}/events`, 'POST', { type: 'view' }).catch(() => {});
     } catch {}
   }, [advert.id]);
+  useEffect(() => {
+    if (modal !== 'gallery') return;
+    const navigate = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        setIndex((i) => Math.min(d.mediaIds.length - 1, i + 1));
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        setIndex((i) => Math.max(0, i - 1));
+      }
+    };
+    document.addEventListener('keydown', navigate);
+    return () => document.removeEventListener('keydown', navigate);
+  }, [modal, d.mediaIds.length]);
   async function share() {
     const url = location.href;
     try {

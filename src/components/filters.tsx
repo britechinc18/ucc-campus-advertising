@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Dialog } from './ui';
@@ -15,6 +15,7 @@ export function Filters({
   const [open, setOpen] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const [pending, startTransition] = useTransition();
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
@@ -42,7 +43,7 @@ export function Filters({
     }
     setError('');
     setOpen(false);
-    router.push(`/explore?${next}`);
+    startTransition(() => router.push(`/explore?${next}`));
   }
   const fields = (
     <>
@@ -141,8 +142,8 @@ export function Filters({
           {error}
         </p>
       ) : null}
-      <button className="btn" type="submit">
-        Apply filters <Icon name="arrow" />
+      <button className="btn" type="submit" disabled={pending}>
+        {pending ? 'Updating…' : 'Apply filters'} <Icon name="arrow" />
       </button>
     </>
   );

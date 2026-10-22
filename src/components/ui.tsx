@@ -15,11 +15,13 @@ export function MediaImage({
   loading?: 'lazy' | 'eager';
 }) {
   const [failed, setFailed] = useState(false);
+  const [loaded, setLoaded] = useState(false);
   return id && !failed ? (
     <img
       src={`/api/v1/media/${id}`}
       alt={alt}
-      className={className}
+      className={`${className} media-image ${loaded ? 'is-loaded' : 'is-loading'}`}
+      onLoad={() => setLoaded(true)}
       loading={rest.loading ?? 'lazy'}
       decoding="async"
       onError={() => setFailed(true)}

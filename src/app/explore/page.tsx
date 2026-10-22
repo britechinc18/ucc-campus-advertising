@@ -42,6 +42,10 @@ export default async function Explore({
         ? 'Some filters are invalid. Clear the filters and try again.'
         : 'We couldn’t load adverts. Please try again shortly.';
   }
+  const selectedCategory = categories.find((c) => c.id === params.category);
+  const activeFilters = Object.entries(params).filter(
+    ([key]) => !['cursor', 'sort', 'q'].includes(key),
+  );
   const next = new URLSearchParams(params);
   if (result?.nextCursor) next.set('cursor', result.nextCursor);
   return (
@@ -49,11 +53,40 @@ export default async function Explore({
       <div className="page-head">
         <div>
           <p className="eyebrow">DISCOVER ON CAMPUS</p>
-          <h1>Explore adverts</h1>
+          <h1>{selectedCategory?.name ?? 'Explore adverts'}</h1>
           <p>Good finds, useful services and wanted items.</p>
         </div>
       </div>
-      <Search value={params.q} />
+      <Search value={params.q} params={params} />
+      {activeFilters.length ? (
+        <nav className="filter-active" aria-label="Active filters">
+          {activeFilters.map(([key, value]) => {
+            const remaining = new URLSearchParams(
+              Object.entries(params).filter(([k]) => k !== key && k !== 'cursor'),
+            );
+            const label =
+              key === 'category'
+                ? (selectedCategory?.name ?? 'Category')
+                : key === 'min' || key === 'max'
+                  ? `${key === 'min' ? 'From' : 'Up to'} GH₵${(Number(value) / 100).toFixed(2)}`
+                  : `${key}: ${value.replaceAll('_', ' ')}`;
+            return (
+              <Link
+                className="chip"
+                key={key}
+                href={`/explore?${remaining}`}
+                aria-label={`Remove ${label} filter`}
+              >
+                {label}
+                <span aria-hidden="true">×</span>
+              </Link>
+            );
+          })}
+          <Link className="text-link" href="/explore">
+            Clear all
+          </Link>
+        </nav>
+      ) : null}
       <div className="explore-layout">
         <Filters key={JSON.stringify(params)} categories={categories} params={params} />
         <section className="explore-results" aria-label="Search results">

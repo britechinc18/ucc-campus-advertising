@@ -314,3 +314,24 @@ test('business edits remain private until approved and upload failure never look
   await adminContext.close();
   await publicContext.close();
 });
+
+test('search keeps active filters and account menu dismisses with Escape and outside click', async ({
+  page,
+}) => {
+  await page.goto('/explore?max=10000');
+  await page.getByRole('searchbox').fill('tutoring');
+  await page.getByRole('searchbox').press('Enter');
+  await expect(page).toHaveURL(/max=10000/);
+  await expect(page).toHaveURL(/q=tutoring/);
+  await page.getByRole('link', { name: 'Remove Up to GH₵100.00 filter' }).click();
+  await expect(page).toHaveURL(/q=tutoring/);
+  await expect(page).not.toHaveURL(/max=/);
+  await page.getByLabel('Account menu').click();
+  await expect(page.locator('.account-menu')).toHaveAttribute('open', '');
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.account-menu')).not.toHaveAttribute('open');
+  await expect(page.getByLabel('Account menu')).toBeFocused();
+  await page.getByLabel('Account menu').click();
+  await page.getByRole('heading', { level: 1 }).click();
+  await expect(page.locator('.account-menu')).not.toHaveAttribute('open');
+});

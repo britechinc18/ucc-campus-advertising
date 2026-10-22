@@ -46,13 +46,20 @@ export function Search({
   value = '',
   placeholder = 'Search phones, books, services…',
   action = '/explore',
+  params = {},
 }: {
   value?: string;
   placeholder?: string;
   action?: string;
+  params?: Record<string, string>;
 }) {
   return (
     <form className="search" action={action} method="get" role="search">
+      {Object.entries(params)
+        .filter(([key]) => !['q', 'cursor'].includes(key))
+        .map(([key, value]) => (
+          <input key={key} type="hidden" name={key} value={value} />
+        ))}
       <Icon name="search" />
       <label className="sr-only" htmlFor="market-search">
         Search the marketplace
@@ -74,12 +81,8 @@ export function Search({
 export function CategoryChips({ categories }: { categories: Category[] }) {
   return (
     <div className="categories" aria-label="Categories">
-      {categories.slice(0, 6).map((c, i) => (
-        <Link
-          key={c.id}
-          className={`chip ${i > 2 ? 'desktop-category' : ''}`}
-          href={`/explore?category=${c.id}`}
-        >
+      {categories.map((c) => (
+        <Link key={c.id} className="chip category-tile" href={`/explore?category=${c.id}`}>
           <Icon
             name={
               /book/i.test(c.name)
@@ -88,7 +91,13 @@ export function CategoryChips({ categories }: { categories: Category[] }) {
                   ? 'food'
                   : /fashion/i.test(c.name)
                     ? 'shirt'
-                    : 'bag'
+                    : /electronic/i.test(c.name)
+                      ? 'laptop'
+                      : /service/i.test(c.name)
+                        ? 'tools'
+                        : /accommodation|housing/i.test(c.name)
+                          ? 'home'
+                          : 'bag'
             }
           />
           <span>
@@ -106,9 +115,6 @@ export function CategoryChips({ categories }: { categories: Category[] }) {
           </span>
         </Link>
       ))}
-      <Link href="/explore#filters" className="chip only-mobile">
-        More
-      </Link>
     </div>
   );
 }

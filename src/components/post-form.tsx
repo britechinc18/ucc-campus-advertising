@@ -62,6 +62,15 @@ export function PostForm({
 }) {
   const [form, setForm] = useState<DraftForm>(() => initialForm(advert));
   const [step, setStep] = useState(1);
+  const stepPanel = useRef<HTMLElement>(null);
+  const previousStep = useRef(1);
+  useEffect(() => {
+    if (previousStep.current === step) return;
+    previousStep.current = step;
+    const heading = stepPanel.current?.querySelector('h2');
+    heading?.setAttribute('tabindex', '-1');
+    heading?.focus();
+  }, [step]);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -278,7 +287,7 @@ export function PostForm({
         ))}
       </div>
       <div className="post-columns">
-        <section className="panel form-panel">
+        <section className="panel form-panel" ref={stepPanel}>
           {error ? <ErrorMessage message={error} /> : null}
           {fields.length ? (
             <div role="alert">
