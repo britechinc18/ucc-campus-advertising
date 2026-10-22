@@ -84,6 +84,60 @@ try {
     ]);
     publicId ||= advertId;
   }
+
+  const testMedia = Array.from({ length: 5 }, () => randomUUID());
+  for (const [i, mid] of testMedia.entries())
+    await pool.query(
+      "insert into media_assets(id,advertiser_id,object_key,state,bytes,checksum) values($1,$2,$3,'ready',1000,$4)",
+      [mid, seller, `browser-fixture/${mid}.webp`, `fixture-${i}`],
+    );
+  const flyerIds: Record<string, string> = {};
+  for (const [i, kind] of ['event', 'promotion', 'announcement', 'business_ad'].entries()) {
+    const aid = randomUUID(),
+      rid = randomUUID();
+    flyerIds[kind] = aid;
+    const data = {
+      title: `Browser campus ${kind} flyer`,
+      description: 'Local-only Campus 360 fixture artwork for end-to-end browser checks.',
+      categoryId: category,
+      kind,
+      condition: 'not_applicable',
+      priceMode: 'contact',
+      pricePesewas: null,
+      location: 'UCC campus hall',
+      phone: '+233241234567',
+      whatsapp: '+233241234567',
+      contactConsent: true,
+      mediaIds: [testMedia[i]],
+      details: {
+        startsAt: new Date(Date.now() + 86400000).toISOString(),
+        endsAt: new Date(Date.now() + 172800000).toISOString(),
+        offer: 'Twenty percent off campus supplies',
+        externalUrl: 'https://example.org/register',
+      },
+    };
+    await pool.query(
+      "insert into adverts(id,advertiser_id,created_by,state,published_at,expires_at) values($1,$2,$3,'published',now(),now()+interval '30 days')",
+      [aid, businessSeller, businessUser],
+    );
+    await pool.query(
+      "insert into advert_revisions(id,advert_id,category_id,data,fingerprint,status,submitted_at,reviewed_at) values($1,$2,$3,$4,$5,'approved',now(),now())",
+      [rid, aid, category, data, randomUUID()],
+    );
+    await pool.query('update adverts set approved_revision_id=$1 where id=$2', [rid, aid]);
+    // Ready artwork must belong to this advertiser; owner-specific upload fixtures are separate.
+    const mid = randomUUID();
+    await pool.query(
+      "insert into media_assets(id,advertiser_id,object_key,state,bytes,checksum) values($1,$2,$3,'ready',1000,$4)",
+      [mid, businessSeller, `browser-fixture/${mid}.webp`, `flyer-${i}`],
+    );
+    data.mediaIds = [mid];
+    await pool.query('update advert_revisions set data=$1 where id=$2', [data, rid]);
+    await pool.query('insert into revision_media(revision_id,media_id,position) values($1,$2,0)', [
+      rid,
+      mid,
+    ]);
+  }
   const bp = {
     slug: 'browser-test-services',
     description:
@@ -111,6 +165,8 @@ try {
       businessSeller,
       category,
       publicId,
+      testMedia,
+      flyerIds,
     }),
     { mode: 0o600 },
   );

@@ -2,6 +2,8 @@
 import { useState, useEffect } from 'react';
 import { Dialog, MediaImage, SafeNote, ErrorMessage } from './ui';
 import { Icon } from './icon';
+import { SaveButton } from './bookmark-button';
+import { isFlyer, kindName, safeExternalUrl } from '@/lib/campus';
 import { api } from '@/lib/api';
 import { priceText, initials, dateText, type Listing } from '@/lib/market';
 export function AdvertDetail({ advert }: { advert: Listing }) {
@@ -11,6 +13,8 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const d = advert.data;
+  const flyer = isFlyer(d.kind);
+  const safeExternal = safeExternalUrl(d.details?.externalUrl);
   useEffect(() => {
     try {
       const key = `viewed:${advert.id}`;
@@ -84,7 +88,7 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
   }
   return (
     <>
-      <div className="detail-grid public-detail">
+      <div className={`detail-grid public-detail ${flyer ? 'flyer-detail' : ''}`}>
         <div className="gallery">
           <button
             className="gallery-main gallery-trigger"
@@ -121,17 +125,63 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
         </div>
         <section className="detail-content">
           <p className="eyebrow">
-            {d.kind === 'wanted'
-              ? 'WANTED ON CAMPUS'
-              : d.kind === 'service'
-                ? 'CAMPUS SERVICE'
-                : 'CAMPUS FIND'}
+            {flyer
+              ? `CAMPUS 360 · ${kindName(d.kind)}`
+              : d.kind === 'wanted'
+                ? 'WANTED ON CAMPUS'
+                : d.kind === 'service'
+                  ? 'CAMPUS SERVICE'
+                  : 'CAMPUS FIND'}
           </p>
           <h1>{d.title}</h1>
-          <div className="price-line">
-            <p className="price">{priceText(d)}</p>
-            {d.priceMode === 'negotiable' ? <span className="meta">Negotiable</span> : null}
-          </div>
+          {!flyer ? (
+            <div className="price-line">
+              <p className="price">{priceText(d)}</p>
+              {d.priceMode === 'negotiable' ? <span className="meta">Negotiable</span> : null}
+            </div>
+          ) : (
+            <div className="flyer-information">
+              {d.details?.startsAt ? (
+                <p>
+                  <strong>When</strong>
+                  {new Date(d.details.startsAt).toLocaleString('en-GH', {
+                    timeZone: 'Africa/Accra',
+                    dateStyle: 'long',
+                    timeStyle: 'short',
+                  })}{' '}
+                  GMT
+                </p>
+              ) : null}
+              {d.details?.endsAt ? (
+                <p>
+                  <strong>{d.kind === 'event' ? 'Until' : 'Valid until'}</strong>
+                  {new Date(d.details.endsAt).toLocaleString('en-GH', {
+                    timeZone: 'Africa/Accra',
+                    dateStyle: 'long',
+                    timeStyle: 'short',
+                  })}{' '}
+                  GMT
+                </p>
+              ) : null}
+              {d.details?.offer ? (
+                <p>
+                  <strong>The offer</strong>
+                  {d.details.offer}
+                </p>
+              ) : null}
+              {safeExternal ? (
+                <a
+                  className="btn secondary"
+                  href={safeExternal}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {d.kind === 'event' ? 'Registration / event link' : 'Visit advertiser’s link'}{' '}
+                  <Icon name="arrow" />
+                </a>
+              ) : null}
+            </div>
+          )}
           <div className="attributes">
             {d.condition !== 'not_applicable' ? (
               <span className="chip">{d.condition === 'new' ? 'New' : 'Used'}</span>
@@ -142,6 +192,7 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
             </span>
           </div>
           <div className="detail-actions">
+            <SaveButton id={advert.id} title={d.title} />
             <button className="btn quiet" onClick={share}>
               <Icon name="share" />
               Share
@@ -177,7 +228,14 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
       </div>
       <section className="description public-detail">
         <h2>
-          About this {d.kind === 'service' ? 'service' : d.kind === 'wanted' ? 'request' : 'item'}
+          About this{' '}
+          {flyer
+            ? 'campus update'
+            : d.kind === 'service'
+              ? 'service'
+              : d.kind === 'wanted'
+                ? 'request'
+                : 'item'}
         </h2>
         <p>{d.description}</p>
       </section>

@@ -53,7 +53,7 @@ export function Shell({
   user,
 }: {
   children: React.ReactNode;
-  user: { name: string | null; role: string } | null;
+  user: { name: string | null; role: string; sellerActive?: boolean } | null;
 }) {
   const path = usePathname();
   const accountMenu = useRef<HTMLDetailsElement>(null);
@@ -81,13 +81,21 @@ export function Shell({
   const admin = path.startsWith('/admin');
   const detail = /^\/adverts\/[^/]+$/.test(path);
   if (admin) return <>{children}</>;
-  const nav = [
-    ['/', 'home', 'Home'],
-    ['/explore', 'compass', 'Explore'],
-    ['/post', 'plus', 'Post'],
-    ['/businesses', 'store', 'Businesses'],
-    ['/my-adverts', 'list', 'My Adverts'],
-  ];
+  const seller = !!user?.sellerActive;
+  const nav = seller
+    ? [
+        ['/', 'home', 'Home'],
+        ['/explore', 'compass', 'Market'],
+        ['/post', 'plus', 'Post'],
+        ['/campus-360', 'grid', 'Campus 360'],
+        ['/my-adverts', 'list', 'My Ads'],
+      ]
+    : [
+        ['/', 'home', 'Home'],
+        ['/explore', 'compass', 'Market'],
+        ['/campus-360', 'grid', 'Campus 360'],
+        ['/saved', 'heart', 'Saved'],
+      ];
   return (
     <>
       <a className="skip-link" href="#main">
@@ -97,24 +105,42 @@ export function Shell({
         <div className="container header-inner">
           <Wordmark />
           <nav className="desktop-nav" aria-label="Main navigation">
-            <Link href="/explore" aria-current={path.startsWith('/explore') ? 'page' : undefined}>
-              Discover
-            </Link>
-            <Link href="/explore?max=9999">Under GH₵100</Link>
-            <Link
-              href="/businesses"
-              aria-current={path.startsWith('/businesses') ? 'page' : undefined}
-            >
-              Businesses
-            </Link>
+            {[
+              ['/', 'Home'],
+              ['/explore', 'Market'],
+              ['/campus-360', 'Campus 360'],
+              [seller ? '/my-adverts' : '/saved', seller ? 'My Ads' : 'Saved'],
+            ].map(([href, label]) => (
+              <Link
+                key={href}
+                href={href}
+                aria-current={
+                  (href === '/' ? path === '/' : path.startsWith(href)) ? 'page' : undefined
+                }
+              >
+                {label}
+              </Link>
+            ))}
           </nav>
+          <form
+            className="header-search"
+            action={path.startsWith('/campus-360') ? '/campus-360' : '/explore'}
+            role="search"
+          >
+            <Icon name="search" />
+            <input
+              type="search"
+              name="q"
+              placeholder="Find your next campus connection"
+              aria-label="Search MedStash"
+              maxLength={100}
+            />
+          </form>
           <div className="header-actions">
             <ThemeButton />
-            <Link className="btn" href="/post">
-              <Icon name="plus" />
-              <span>
-                Post<span className="hide-mobile"> advert</span>
-              </span>
+            <Link className="btn" href={seller ? '/post' : '/sell'}>
+              <Icon name={seller ? 'plus' : 'store'} />
+              <span>{seller ? 'Post advert' : 'Start Selling'}</span>
             </Link>
             <details className="account-menu" ref={accountMenu}>
               <summary className="icon-btn" aria-label="Account menu">
@@ -122,8 +148,15 @@ export function Shell({
               </summary>
               <div className="account-dropdown">
                 <p>{user?.name ?? 'Your campus corner'}</p>
-                <Link href="/my-adverts">My adverts</Link>
-                <Link href="/my-business">Business profile</Link>
+                <Link href="/saved">Saved adverts</Link>
+                {seller ? (
+                  <>
+                    <Link href="/my-adverts">My adverts</Link>
+                    <Link href="/my-business">Business profile</Link>
+                  </>
+                ) : (
+                  <Link href="/sell">Start Selling</Link>
+                )}
                 {user?.role === 'admin' ? <Link href="/admin">Administration</Link> : null}
                 {user ? (
                   <form
@@ -174,7 +207,10 @@ export function Shell({
         </Link>
       </footer>
       {!detail ? (
-        <nav className="bottom-nav" aria-label="Mobile navigation">
+        <nav
+          className={`bottom-nav ${seller ? 'seller-nav' : 'buyer-nav'}`}
+          aria-label="Mobile navigation"
+        >
           {nav.map(([href, glyph, label]) => (
             <Link
               key={href}

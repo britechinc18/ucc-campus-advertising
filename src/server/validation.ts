@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
+import { isFlyer, safeExternalUrl } from '../lib/campus';
 import { createHash } from 'node:crypto';
 export const id = z.uuid();
 export const phone = z
@@ -18,7 +19,15 @@ export const contentSchema = z
     title: z.string().trim().min(5).max(120),
     description: z.string().trim().min(20).max(5000),
     categoryId: id,
-    kind: z.enum(['product', 'service', 'wanted']),
+    kind: z.enum([
+      'product',
+      'service',
+      'wanted',
+      'event',
+      'promotion',
+      'announcement',
+      'business_ad',
+    ]),
     condition: z.enum(['new', 'used', 'not_applicable']),
     priceMode: z.enum(['fixed', 'negotiable', 'free', 'contact', 'budget']),
     pricePesewas: z.number().int().min(0).max(100000000).nullable(),
@@ -27,9 +36,73 @@ export const contentSchema = z
     whatsapp: phone.optional(),
     contactConsent: z.literal(true),
     mediaIds: z.array(id).max(5).default([]),
+    details: z
+      .object({
+        startsAt: z.iso.datetime().optional(),
+        endsAt: z.iso.datetime().optional(),
+        externalUrl: z
+          .string()
+          .url()
+          .max(1000)
+          .refine(
+            (value) => safeExternalUrl(value) !== null,
+            'Use a complete HTTPS link without embedded credentials',
+          )
+          .optional(),
+        offer: z.string().trim().min(5).max(500).optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .superRefine((v, ctx) => {
+    if (isFlyer(v.kind)) {
+      if (!v.mediaIds.length)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['mediaIds'],
+          message: 'Flyers require uploaded artwork',
+        });
+      if (v.priceMode !== 'contact' || v.pricePesewas !== null)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['priceMode'],
+          message: 'Flyers do not use a product price',
+        });
+      if (v.condition !== 'not_applicable')
+        ctx.addIssue({
+          code: 'custom',
+          path: ['condition'],
+          message: 'Flyers do not have a product condition',
+        });
+      if (v.kind === 'event' && !v.details?.startsAt)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['details', 'startsAt'],
+          message: 'An event date and time are required',
+        });
+      if (v.kind === 'promotion' && !v.details?.offer)
+        ctx.addIssue({
+          code: 'custom',
+          path: ['details', 'offer'],
+          message: 'Describe the promotional offer',
+        });
+    } else if (v.details)
+      ctx.addIssue({
+        code: 'custom',
+        path: ['details'],
+        message: 'Flyer details apply only to Campus 360 adverts',
+      });
+    if (
+      v.details?.startsAt &&
+      v.details.endsAt &&
+      Date.parse(v.details.endsAt) <= Date.parse(v.details.startsAt)
+    )
+      ctx.addIssue({
+        code: 'custom',
+        path: ['details', 'endsAt'],
+        message: 'The end must be after the start',
+      });
     if (!v.phone && !v.whatsapp)
       ctx.addIssue({
         code: 'custom',

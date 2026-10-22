@@ -158,7 +158,7 @@ test('theme override, dialog focus and onboarding work', async ({ page }) => {
   await expect(page).toHaveURL(/onboarding/);
   await page.getByLabel('Advertiser name').fill('Browser New Student');
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Create advertiser profile' }).click();
+  await page.getByRole('button', { name: 'Activate seller tools' }).click();
   await expect(page).toHaveURL(/my-adverts$/);
 });
 
@@ -334,4 +334,185 @@ test('search keeps active filters and account menu dismisses with Escape and out
   await page.getByLabel('Account menu').click();
   await page.getByRole('heading', { level: 1 }).click();
   await expect(page.locator('.account-menu')).not.toHaveAttribute('open');
+});
+
+test('anonymous buyer discovers all Campus 360 categories and saves without an account', async ({
+  page,
+}) => {
+  const ids = (fixture as unknown as { flyerIds: Record<string, string> }).flyerIds;
+  await page.goto('/');
+  await expect(page.locator('.buyer-nav')).toBeVisible();
+  await expect(page.locator('.buyer-nav')).toContainText('Market');
+  await expect(page.locator('.buyer-nav')).toContainText('Saved');
+  await expect(page.locator('.buyer-nav')).not.toContainText('Post');
+  await page.goto('/campus-360');
+  await expect(page.locator('.campus-banner')).toHaveCount(4);
+  for (const [slug, kind] of [
+    ['events', 'event'],
+    ['promotions', 'promotion'],
+    ['announcements', 'announcement'],
+    ['businesses', 'business_ad'],
+  ]) {
+    await page.goto(`/campus-360/${slug}`);
+    await expect(page.locator('.flyer-card')).toHaveCount(1);
+    await page.locator('.flyer-link').click();
+    await expect(page).toHaveURL(new RegExp(ids[kind]));
+    await expect(page.locator('.flyer-detail')).toBeVisible();
+    await expect(
+      page.getByRole('link', {
+        name: kind === 'event' ? 'Registration / event link' : 'Visit advertiser’s link',
+      }),
+    ).toHaveAttribute('href', 'https://example.org/register');
+    await expect(page.locator('.detail-content .price')).toHaveCount(0);
+  }
+  await page.getByRole('button', { name: /^Save advert:/ }).click();
+  await page.goto('/saved');
+  await expect(page.locator('.flyer-card')).toHaveCount(1);
+  await page.reload();
+  await expect(page.locator('.flyer-card')).toHaveCount(1);
+  await page.getByRole('button', { name: /^Unsave advert:/ }).click();
+  await expect(page.getByRole('heading', { name: 'Keep a good find close.' })).toBeVisible();
+  await page.goto('/explore');
+  await expect(page.locator('.flyer-card')).toHaveCount(0);
+  await page
+    .locator('.listing')
+    .first()
+    .getByRole('button', { name: /^Save advert:/ })
+    .click();
+  await page.goto('/saved');
+  await expect(page.locator('.listing')).toHaveCount(1);
+  await page.goto('/sell');
+  await page.getByRole('link', { name: 'Start selling with MedStash' }).click();
+  await expect(page).toHaveURL(/sign-in/);
+  await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+});
+
+test('existing seller gets flat navigation and can draft every supported advert type', async ({
+  page,
+}) => {
+  const media = (fixture as unknown as { testMedia: string[] }).testMedia;
+  await session(page.context(), 'owner');
+  await page.goto('/');
+  await expect(page.locator('.seller-nav')).toContainText('My Ads');
+  await expect(page.locator('.buyer-nav')).toHaveCount(0);
+  let uploaded = 0;
+  await page.route('**/api/v1/uploads/sign', (route) =>
+    route.fulfill({
+      json: {
+        mediaId: media[uploaded++ % media.length],
+        uploadUrl: 'http://localhost:3000/test-only-upload',
+      },
+    }),
+  );
+  await page.route('**/test-only-upload', (route) => route.fulfill({ status: 200, body: '' }));
+  await page.route('**/api/v1/uploads/complete', (route) =>
+    route.fulfill({ json: { state: 'ready' } }),
+  );
+  for (const kind of [
+    'product',
+    'service',
+    'wanted',
+    'event',
+    'promotion',
+    'announcement',
+    'business_ad',
+  ]) {
+    await page.goto('/post');
+    await page.getByLabel('What are you posting?').selectOption(kind);
+    await page.getByLabel('Advert title').fill(`Campus browser draft ${kind}`);
+    if (['product', 'service', 'wanted'].includes(kind)) {
+      await page
+        .getByRole('combobox', { name: 'Category', exact: true })
+        .selectOption(fixture.category);
+      await page
+        .getByLabel(kind === 'wanted' ? 'Budget (GH₵)' : 'Price (GH₵)', { exact: true })
+        .fill('90');
+    } else {
+      await expect(page.getByLabel('Price (GH₵)', { exact: true })).toHaveCount(0);
+      if (kind === 'event')
+        await page.getByLabel('Event start (Ghana time)').fill('2030-01-01T12:00');
+      if (kind === 'promotion')
+        await page.getByLabel('Offer description').fill('Twenty percent off campus printing');
+      await page
+        .getByLabel(kind === 'event' ? 'Registration link (optional)' : 'External link (optional)')
+        .fill('https://example.org/campus');
+    }
+    await page
+      .getByRole('textbox', { name: /^Description/ })
+      .fill('Local browser draft covering the full real advert creation API.');
+    await page
+      .getByLabel(kind === 'event' ? 'Event venue' : 'Campus location', { exact: true })
+      .fill('Campus central hall');
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
+    if (kind !== 'service' && kind !== 'wanted') {
+      await page.getByLabel('Select photographs').setInputFiles({
+        name: `${kind}.png`,
+        mimeType: 'image/png',
+        buffer: Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lWQAAAAASUVORK5CYII=',
+          'base64',
+        ),
+      });
+      await expect(page.locator('.uploaded-photo')).toHaveCount(1);
+    }
+    await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
+    await page.getByRole('checkbox').check();
+    await page.getByRole('button', { name: 'Review advert' }).click();
+    if (kind === 'event') {
+      await page.getByRole('button', { name: 'Submit for approval' }).click();
+      await expect(page).toHaveURL(/submitted=1/);
+    } else {
+      await page.getByRole('button', { name: 'Save as draft' }).click();
+      await expect(page.getByRole('status')).toContainText('Draft saved');
+    }
+  }
+  await page.goto('/my-adverts');
+  await expect(page.getByText('Campus browser draft event', { exact: true })).toBeVisible();
+});
+
+test('new buyer screens are responsive, accessible and honor reduced motion in both themes', async ({
+  page,
+}) => {
+  for (const theme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: theme, reducedMotion: 'reduce' });
+    for (const path of [
+      '/campus-360',
+      '/campus-360/events',
+      '/campus-360/promotions',
+      '/campus-360/announcements',
+      '/campus-360/businesses',
+      '/saved',
+      '/sell',
+    ]) {
+      await page.goto(path);
+      for (const width of [320, 390, 768, 1024, 1440]) {
+        await page.setViewportSize({ width, height: 950 });
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+          `${path} ${theme} ${width}`,
+        ).toBe(true);
+      }
+      const result = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+        .analyze();
+      expect(
+        result.violations.filter((v) => ['serious', 'critical'].includes(v.impact ?? '')),
+        JSON.stringify(
+          result.violations.map((v) => ({ id: v.id, nodes: v.nodes.map((n) => n.target) })),
+        ),
+      ).toEqual([]);
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 950 });
+  await page.goto('/campus-360');
+  for (const banner of await page.locator('.campus-banner').all()) {
+    const box = await banner.boundingBox();
+    expect(Math.abs(box!.width - box!.height)).toBeLessThan(2);
+  }
+  expect(
+    await page
+      .locator('.campus-banner')
+      .first()
+      .evaluate((e) => getComputedStyle(e).transitionDuration),
+  ).toBe('0s');
 });

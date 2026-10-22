@@ -58,7 +58,7 @@ export function Onboarding({ name, next }: { name: string; next: string }) {
       </label>
       {error ? <ErrorMessage message={error} /> : null}
       <button className="btn" disabled={busy}>
-        {busy ? 'Creating profile…' : 'Create advertiser profile'}
+        {busy ? 'Activating…' : 'Activate seller tools'}
       </button>
       <p className="meta">
         Choose carefully: profile type cannot currently be changed through self-service.

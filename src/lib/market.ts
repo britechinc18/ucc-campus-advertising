@@ -1,8 +1,10 @@
+import { isFlyer, kindName } from './campus';
 export interface AdvertContent {
   title: string;
   description: string;
   categoryId: string;
-  kind: 'product' | 'service' | 'wanted';
+  kind: 'product' | 'service' | 'wanted' | 'event' | 'promotion' | 'announcement' | 'business_ad';
+  details?: { startsAt?: string; endsAt?: string; externalUrl?: string; offer?: string };
   condition: 'new' | 'used' | 'not_applicable';
   priceMode: 'fixed' | 'negotiable' | 'free' | 'contact' | 'budget';
   pricePesewas: number | null;
@@ -83,7 +85,10 @@ export function parseMoney(value: string): number | null {
   const n = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
   return Number.isSafeInteger(n) && n <= 100000000 ? n : null;
 }
-export function priceText(d: Pick<AdvertContent, 'priceMode' | 'pricePesewas'>) {
+export function priceText(
+  d: Pick<AdvertContent, 'priceMode' | 'pricePesewas'> & Partial<Pick<AdvertContent, 'kind'>>,
+) {
+  if (d.kind && isFlyer(d.kind)) return kindName(d.kind) + ' · Campus 360';
   if (d.priceMode === 'free') return 'Free';
   if (d.priceMode === 'contact' || d.pricePesewas === null) return 'Contact for price';
   return `${d.priceMode === 'budget' ? 'Budget: ' : ''}GH₵${(d.pricePesewas / 100).toLocaleString('en-GH', { minimumFractionDigits: d.pricePesewas % 100 ? 2 : 0, maximumFractionDigits: 2 })}`;

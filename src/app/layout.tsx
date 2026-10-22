@@ -1,5 +1,6 @@
 import './globals.css';
 import './premium.css';
+import './campus.css';
 import type { Metadata } from 'next';
 import { Shell } from '@/components/shell';
 import { viewer } from '@/server/viewer';
@@ -19,7 +20,15 @@ export default async function Layout({ children }: { children: React.ReactNode }
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <Shell user={v.user ? { name: v.user.name, role: v.user.role } : null}>{children}</Shell>
+        <Shell
+          user={
+            v.user
+              ? { name: v.user.name, role: v.user.role, sellerActive: v.user.seller_active }
+              : null
+          }
+        >
+          {children}
+        </Shell>
       </body>
     </html>
   );

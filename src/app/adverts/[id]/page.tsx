@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { advertDetail, listAdverts } from '@/server/discovery';
 import { AppError } from '@/server/errors';
 import { AdvertDetail } from '@/components/advert-detail';
+import { FlyerGrid } from '@/components/campus';
+import { isFlyer, campusCategories } from '@/lib/campus';
 import { ListingGrid } from '@/components/listings';
 import { EmptyState } from '@/components/ui';
 import { Icon } from '@/components/icon';
@@ -33,15 +35,27 @@ export default async function Detail({ params }: { params: Promise<{ id: string 
   }
   let related: Listing[] = [];
   try {
-    const r = await listAdverts({ category: advert.data.categoryId, limit: 5 });
+    const r = await listAdverts(
+      isFlyer(advert.data.kind)
+        ? { surface: 'campus', kind: advert.data.kind, limit: 5 }
+        : { category: advert.data.categoryId, limit: 5 },
+    );
     related = r.items.filter((a) => a.id !== id).slice(0, 4) as unknown as Listing[];
   } catch {}
   return (
     <main id="main" className="container detail-bottom-space">
       <div className="breadcrumbs">
-        <BrowseBack />
+        {isFlyer(advert.data.kind) ? (
+          <Link
+            href={`/campus-360/${campusCategories.find((c) => c.kind === advert.data.kind)?.slug ?? ''}`}
+          >
+            ← Campus 360
+          </Link>
+        ) : (
+          <BrowseBack />
+        )}
       </div>
-      <AdvertDetail advert={JSON.parse(JSON.stringify(advert)) as Listing} />
+      <AdvertDetail key={advert.id} advert={JSON.parse(JSON.stringify(advert)) as Listing} />
       {related.length ? (
         <section className="section">
           <div className="section-head">
@@ -50,7 +64,11 @@ export default async function Detail({ params }: { params: Promise<{ id: string 
               View all <Icon name="arrow" />
             </Link>
           </div>
-          <ListingGrid items={related} />
+          {isFlyer(advert.data.kind) ? (
+            <FlyerGrid items={related} />
+          ) : (
+            <ListingGrid items={related} />
+          )}
         </section>
       ) : null}
     </main>

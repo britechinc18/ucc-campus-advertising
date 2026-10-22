@@ -79,7 +79,8 @@ export async function createProfile(userId: string, input: unknown) {
       tx,
       sql`select id from advertisers where user_id=${userId}`,
     );
-    ensure(!existing.length, 409, 'PROFILE_EXISTS', 'Advertiser profile already exists');
+    if (existing.length)
+      return one(tx, sql`select id,name,kind from advertisers where user_id=${userId}`);
     return one(
       tx,
       sql`insert into advertisers(user_id,name,kind,consent_at,created_by) values(${userId},${data.name},${data.kind},now(),${userId}) returning id,name,kind`,

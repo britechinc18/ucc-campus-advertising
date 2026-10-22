@@ -3,7 +3,7 @@ import { accountContext } from '@/server/frontend';
 import { redirect } from 'next/navigation';
 import { safeReturn } from '@/lib/market';
 import { Onboarding } from '@/components/onboarding';
-export const metadata = { title: 'Create advertiser profile' };
+export const metadata = { title: 'Activate your seller profile' };
 export default async function OnboardingPage({
   searchParams,
 }: {
@@ -11,7 +11,7 @@ export default async function OnboardingPage({
 }) {
   const params = await searchParams;
   const next = safeReturn(params.next);
-  const u = await requireViewer('/onboarding');
+  const u = await requireViewer(`/onboarding?next=${encodeURIComponent(next)}`);
   const context = await accountContext(u.id);
   if (context.profile) redirect(next);
   return (
