@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Notifications } from './notifications';
 import { initials } from '@/lib/market';
 import { Icon } from './icon';
+import { AccountModeSwitch } from './account-mode-switch';
 export function Wordmark({ showLogo = false }: { showLogo?: boolean }) {
   return (
     <Link className="wordmark" href="/" aria-label="MedStash home">
@@ -56,7 +57,13 @@ export function Shell({
   user,
 }: {
   children: React.ReactNode;
-  user: { name: string | null; role: string; sellerActive?: boolean; image?: string | null } | null;
+  user: {
+    name: string | null;
+    role: string;
+    sellerActive?: boolean;
+    buyerMode?: boolean;
+    image?: string | null;
+  } | null;
 }) {
   const path = usePathname();
   const [avatarFailed, setAvatarFailed] = useState(false);
@@ -85,7 +92,7 @@ export function Shell({
   const admin = path.startsWith('/admin');
   const detail = /^\/adverts\/[^/]+$/.test(path);
   if (admin) return <>{children}</>;
-  const seller = !!user?.sellerActive;
+  const seller = !!user?.sellerActive && !user?.buyerMode;
   const nav = seller
     ? [
         ['/', 'home', 'Home'],
@@ -159,10 +166,14 @@ export function Shell({
             >
               <Icon name="search" />
             </Link>
-            <Link className="btn" href={seller ? '/post' : '/sell'}>
-              <Icon name={seller ? 'plus' : 'store'} />
-              <span>{seller ? 'Post advert' : 'Start Selling'}</span>
-            </Link>
+            {user?.sellerActive && !seller ? (
+              <AccountModeSwitch mode="seller" className="btn" />
+            ) : (
+              <Link className="btn" href={seller ? '/post' : '/sell'}>
+                <Icon name={seller ? 'plus' : 'store'} />
+                <span>{seller ? 'Post advert' : 'Start Selling'}</span>
+              </Link>
+            )}
             <Notifications
               key={`${user?.name ?? 'anonymous'}:${!!user?.sellerActive}:${path}`}
               scope={path}
@@ -204,9 +215,12 @@ export function Shell({
                     <Link href="/my-adverts">My adverts</Link>
                     <Link href="/my-business">Business profile</Link>
                   </>
-                ) : (
+                ) : !user?.sellerActive ? (
                   <Link href="/sell">Start Selling</Link>
-                )}
+                ) : null}
+                {user?.sellerActive ? (
+                  <AccountModeSwitch mode={seller ? 'buyer' : 'seller'} />
+                ) : null}
                 {user?.role === 'admin' ? <Link href="/admin">Administration</Link> : null}
                 {user ? (
                   <form
@@ -227,20 +241,6 @@ export function Shell({
                   <span>Appearance</span>
                   <ThemeButton />
                 </div>
-                <button
-                  onClick={() => {
-                    try {
-                      localStorage.removeItem('ucc-theme');
-                    } catch {}
-                    document.documentElement.dataset.theme = matchMedia(
-                      '(prefers-color-scheme: dark)',
-                    ).matches
-                      ? 'dark'
-                      : 'light';
-                  }}
-                >
-                  Use system theme
-                </button>
               </div>
             </details>
           </div>

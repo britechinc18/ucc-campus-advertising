@@ -132,6 +132,74 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     expect(a.state).toBe('published');
     expect(Number(a.duration)).toBe(30);
   });
+  it('exempts admin own and assisted submissions while retaining normal advertiser limits', async () => {
+    await createProfile(admin, { name: 'Admin Seller', kind: 'student', consent: true });
+    await pool.query('update platform_settings set max_active=1,daily_limit=1');
+    for (let index = 0; index < 6; index++) {
+      const own = await createAdvert(admin, content(`Administrator campus service ${index}`));
+      const key = randomUUID();
+      await submitAdvert(admin, own.advertId, own.revisionId, key);
+      await submitAdvert(admin, own.advertId, own.revisionId, key);
+      await moderate(admin, own.revisionId, 'approve', 'Reviewed admin submission');
+    }
+    expect(
+      (await pool.query('select count(*)::int as n from advertiser_daily_usage')).rows[0].n,
+    ).toBe(0);
+    const profile = (await pool.query('select id from advertisers where user_id=$1', [owner]))
+      .rows[0].id;
+    for (let index = 0; index < 3; index++) {
+      const assisted = await createAdvert(
+        admin,
+        content(`Assisted campus service ${index}`),
+        profile,
+      );
+      await submitAdvert(admin, assisted.advertId, assisted.revisionId, randomUUID());
+      await moderate(admin, assisted.revisionId, 'approve', 'Reviewed assisted content');
+    }
+    const regular = await draft('Regular owner still limited');
+    await expect(
+      submitAdvert(owner, regular.advertId, regular.revisionId, randomUUID()),
+    ).rejects.toMatchObject({ code: 'ACTIVE_LIMIT' });
+    const context = await accountContext(admin);
+    expect(context.postingLimitExempt).toBe(true);
+    expect((await accountContext(owner)).postingLimitExempt).toBe(false);
+    expect(
+      (
+        await pool.query(
+          "select count(*)::int n from audit_events where action='advert_submitted' and detail->>'postingLimitExempt'='true'",
+        )
+      ).rows[0].n,
+    ).toBe(9);
+  });
+  it('protects system usage and checks seller switching independently of presentation cookies', async () => {
+    vi.mocked(auth).mockResolvedValue(null as never);
+    expect(
+      (await dispatch(new Request('https://campus.test/api/v1/admin/system'), ['admin', 'system']))
+        .status,
+    ).toBe(401);
+    vi.mocked(auth).mockResolvedValue({ user: { id: owner } } as never);
+    expect(
+      (await dispatch(new Request('https://campus.test/api/v1/admin/system'), ['admin', 'system']))
+        .status,
+    ).toBe(403);
+    const switchMode = (mode: string, origin = 'https://campus.test') =>
+      dispatch(
+        new Request('https://campus.test/api/v1/me/mode', {
+          method: 'POST',
+          headers: { origin, 'content-type': 'application/json' },
+          body: JSON.stringify({ mode }),
+        }),
+        ['me', 'mode'],
+      );
+    expect((await switchMode('admin')).status).toBe(422);
+    expect((await switchMode('seller', 'https://attacker.test')).status).toBe(403);
+    const response = await switchMode('buyer');
+    expect(response.status).toBe(200);
+    expect(response.headers.get('set-cookie')).toContain(`${owner}:buyer`);
+    expect(response.headers.get('set-cookie')).toContain('HttpOnly');
+    vi.mocked(auth).mockResolvedValue({ user: { id: stranger } } as never);
+    expect((await switchMode('seller')).status).toBe(403);
+  });
   it('enforces daily limit under concurrent independent connections', async () => {
     const ds = await Promise.all(
       Array.from({ length: 5 }, (_, i) => draft(`Different tutoring ${i}`)),

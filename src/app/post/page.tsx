@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import { sql } from 'drizzle-orm';
 import { requireViewer } from '@/server/viewer';
 import { accountContext, ownedAdverts } from '@/server/frontend';
-import { query } from '@/server/store';
+import { one, query } from '@/server/store';
 import { db } from '@/server/db';
 import { PostForm } from '@/components/post-form';
 import { EmptyState } from '@/components/ui';
@@ -32,6 +32,14 @@ export default async function PostPage({
       </main>
     );
   let advert: OwnAdvert | undefined;
+  let assistedName: string | undefined;
+  if (assisted) {
+    const profile = await one<{ name: string }>(
+      db(),
+      sql`select name from advertisers where id=${assisted} and not suspended`,
+    );
+    assistedName = profile.name;
+  }
   if (p.edit) {
     try {
       advert = JSON.parse(JSON.stringify(await ownedAdverts(u.id, 0, p.edit))) as OwnAdvert;
@@ -54,6 +62,12 @@ export default async function PostPage({
   );
   return (
     <main id="main" className="container">
+      {assistedName ? (
+        <p className="inline-notice">
+          Posting for <strong>{assistedName}</strong>. Enter their phone and WhatsApp details, with
+          their permission. These will appear publicly on the advert.
+        </p>
+      ) : null}
       <PostForm
         key={p.edit ?? assisted ?? initialKind}
         initialKind={initialKind}

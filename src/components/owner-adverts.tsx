@@ -179,27 +179,36 @@ export function OwnerDashboard({
         <aside className="dashboard-aside">
           <div className="panel">
             <h3>Your posting allowance</h3>
-            <p>
-              <strong>
-                {account.activeCount} of {account.settings.max_active}
-              </strong>{' '}
-              active slots reserved
-            </p>
-            <div className="progress">
-              <span
-                style={{
-                  width: `${Math.min(100, (account.activeCount / account.settings.max_active) * 100)}%`,
-                }}
-              />
-            </div>
-            <p>
-              {Math.max(0, account.settings.daily_limit - account.dailyUsed)} new submissions left
-              today.
-            </p>
-            <p style={{ marginTop: 16 }}>
-              Pending adverts reserve a slot. Editing an existing advert does not use another daily
-              submission.
-            </p>
+            {account.role === 'admin' ? (
+              <p>
+                No daily or active-advert limit for administrator submissions, including adverts
+                posted for others. Content review and image checks still apply.
+              </p>
+            ) : (
+              <>
+                <p>
+                  <strong>
+                    {account.activeCount} of {account.settings.max_active}
+                  </strong>{' '}
+                  active slots reserved
+                </p>
+                <div className="progress">
+                  <span
+                    style={{
+                      width: `${Math.min(100, (account.activeCount / account.settings.max_active) * 100)}%`,
+                    }}
+                  />
+                </div>
+                <p>
+                  {Math.max(0, account.settings.daily_limit - account.dailyUsed)} new submissions
+                  left today.
+                </p>
+                <p style={{ marginTop: 16 }}>
+                  Pending adverts reserve a slot. Editing an existing advert does not use another
+                  daily submission.
+                </p>
+              </>
+            )}
             {account.profile?.kind === 'business' ? (
               <Link className="text-link" href="/my-business">
                 Manage business profile →

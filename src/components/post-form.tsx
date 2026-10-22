@@ -292,7 +292,7 @@ export function PostForm({
           </h1>
           <p>
             {advertiserId
-              ? 'Posting for the selected advertiser. Approval and limits still apply.'
+              ? 'Posting for the selected advertiser. Review and contact consent still apply.'
               : 'Make your next campus connection.'}
           </p>
         </div>
@@ -696,8 +696,11 @@ export function PostForm({
           </p>
           <div className="allowance">
             <p className="eyebrow">POSTING ALLOWANCE</p>
-            {advertiserId ? (
-              <p>The selected advertiser’s limits are checked at submission.</p>
+            {account.role === 'admin' ? (
+              <p>
+                Administrator posting: no daily or active-advert limit, including assisted adverts.
+                Content review and photo checks still apply.
+              </p>
             ) : (
               <>
                 <p>

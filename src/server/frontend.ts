@@ -29,6 +29,7 @@ export async function accountContext(userId: string) {
       : { count: 0 };
     return {
       role: user.role,
+      postingLimitExempt: user.role === 'admin',
       profile,
       settings,
       activeCount: active.count,

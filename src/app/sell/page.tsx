@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { viewer } from '@/server/viewer';
+import { AccountModeSwitch } from '@/components/account-mode-switch';
 import { Icon } from '@/components/icon';
 export const metadata = { title: 'Start selling' };
 export default async function Sell() {
@@ -20,10 +21,14 @@ export default async function Sell() {
             Sell an item, offer your skills, or share what’s happening. MedStash connects you
             directly with the people around you.
           </p>
-          <Link className="btn" href={href}>
-            {active ? 'Create an advert' : 'Start selling with MedStash'}
-            <Icon name="arrow" />
-          </Link>
+          {active ? (
+            <AccountModeSwitch mode="seller" destination="/post" className="btn" />
+          ) : (
+            <Link className="btn" href={href}>
+              {active ? 'Create an advert' : 'Start selling with MedStash'}
+              <Icon name="arrow" />
+            </Link>
+          )}
           <Link className="text-link" href="/explore">
             Keep browsing freely →
           </Link>

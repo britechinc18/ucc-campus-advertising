@@ -419,7 +419,7 @@ export function AdminScreen({ resource, target }: { resource: string; target?: s
             Create profile
           </button>
         ) : !target && ['overview', 'adverts'].includes(resource) ? (
-          <Link className="btn" href="/admin/advertisers">
+          <Link className="btn" href="/admin/post">
             Create assisted advert →
           </Link>
         ) : null}

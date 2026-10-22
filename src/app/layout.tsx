@@ -36,6 +36,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
                   image: v.user.image,
                   role: v.user.role,
                   sellerActive: v.user.seller_active,
+                  buyerMode: v.user.buyer_mode,
                 }
               : null
           }

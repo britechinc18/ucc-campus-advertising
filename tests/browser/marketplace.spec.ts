@@ -603,3 +603,123 @@ test('brand icons, buyer menu, seller avatar and real notification panels work',
     await page.keyboard.press('Escape');
   }
 });
+
+test('seller switches buyer and seller views without signing out or losing listings', async ({
+  page,
+}) => {
+  await session(page.context(), 'owner');
+  await page.goto('/');
+  await page.getByLabel('Account menu', { exact: true }).click();
+  await expect(
+    page.locator('.account-dropdown').getByText('Appearance', { exact: true }),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Use system theme' })).toHaveCount(0);
+  await page
+    .locator('.account-dropdown')
+    .getByRole('button', { name: 'Switch to buyer', exact: true })
+    .click();
+  await expect(page.locator('.buyer-nav')).toBeVisible();
+  await page.reload();
+  await expect(page.locator('.buyer-nav')).toBeVisible();
+  await page.getByLabel('Menu', { exact: true }).click();
+  await expect(
+    page.locator('.account-dropdown').getByRole('button', { name: 'Sign out' }),
+  ).toBeVisible();
+  await page
+    .locator('.account-dropdown')
+    .getByRole('button', { name: 'Switch to seller', exact: true })
+    .click();
+  await expect(page).toHaveURL(/my-adverts/);
+  await expect(page.locator('.seller-nav')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My adverts', exact: true })).toBeVisible();
+});
+
+test('admin selects an assisted advertiser by name and sees real protected system checks', async ({
+  page,
+}) => {
+  await session(page.context(), 'admin');
+  await page.goto('/admin/post');
+  await expect(page.getByRole('heading', { name: 'Post for someone', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Find', exact: true }).click();
+  await page
+    .getByRole('combobox', { name: 'Advertiser', exact: true })
+    .selectOption({ label: 'Browser Test Student · student' });
+  await page.getByRole('button', { name: 'Continue to advert', exact: true }).click();
+  await expect(page).toHaveURL(/post\?advertiserId=/);
+  await expect(page.locator('.inline-notice')).toContainText('Browser Test Student');
+  await expect(page.locator('.allowance')).toContainText('no daily or active-advert limit');
+  await page.goto('/admin/post');
+  await page.getByLabel('Public advertiser name').fill('Assisted Campus Designer');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Create advertiser & continue' }).click();
+  await expect(page).toHaveURL(/post\?advertiserId=/);
+  await expect(page.locator('.inline-notice')).toContainText('Assisted Campus Designer');
+  await page.getByLabel('What are you posting?').selectOption('service');
+  await page.getByLabel('Advert title').fill('Assisted graphic design service');
+  await page
+    .getByRole('combobox', { name: 'Category', exact: true })
+    .selectOption(fixture.category);
+  await page.getByLabel('Price (GH₵)').fill('45');
+  await page
+    .getByLabel('Description')
+    .fill('Consent-based assisted graphic design service for the campus community.');
+  await page.getByLabel('Campus location').fill('UCC campus');
+  await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Phone number', { exact: true }).fill('0543982307');
+  await page.getByLabel('WhatsApp number', { exact: true }).fill('0543982307');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Review advert' }).click();
+  await page.getByRole('button', { name: 'Submit for approval' }).click();
+  await expect(page).toHaveURL(/admin\/submissions$/);
+  await page
+    .locator('.data-row')
+    .filter({ hasText: 'Assisted graphic design service' })
+    .getByRole('link', { name: 'Review', exact: true })
+    .click();
+  await page.getByRole('button', { name: 'Approve advert', exact: true }).click();
+  await page
+    .getByRole('dialog')
+    .getByLabel('Reason for the audit trail')
+    .fill('Reviewed assisted advertiser consent, content and contacts.');
+  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page).toHaveURL(/admin\/submissions$/);
+  await page.goto('/explore?q=Assisted%20graphic');
+  await page.locator('.listing').click();
+  await expect(page.getByText('Assisted Campus Designer', { exact: true }).first()).toBeVisible();
+  await expect(page.locator('.contact-bar a').filter({ hasText: 'WhatsApp' })).toHaveAttribute(
+    'href',
+    /^https:\/\/wa.me\/233543982307/,
+  );
+  await page.goto('/admin/system');
+  await expect(page.getByRole('heading', { name: 'System check', exact: true })).toBeVisible();
+  await expect(page.getByText('Connected database size', { exact: true })).toBeVisible();
+  await expect(page.getByText('Tracked ready image size', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Connect provider usage', exact: true }),
+  ).toBeVisible();
+  const response = await page.request.get('/api/v1/admin/system');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['cache-control']).toBe('private, no-store');
+  expect((await response.json()).neon.state).toBe('not_connected');
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.goto('/admin/system');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+  }
+  for (const theme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: theme });
+    await page.evaluate(() => localStorage.removeItem('ucc-theme'));
+    for (const path of ['/admin/system', '/admin/post']) {
+      await page.goto(path);
+      await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
+      const result = await new AxeBuilder({ page })
+        .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+        .analyze();
+      expect(
+        result.violations.filter((v) => ['serious', 'critical'].includes(v.impact ?? '')),
+      ).toEqual([]);
+    }
+  }
+});

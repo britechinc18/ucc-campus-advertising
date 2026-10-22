@@ -3,6 +3,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  ListObjectsV2Command,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import sharp from 'sharp';
@@ -21,7 +22,7 @@ export interface ObjectStorage {
   write(key: string, data: Buffer): Promise<void>;
   remove(key: string): Promise<void>;
 }
-export function storage(): ObjectStorage {
+function storageClient() {
   const names = ['S3_ENDPOINT', 'S3_BUCKET', 'S3_ACCESS_KEY_ID', 'S3_SECRET_ACCESS_KEY'] as const;
   ensure(
     names.every((k) => process.env[k]),
@@ -45,6 +46,10 @@ export function storage(): ObjectStorage {
       secretAccessKey: process.env.S3_SECRET_ACCESS_KEY!,
     },
   });
+  return { s3, Bucket };
+}
+export function storage(): ObjectStorage {
+  const { s3, Bucket } = storageClient();
   return {
     sign: (Key, ContentType, ContentLength) =>
       getSignedUrl(s3, new PutObjectCommand({ Bucket, Key, ContentType, ContentLength }), {
@@ -145,7 +150,12 @@ export async function signUpload(
       tx,
       sql`select count(*)::int as n from media_assets where advertiser_id=${p.id} and state in ('staged','ready') and created_at>now()-interval '1 day'`,
     );
-    ensure(count.n < 30, 429, 'UPLOAD_LIMIT', 'Daily upload limit reached');
+    ensure(
+      user.role === 'admin' || count.n < 30,
+      429,
+      'UPLOAD_LIMIT',
+      'Daily upload limit reached',
+    );
     const assetId = randomUUID();
     const key = `staged/${p.id}/${assetId}`;
     await tx.execute(
@@ -241,4 +251,27 @@ export async function readMedia(
     return asset.object_key;
   });
   return objects.read(key, 5242880);
+}
+
+// Bounded read-only inventory includes staging/derived objects and cleanup leftovers.
+export async function imageStorageUsage() {
+  const { s3, Bucket } = storageClient();
+  const signal = AbortSignal.timeout(8000);
+  let bytes = 0,
+    objects = 0,
+    token: string | undefined;
+  for (let page = 0; page < 10; page++) {
+    const result = await s3.send(
+      new ListObjectsV2Command({ Bucket, MaxKeys: 1000, ContinuationToken: token }),
+      { abortSignal: signal },
+    );
+    for (const object of result.Contents ?? []) {
+      bytes += object.Size ?? 0;
+      objects++;
+    }
+    if (!result.IsTruncated) return { bytes, objects, complete: true };
+    token = result.NextContinuationToken;
+    if (!token) break;
+  }
+  return { bytes, objects, complete: false };
 }
