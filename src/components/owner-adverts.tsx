@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
+import { isFlyer, kindName, safeExternalUrl } from '@/lib/campus';
 import {
   effectiveState,
   stateLabel,
@@ -39,7 +40,7 @@ export function OwnerDashboard({
         <div>
           <p className="eyebrow">YOUR CAMPUS CORNER</p>
           <h1>My adverts</h1>
-          <p>Keep your listings up to date, all in one place.</p>
+          <p>Your items, services and Campus 360 adverts, all in one place.</p>
         </div>
         <Link className="btn" href="/post">
           <Icon name="plus" />
@@ -54,6 +55,32 @@ export function OwnerDashboard({
       {account.profile?.suspended ? (
         <ErrorMessage message="This advertiser profile is suspended. Contact an administrator before posting." />
       ) : null}
+      <section className="seller-launch" aria-label="Create an advert">
+        <div>
+          <p className="eyebrow">WHAT WILL YOU SHARE?</p>
+          <h2>Create something for campus.</h2>
+          <p>Choose a format. Every submission is reviewed before it goes live.</p>
+        </div>
+        <div className="seller-formats">
+          {(
+            [
+              ['product', 'bag', 'Sell an item'],
+              ['wanted', 'search', 'Find something'],
+              ['service', 'tools', 'Offer a service'],
+              ['event', 'calendar', 'Share an event'],
+              ['promotion', 'tag', 'Run a promotion'],
+              ['announcement', 'megaphone', 'Post a notice'],
+              ['business_ad', 'store', 'Advertise a business'],
+            ] as const
+          ).map(([kind, icon, label]) => (
+            <Link key={kind} href={`/post?kind=${kind}`}>
+              <Icon name={icon} />
+              <span>{label}</span>
+              <Icon name="chevron" />
+            </Link>
+          ))}
+        </div>
+      </section>
       <div className="stats">
         {[
           ['Live adverts', count('published')],
@@ -98,7 +125,7 @@ export function OwnerDashboard({
               const pending = a.revisions.some((r) => r.status === 'pending');
               return (
                 <article className="advert-row" key={a.id}>
-                  <div className="row-photo">
+                  <div className={`row-photo ${d && isFlyer(d.kind) ? 'flyer-photo' : ''}`}>
                     <MediaImage id={d?.mediaIds[0]} alt={d?.title ?? 'Advert'} />
                   </div>
                   <div className="row-main">
@@ -130,7 +157,7 @@ export function OwnerDashboard({
           ) : (
             <EmptyState
               title="No adverts here yet."
-              message="Post your first item, service or wanted advert. Approved listings will be visible to everyone."
+              message="Create an item, service, wanted advert or Campus 360 flyer. Approved adverts are visible to everyone."
               action={false}
             />
           )}
@@ -197,7 +224,12 @@ export function OwnerDetail({ advert }: { advert: OwnAdvert }) {
   const status = effectiveState(advert);
   const pending = advert.revisions.some((r) => r.status === 'pending');
   const inactive = !!advert.approved_revision_id && status !== 'published';
-  const fulfilled = d?.kind === 'wanted' ? 'found' : d?.kind === 'service' ? 'completed' : 'sold';
+  const fulfilled =
+    d?.kind === 'wanted'
+      ? 'found'
+      : d && (d.kind === 'service' || isFlyer(d.kind))
+        ? 'completed'
+        : 'sold';
   async function act() {
     if (!state) return;
     setBusy(true);
@@ -269,13 +301,64 @@ export function OwnerDetail({ advert }: { advert: OwnAdvert }) {
       </div>
       {d ? (
         <section className="panel owner-content">
-          <div className="owner-photos">
+          <div className={`owner-photos ${isFlyer(d.kind) ? 'flyer-photos' : ''}`}>
             {d.mediaIds.map((id) => (
               <MediaImage key={id} id={id} alt={d.title} />
             ))}
           </div>
+          <p className="eyebrow">
+            {kindName(d.kind)} · {isFlyer(d.kind) ? 'Campus 360' : 'Market'}
+          </p>
           <h2>Description</h2>
           <p style={{ whiteSpace: 'pre-wrap' }}>{d.description}</p>
+          {d.details ? (
+            <dl className="seller-metadata">
+              {d.details.startsAt ? (
+                <div>
+                  <dt>Starts (Ghana time)</dt>
+                  <dd>
+                    {new Intl.DateTimeFormat('en-GH', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                      timeZone: 'Africa/Accra',
+                    }).format(new Date(d.details.startsAt))}
+                  </dd>
+                </div>
+              ) : null}
+              {d.details.endsAt ? (
+                <div>
+                  <dt>Valid until (Ghana time)</dt>
+                  <dd>
+                    {new Intl.DateTimeFormat('en-GH', {
+                      dateStyle: 'medium',
+                      timeStyle: 'short',
+                      timeZone: 'Africa/Accra',
+                    }).format(new Date(d.details.endsAt))}
+                  </dd>
+                </div>
+              ) : null}
+              {d.details.offer ? (
+                <div>
+                  <dt>Offer</dt>
+                  <dd>{d.details.offer}</dd>
+                </div>
+              ) : null}
+              {safeExternalUrl(d.details.externalUrl) ? (
+                <div>
+                  <dt>External link</dt>
+                  <dd>
+                    <a
+                      href={safeExternalUrl(d.details.externalUrl)!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {d.details.externalUrl}
+                    </a>
+                  </dd>
+                </div>
+              ) : null}
+            </dl>
+          ) : null}
           <div className="summary-line">
             <span>Phone</span>
             <strong>{d.phone ?? 'Not published'}</strong>

@@ -109,7 +109,8 @@ export function stateLabel(state: string, kind = 'product') {
         expired: 'Expired',
         withdrawn: 'Withdrawn',
         suspended: 'Suspended',
-        fulfilled: kind === 'wanted' ? 'Found' : kind === 'service' ? 'Completed' : 'Sold',
+        fulfilled:
+          kind === 'wanted' ? 'Found' : kind === 'service' || isFlyer(kind) ? 'Completed' : 'Sold',
       } as Record<string, string>
     )[state] ?? state
   );

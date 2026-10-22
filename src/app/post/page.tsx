@@ -7,14 +7,16 @@ import { db } from '@/server/db';
 import { PostForm } from '@/components/post-form';
 import { EmptyState } from '@/components/ui';
 import type { Account, Category, OwnAdvert } from '@/lib/market';
-import { id } from '@/server/validation';
+import { contentSchema, id } from '@/server/validation';
 export const metadata = { title: 'Post an advert' };
 export default async function PostPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string; renew?: string; advertiserId?: string }>;
+  searchParams: Promise<{ edit?: string; renew?: string; advertiserId?: string; kind?: string }>;
 }) {
   const p = await searchParams;
+  const parsedKind = contentSchema.shape.kind.safeParse(p.kind);
+  const initialKind = parsedKind.success ? parsedKind.data : 'product';
   const u = await requireViewer(`/post${p.edit ? `?edit=${p.edit}` : ''}`);
   const context = await accountContext(u.id);
   const assisted =
@@ -53,7 +55,8 @@ export default async function PostPage({
   return (
     <main id="main" className="container">
       <PostForm
-        key={p.edit ?? assisted ?? 'new'}
+        key={p.edit ?? assisted ?? initialKind}
+        initialKind={initialKind}
         account={context as Account}
         categories={categories}
         userId={u.id}

@@ -52,3 +52,13 @@ The protected preview uses the existing configured Preview database/storage envi
 Existing Google OAuth callback, `APP_ORIGIN`, `AUTH_URL` and storage CORS remain bound to `https://ucc-campus-advertising.vercel.app`. A separate protected deployment cannot complete all authenticated write/upload journeys under that origin without isolated preview-origin/OAuth configuration. Google login may return to the public site; origin protections must not be weakened to work around this. The new account and posting journeys are tested locally with synthetic database sessions; fresh real Google login and provider-backed Campus flyer uploads on the separate preview remain unverified. Live OAuth, existing admin account, permissions and storage configuration were preserved.
 
 Before release, review the PR and decide whether to authorize isolated preview OAuth/origin configuration for hosted end-to-end testing. Production deployment and merge require approval. No new paid services were added.
+
+## Seller workspace follow-up and configuration attempt
+
+- My Adverts now offers seven format shortcuts into validated `/post?kind=...` defaults. Invalid kinds fall back to products; existing edit data takes precedence. Seller flyer management shows dates, offer and safe external links, preserves artwork proportions, and uses Completed rather than Sold.
+- Stable protected review alias: `https://medstash-campus360-preview.vercel.app`. The original public alias is unchanged.
+- Created an isolated Neon child branch `campus360-preview-pr15` (`br-snowy-forest-b950qf5b`) for future authenticated preview testing. It is not currently connected to Vercel; no live records were changed. Default account compute settings were used because custom suspend-time settings were rejected by the account. Remove this branch after PR review when authorized.
+- Preview configuration remains blocked: Google Console returned **You cannot modify this client** for the saved account attempting to add the preview origin/callback. Neither addition was saved. The client owner must add the stable preview origin and `/api/auth/callback/google` redirect.
+- Vercel rejected every branch-scoped environment request with **Project medstash does not have a connected Git repository**. Shared settings were not overwritten. Git integration must be connected before branch overrides can be applied safely, or an isolated preview project must be configured.
+- Inherited storage is listed by Neon, but the attempted CORS configuration stopped with NoSuchBucket before writing a rule. Preview uploads remain unconfigured; the live bucket CORS was not changed.
+- The earlier PR commit passed both GitHub verification and browser CI. Follow-up checks are recorded in the PR.
