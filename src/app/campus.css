@@ -468,7 +468,7 @@
     justify-content: center;
     padding: 6px 3px;
     min-height: 54px;
-    color: var(--muted);
+    color: var(--text);
     font-size: 9px;
     font-weight: 650;
     transition:
@@ -980,5 +980,26 @@
     width: 32px;
     height: 32px;
     flex-basis: 32px;
+  }
+}
+
+/* Compact homepage categories retain comfortable touch targets. */
+.live-home-cleanup .category-tile {
+  gap: 8px;
+  min-height: 84px;
+  padding: 16px 10px;
+}
+.live-home-cleanup .category-tile svg {
+  width: 18px;
+  height: 18px;
+}
+.live-home-cleanup > .market-promise:last-child {
+  margin-top: 24px;
+  margin-bottom: 32px;
+}
+@media (max-width: 699px) {
+  .live-home-cleanup .category-tile {
+    min-height: 78px;
+    padding: 12px 8px;
   }
 }
