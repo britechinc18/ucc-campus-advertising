@@ -6,7 +6,7 @@ import { home } from '@/server/discovery';
 import { query } from '@/server/store';
 import { db } from '@/server/db';
 import type { Category, Listing } from '@/lib/market';
-import { ListingGrid, Search, CategoryChips } from '@/components/listings';
+import { ListingGrid, CategoryChips } from '@/components/listings';
 import Image from 'next/image';
 import { Icon } from '@/components/icon';
 import { EmptyState, ErrorMessage } from '@/components/ui';
@@ -62,64 +62,10 @@ export default async function HomePage() {
     : [];
   return (
     <main id="main" className="container live-home-cleanup">
-      <section className="premium-hero" aria-labelledby="hero-heading">
-        <div className="hero-story">
-          <p className="eyebrow">A CAMPUS FULL OF POSSIBILITIES</p>
-          <h1 id="hero-heading">
-            Your campus.
-            <br />
-            <span>
-              Good things,
-              <br />
-              closer.
-            </span>
-          </h1>
-          <p className="hero-description">
-            The everyday essentials. The unexpected finds. Discover what your campus has to offer.
-          </p>
-          <div className="hero-buttons">
-            <Link className="btn hero-primary" href="/explore">
-              Explore the marketplace <Icon name="arrow" />
-            </Link>
-            <Link className="hero-secondary" href="/post">
-              Have something to offer? <span>Post an advert ↗</span>
-            </Link>
-          </div>
-          <p className="hero-footnote">
-            <Icon name="pin" /> Made for the UCC medical-student community.
-          </p>
-        </div>
-        <Link href="/explore" className="hero-editorial" aria-label="Explore campus essentials">
-          <Image
-            src="/editorial/study.webp"
-            alt="An upholstered chair in a light, uncluttered room"
-            fill
-            priority
-            sizes="(max-width: 699px) 100vw, 50vw"
-          />
-          <div className="editorial-caption">
-            <span>STUDY. CONNECT. REPEAT.</span>
-            <strong>
-              A fresh start,
-              <br />
-              within reach.
-            </strong>
-            <span className="editorial-arrow">
-              <Icon name="arrow" />
-            </span>
-          </div>
-        </Link>
-      </section>
-      <div className="discovery-search">
-        <Search />
-        <p>
-          <Icon name="pin" /> Cape Coast, Ghana
-        </p>
-      </div>
       <section className="category-section" aria-label="Browse categories">
         <div className="section-head">
           <div>
-            <h2>Find your thing around campus</h2>
+            <h1>Find your thing around campus</h1>
           </div>
           <Link className="text-link" href="/explore#filters">
             All categories <Icon name="arrow" />

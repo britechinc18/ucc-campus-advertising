@@ -402,7 +402,7 @@ a,
 .category-section {
   padding-top: 38px;
 }
-.category-section .section-head h2 {
+.category-section .section-head h1 {
   margin-top: 7px;
 }
 .categories {
@@ -1404,7 +1404,7 @@ textarea.field-input {
   .category-section {
     padding-top: 28px;
   }
-  .category-section .section-head h2 {
+  .category-section .section-head h1 {
     font-size: 27px;
   }
   .categories {
