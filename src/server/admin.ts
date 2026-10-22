@@ -54,19 +54,22 @@ export async function adminRead(
   userId: string,
   resource: 'submissions' | 'reports' | 'settings' | 'advertisers' | 'audit',
   offset = 0,
+  reportStatus = 'open',
+  search = '',
 ) {
   return db().transaction(async (tx) => {
     await actor(tx, userId, true);
+    z.enum(['open', 'resolved', 'dismissed']).parse(reportStatus);
     if (resource === 'settings') return one(tx, sql`select * from platform_settings where id=1`);
     if (resource === 'reports')
       return query(
         tx,
-        sql`select * from reports where status='open' order by created_at,id limit 50 offset ${offset}`,
+        sql`select * from reports where status=${reportStatus} order by created_at,id limit 50 offset ${offset}`,
       );
     if (resource === 'advertisers')
       return query(
         tx,
-        sql`select * from advertisers order by created_at,id limit 50 offset ${offset}`,
+        sql`select * from advertisers where (${search}='' or strpos(lower(name),lower(${search}))>0) order by created_at,id limit 50 offset ${offset}`,
       );
     if (resource === 'audit')
       return query(

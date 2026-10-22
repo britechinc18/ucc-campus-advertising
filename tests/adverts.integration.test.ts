@@ -25,6 +25,7 @@ import { saveBusiness, moderateBusiness, listBusinesses } from '../src/server/bu
 import { signUpload, completeUpload, readMedia, type ObjectStorage } from '../src/server/storage';
 import { maintenance } from '../src/server/maintenance';
 import { readiness } from '../src/server/readiness';
+import { accountContext, ownedAdverts, adminView } from '../src/server/frontend';
 import sharp from 'sharp';
 const url = process.env.TEST_DATABASE_URL;
 // Only an explicitly designated test database may be reset.
@@ -545,5 +546,106 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       ['internal', 'maintenance'],
     );
     expect(allowed.status).toBe(200);
+  });
+  it('protects additive admin reads and isolates owner advert details', async () => {
+    const d = await draft();
+    vi.mocked(auth).mockResolvedValue({ user: { id: owner } } as never);
+    for (const route of [
+      'admin/overview',
+      'admin/categories',
+      'admin/adverts',
+      `admin/adverts/${d.advertId}`,
+      `admin/submissions/${d.revisionId}`,
+      `admin/advertisers/${stranger}`,
+    ]) {
+      const response = await dispatch(
+        new Request(`https://campus.test/api/v1/${route}`),
+        route.split('/'),
+      );
+      expect(response.status).toBe(403);
+    }
+    await expect(ownedAdverts(stranger, 0, d.advertId)).rejects.toMatchObject({ status: 404 });
+    expect(((await ownedAdverts(owner, 0, d.advertId)) as { id: string }).id).toBe(d.advertId);
+  });
+  it('returns real allowances, pending edit counts and actual overview metrics', async () => {
+    const d = await submit();
+    await moderate(admin, d.revisionId, 'approve', 'Approved for campus');
+    const edit = await saveAdvert(owner, d.advertId, content('Updated tutoring availability'));
+    await submitAdvert(owner, d.advertId, edit.revisionId, randomUUID());
+    const context = await accountContext(owner);
+    expect(context.activeCount).toBe(1);
+    expect(context.dailyUsed).toBe(1);
+    expect(context.role).toBe('advertiser');
+    const page = (await ownedAdverts(owner, 0, undefined, 'pending')) as {
+      pendingCount: number;
+      items: unknown[];
+    };
+    expect(page.pendingCount).toBe(1);
+    expect(page.items).toHaveLength(1);
+    const overview = (await adminView(admin, 'overview')) as {
+      counts: { live: number; pending: number; reports: number };
+    };
+    expect(overview.counts).toMatchObject({ live: 1, pending: 1, reports: 0 });
+  });
+  it('paginates owner adverts without changing the legacy list endpoint', async () => {
+    for (let i = 0; i < 22; i++) await draft(`Tutor service number ${i}`);
+    const first = (await ownedAdverts(owner)) as { items: { id: string }[]; nextOffset: number };
+    const second = (await ownedAdverts(owner, first.nextOffset)) as {
+      items: { id: string }[];
+      nextOffset: null;
+    };
+    expect(first.items).toHaveLength(20);
+    expect(second.items).toHaveLength(2);
+    expect(second.nextOffset).toBeNull();
+    expect(new Set([...first.items, ...second.items].map((x) => x.id)).size).toBe(22);
+    vi.mocked(auth).mockResolvedValue({ user: { id: owner } } as never);
+    const legacy = await dispatch(new Request('https://campus.test/api/v1/me/adverts'), [
+      'me',
+      'adverts',
+    ]);
+    expect(Array.isArray(await legacy.json())).toBe(true);
+  });
+  it('moderates business contacts and protects attached logos from cleanup', async () => {
+    const p = (await createAssistedProfile(admin, {
+      name: 'Campus business',
+      kind: 'business',
+      consent: true,
+    })) as { id: string };
+    const mediaId = randomUUID();
+    await pool.query(
+      "insert into media_assets(id,advertiser_id,object_key,state,bytes,created_at) values($1,$2,$3,'ready',10,now()-interval '2 days')",
+      [mediaId, p.id, `derived/${mediaId}.webp`],
+    );
+    const objects: ObjectStorage = {
+      sign: async () => '',
+      read: async () => Buffer.from('logo-bytes'),
+      write: async () => {},
+      remove: async () => {},
+    };
+    const profile = {
+      slug: 'campus-business',
+      description: 'A useful business profile for campus students.',
+      location: 'UCC campus',
+      logoMediaId: mediaId,
+      phone: '0241234567',
+      contactConsent: true,
+    };
+    await expect(
+      saveBusiness(admin, { ...profile, contactConsent: undefined }, p.id),
+    ).rejects.toBeDefined();
+    const b = await saveBusiness(admin, profile, p.id);
+    expect((await maintenance(objects)).cleaned).toBe(0);
+    await expect(readMedia(undefined, mediaId, objects)).rejects.toMatchObject({ status: 404 });
+    await moderateBusiness(admin, b.id, {
+      decision: 'approve',
+      reason: 'Profile and contacts reviewed',
+    });
+    expect((await readMedia(undefined, mediaId, objects)).toString()).toBe('logo-bytes');
+    await expect(saveBusiness(owner, profile)).rejects.toBeDefined();
+    await moderateBusiness(admin, b.id, {
+      decision: 'suspend',
+      reason: 'Profile suspended for investigation',
+    });
+    await expect(readMedia(undefined, mediaId, objects)).rejects.toMatchObject({ status: 404 });
   });
 });

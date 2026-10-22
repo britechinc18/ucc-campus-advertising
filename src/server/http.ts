@@ -30,6 +30,7 @@ import { businessQueue, listBusinesses, moderateBusiness, saveBusiness } from '.
 import { signUpload, completeUpload, readMedia } from './storage';
 import { maintenance } from './maintenance';
 import { actor, one, query, rateLimit, limits } from './store';
+import { accountContext, ownedAdverts, ownBusiness, adminView } from './frontend';
 import { db } from './db';
 import { id } from './validation';
 async function body(request: Request) {
@@ -178,8 +179,50 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
     // Fast rejection plus a second check under transaction in each domain service.
     await db().transaction((tx) => actor(tx, userId, path[0] === 'admin'));
     if (method !== 'GET') await rateLimit(`write:${userId}`, 60, 3600);
+    if (method === 'GET' && route === 'me/context')
+      return Response.json(await accountContext(userId), { headers });
+    if (method === 'GET' && route === 'me/business')
+      return Response.json(await ownBusiness(userId), { headers });
     if (method === 'GET' && route === 'me/adverts')
-      return Response.json(await myAdverts(userId), { headers });
+      return Response.json(
+        url.searchParams.has('offset')
+          ? await ownedAdverts(
+              userId,
+              pageOffset(url),
+              undefined,
+              url.searchParams.get('state') ?? undefined,
+            )
+          : await myAdverts(userId),
+        { headers },
+      );
+    if (method === 'GET' && path[0] === 'me' && path[1] === 'adverts' && path.length === 3)
+      return Response.json(await ownedAdverts(userId, 0, path[2]), { headers });
+    if (
+      method === 'GET' &&
+      path[0] === 'admin' &&
+      ['overview', 'categories', 'adverts'].includes(path[1]) &&
+      path.length <= 3
+    )
+      return Response.json(
+        await adminView(
+          userId,
+          path[1],
+          pageOffset(url),
+          path[2],
+          z
+            .string()
+            .max(100)
+            .parse(url.searchParams.get('q') ?? ''),
+        ),
+        { headers },
+      );
+    if (
+      method === 'GET' &&
+      path[0] === 'admin' &&
+      ['submissions', 'advertisers'].includes(path[1]) &&
+      path.length === 3
+    )
+      return Response.json(await adminView(userId, path[1], 0, path[2]), { headers });
     if (method === 'GET' && route === 'me/profile')
       return Response.json(
         await db().transaction(async (tx) => {
@@ -255,11 +298,28 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
     if (path[0] === 'admin') {
       if (method === 'GET' && path.length === 2) {
         if (path[1] === 'businesses')
-          return Response.json(await businessQueue(userId), { headers });
+          return Response.json(
+            url.searchParams.get('all') === '1'
+              ? await adminView(userId, 'businesses', pageOffset(url))
+              : await businessQueue(userId),
+            { headers },
+          );
         const resource = z
           .enum(['submissions', 'reports', 'settings', 'advertisers', 'audit'])
           .parse(path[1]);
-        return Response.json(await adminRead(userId, resource, pageOffset(url)), { headers });
+        return Response.json(
+          await adminRead(
+            userId,
+            resource,
+            pageOffset(url),
+            url.searchParams.get('status') ?? 'open',
+            z
+              .string()
+              .max(100)
+              .parse(url.searchParams.get('q') ?? ''),
+          ),
+          { headers },
+        );
       }
       if (method === 'POST' && route === 'admin/advertisers')
         return Response.json(await createAssistedProfile(userId, await body(request)), {

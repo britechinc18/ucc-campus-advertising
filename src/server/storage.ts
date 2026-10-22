@@ -216,6 +216,11 @@ export async function readMedia(
     sql`select m.object_key from media_assets m join revision_media rm on rm.media_id=m.id join advert_revisions r on r.id=rm.revision_id join adverts a on a.approved_revision_id=r.id join advertisers p on p.id=a.advertiser_id left join users u on u.id=p.user_id where m.id=${mediaId} and m.state='ready' and ${visible} limit 1`,
   );
   if (publicAsset[0]) return objects.read(publicAsset[0].object_key, 5242880);
+  const logo = await query<{ object_key: string }>(
+    db(),
+    sql`select m.object_key from media_assets m join business_profiles b on b.approved->>'logoMediaId'=m.id::text join advertisers p on p.id=b.advertiser_id left join users u on u.id=p.user_id where m.id=${mediaId} and m.state='ready' and b.state<>'suspended' and not p.suspended and (u.id is null or not u.suspended) limit 1`,
+  );
+  if (logo[0]) return objects.read(logo[0].object_key, 5242880);
   ensure(userId, 404, 'NOT_FOUND', 'Image not found');
   const key = await db().transaction(async (tx) => {
     const user = await actor(tx, userId);

@@ -3,20 +3,40 @@ import { z } from 'zod';
 import { db } from './db';
 import { actor, advertiser, audit, one, query } from './store';
 import { ensure } from './errors';
-import { id } from './validation';
+import { id, phone } from './validation';
 const profile = z
   .object({
     slug: z.string().regex(/^[a-z0-9-]{3,60}$/),
     description: z.string().trim().min(20).max(2000),
     location: z.string().trim().min(2).max(120),
+    logoMediaId: id.optional(),
+    phone: phone.optional(),
+    whatsapp: phone.optional(),
+    contactConsent: z.literal(true).optional(),
   })
-  .strict();
+  .strict()
+  .refine((v) => !(v.phone || v.whatsapp) || v.contactConsent === true, {
+    path: ['contactConsent'],
+    message: 'Consent is required to publish contacts',
+  });
 export async function saveBusiness(userId: string, input: unknown, sellerId?: string) {
   const data = profile.parse(input);
   return db().transaction(async (tx) => {
     const user = await actor(tx, userId, !!sellerId);
     const p = await advertiser(tx, user, sellerId);
     ensure(p.kind === 'business', 422, 'BUSINESS_REQUIRED', 'Business advertiser required');
+    if (data.logoMediaId) {
+      const media = await one<{ advertiser_id: string; state: string }>(
+        tx,
+        sql`select advertiser_id,state from media_assets where id=${data.logoMediaId} for share`,
+      );
+      ensure(
+        media.advertiser_id === p.id && media.state === 'ready',
+        422,
+        'INVALID_MEDIA',
+        'Choose a completed image belonging to this business',
+      );
+    }
     const old = await query<{ id: string; state: string; slug: string }>(
       tx,
       sql`select * from business_profiles where advertiser_id=${p.id} for update`,

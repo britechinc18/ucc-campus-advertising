@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { createHash } from 'node:crypto';
 export const id = z.uuid();
-const phone = z
+export const phone = z
   .string()
   .max(32)
   .transform((s, ctx) => {
