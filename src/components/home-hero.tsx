@@ -10,7 +10,7 @@ const slides = [
   {
     image: '/editorial/campus.webp',
     alt: 'The real clock tower and red-roofed buildings at the University of Ghana, photographed by Maxx Sas',
-    heading: 'Your next great find, right here on campus.',
+    heading: 'Your next great find, right on campus.',
   },
 ];
 export function HomeHero({ search }: { search: ReactNode }) {
@@ -131,7 +131,7 @@ export function HomeHero({ search }: { search: ReactNode }) {
             <>
               Your next great find,
               <br />
-              right here on campus.
+              right on campus.
             </>
           )}
         </h1>
