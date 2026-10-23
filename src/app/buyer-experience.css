@@ -682,12 +682,12 @@
   content: '';
   position: absolute;
   width: 88%;
-  height: 9%;
+  height: 5%;
   left: 6%;
-  bottom: 5%;
+  bottom: 11%;
   border-radius: 50%;
   background: var(--hero-shadow);
-  filter: blur(13px);
+  filter: blur(9px);
   z-index: -1;
 }
 .hero-objects img {
@@ -839,8 +839,8 @@
   .hero-objects::before {
     width: 78%;
     left: 11%;
-    bottom: 4%;
-    filter: blur(9px);
+    bottom: 10%;
+    filter: blur(6px);
   }
   .home-promotions {
     grid-template-columns: minmax(0, 1fr);
