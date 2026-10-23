@@ -36,7 +36,7 @@ export function BusinessForm({
       <div className="page-head">
         <div>
           <p className="eyebrow">CAMPUS BUSINESS</p>
-          <h1>Your business profile</h1>
+          <h1>{assisted ? 'Manage business profile' : 'Your business profile'}</h1>
           <p>Help students find your business and current adverts.</p>
         </div>
         {business ? (

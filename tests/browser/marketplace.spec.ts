@@ -1100,3 +1100,87 @@ test('one owner can add a business, select posting identity and filter My Ads', 
   );
   await expect(page.getByRole('link', { name: 'Business adverts', exact: true })).toBeVisible();
 });
+
+test('admin creates an assisted business and hands management to a verified owner', async ({
+  page,
+  browser,
+}) => {
+  await session(page.context(), 'admin');
+  await page.goto('/admin/post');
+  await page.getByLabel('Public advertiser name').fill('Assisted Campus Clothing');
+  await page.getByLabel('Advertiser type').selectOption('business');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Create advertiser & continue' }).click();
+  await expect(page).toHaveURL(/\/admin\/businesses\/.+\/profile/);
+  const identity = page.url().split('/').at(-2)!;
+  await page.getByLabel('Business URL').fill('assisted-campus-clothing');
+  await page
+    .getByLabel('About your business')
+    .fill('Student clothing business managed by MedStash with owner permission.');
+  await page.getByLabel('Campus location').fill('UCC campus');
+  await page.getByLabel('WhatsApp (optional)').fill('0543982307');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Submit for approval' }).click();
+  await expect(page.getByRole('status')).toContainText('submitted');
+  await page.goto('/admin/businesses');
+  await page
+    .locator('.data-row')
+    .filter({ hasText: 'Assisted Campus Clothing' })
+    .getByRole('button', { name: 'Approve', exact: true })
+    .click();
+  await page
+    .getByRole('dialog')
+    .getByLabel('Reason for the audit trail')
+    .fill('Checked business identity and contact consent.');
+  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  const publicContext = await browser.newContext({ baseURL: 'http://localhost:3000' });
+  const pub = await publicContext.newPage();
+  await pub.goto('/campus-360/businesses?q=Assisted%20Campus');
+  await expect(
+    pub.getByRole('heading', { name: 'Assisted Campus Clothing', exact: true }),
+  ).toBeVisible();
+  await pub.getByRole('link', { name: 'View business', exact: true }).click();
+  await expect(pub.getByRole('link', { name: 'WhatsApp', exact: true })).toHaveAttribute(
+    'href',
+    /^https:\/\/wa.me\/233543982307\?text=/,
+  );
+  await page.goto(`/admin/advertisers/${identity}`);
+  await page.getByText('Assign verified owner', { exact: true }).click();
+  await page.getByLabel('Find verified account by name or email').fill('browser-visitor');
+  await page.getByRole('button', { name: 'Find account', exact: true }).click();
+  await page.getByRole('radio').check();
+  await page
+    .getByLabel('Private verification evidence reference')
+    .fill('Owner permission confirmed in local test.');
+  await page.getByLabel('I verified that this account belongs to the advertiser.').check();
+  await page.getByLabel('The advertiser consented to this handover.').check();
+  for (const theme of ['light', 'dark']) {
+    await page.evaluate((theme) => {
+      document.documentElement.dataset.theme = theme;
+    }, theme);
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 1000 });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+    }
+    const accessibility = await new AxeBuilder({ page })
+      .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
+      .analyze();
+    expect(
+      accessibility.violations.filter((v) => ['serious', 'critical'].includes(v.impact ?? '')),
+    ).toEqual([]);
+    await page.screenshot({ path: `/tmp/medstash-handover-${theme}.png`, fullPage: true });
+  }
+  await page.getByRole('button', { name: 'Confirm handover', exact: true }).click();
+  await expect(page.getByText('Claimed', { exact: false }).first()).toBeVisible();
+  await session(pub.context(), 'stranger');
+  await pub.goto('/my-business');
+  await expect(pub.getByLabel('Business URL')).toHaveValue('assisted-campus-clothing');
+  const protectedSearch = await pub.request.get(
+    `/api/v1/admin/advertisers/${identity}/claimants?q=browser`,
+  );
+  expect(protectedSearch.status()).toBe(403);
+  await publicContext.close();
+});

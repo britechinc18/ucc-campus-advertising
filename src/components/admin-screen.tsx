@@ -12,6 +12,7 @@ import {
 } from '@/lib/market';
 import { Dialog, ErrorMessage, Loading, EmptyState, MediaImage } from './ui';
 import { Icon } from './icon';
+import { AdminHandover } from './admin-handover';
 import { SocialProfiles } from './social-profiles';
 interface Row {
   id: string;
@@ -350,31 +351,6 @@ export function AdminScreen({ resource, target }: { resource: string; target?: s
         consent: f.get('consent') === 'yes',
       }),
     });
-  const createBusiness = () =>
-    setAction({
-      title: 'Create assisted business profile',
-      path: 'admin/businesses',
-      description: 'Select an existing business advertiser. The profile still requires review.',
-      fields: [
-        { key: 'advertiserId', label: 'Business advertiser UUID', required: true },
-        { key: 'slug', label: 'Business URL slug', required: true },
-        {
-          key: 'description',
-          label: 'Business description (20+ characters)',
-          type: 'textarea',
-          required: true,
-        },
-        { key: 'location', label: 'Campus location', required: true },
-      ],
-      build: (f) => ({
-        advertiserId: f.get('advertiserId'),
-        profile: {
-          slug: f.get('slug'),
-          description: f.get('description'),
-          location: f.get('location'),
-        },
-      }),
-    });
   const title = target
     ? resource === 'submissions'
       ? 'Review advert'
@@ -415,10 +391,10 @@ export function AdminScreen({ resource, target }: { resource: string; target?: s
             Add category
           </button>
         ) : !target && resource === 'businesses' ? (
-          <button className="btn" onClick={createBusiness}>
+          <Link className="btn" href="/admin/post">
             <Icon name="plus" />
             Create profile
-          </button>
+          </Link>
         ) : !target && ['overview', 'adverts'].includes(resource) ? (
           <Link className="btn" href="/admin/post">
             Create assisted advert →
@@ -478,7 +454,7 @@ export function AdminScreen({ resource, target }: { resource: string; target?: s
         resource === 'submissions' ? (
           <Submission row={detail} onDecision={moderation} />
         ) : resource === 'advertisers' ? (
-          <AdvertiserDetails row={detail} onAction={setAction} />
+          <AdvertiserDetails row={detail} onAction={setAction} onComplete={reload} />
         ) : (
           <AdminAdvert row={detail} onSuspend={suspendAdvert} onFeature={feature} />
         )
@@ -559,6 +535,12 @@ export function AdminScreen({ resource, target }: { resource: string; target?: s
                       </>
                     ) : resource === 'businesses' ? (
                       <>
+                        <Link
+                          className="btn secondary small"
+                          href={`/admin/businesses/${row.advertiser_id}/profile`}
+                        >
+                          Edit profile
+                        </Link>
                         <h3>{row.advertiser_name ?? row.slug}</h3>
                         <p>
                           /{row.slug} · {row.state}
@@ -657,6 +639,12 @@ export function AdminScreen({ resource, target }: { resource: string; target?: s
                       </button>
                     ) : resource === 'businesses' ? (
                       <>
+                        <Link
+                          className="btn secondary small"
+                          href={`/admin/businesses/${row.advertiser_id}/profile`}
+                        >
+                          Edit profile
+                        </Link>
                         {row.pending ? (
                           <>
                             <button
@@ -951,7 +939,15 @@ function AdminAdvert({
     </>
   );
 }
-function AdvertiserDetails({ row, onAction }: { row: Row; onAction: (a: Action) => void }) {
+function AdvertiserDetails({
+  row,
+  onAction,
+  onComplete,
+}: {
+  row: Row;
+  onAction: (a: Action) => void;
+  onComplete: () => void;
+}) {
   const p = row.profile as Row;
   const history = row.history as Row[];
   const adverts = row.adverts as Row[];
@@ -985,46 +981,14 @@ function AdvertiserDetails({ row, onAction }: { row: Row; onAction: (a: Action) 
           >
             {p.suspended ? 'Restore advertiser' : 'Suspend advertiser'}
           </button>
-          {!p.user_id ? (
-            <button
-              className="btn secondary"
-              onClick={() =>
-                onAction({
-                  title: 'Assign verified account',
-                  path: `admin/advertisers/${p.id}/claim`,
-                  description:
-                    'Manually verify contact ownership and consent before claiming. Use an existing verified account UUID. This cannot merge profiles.',
-                  fields: [
-                    { key: 'userId', label: 'Verified account UUID', required: true },
-                    {
-                      key: 'evidenceReference',
-                      label: 'Manual verification evidence reference',
-                      required: true,
-                    },
-                    {
-                      key: 'confirm',
-                      label: 'Ownership and consent verified?',
-                      required: true,
-                      options: [
-                        { value: '', label: 'Choose after completing verification' },
-                        { value: 'yes', label: 'Yes, both verified' },
-                      ],
-                    },
-                  ],
-                  build: (f) => ({
-                    userId: f.get('userId'),
-                    evidenceReference: f.get('evidenceReference'),
-                    contactVerified: f.get('confirm') === 'yes',
-                    consent: f.get('confirm') === 'yes',
-                  }),
-                })
-              }
-            >
-              Assign verified account
-            </button>
+          {p.kind === 'business' ? (
+            <Link className="btn secondary" href={`/admin/businesses/${p.id}/profile`}>
+              Manage business profile
+            </Link>
           ) : null}
         </div>
       </section>
+      {!p.user_id ? <AdminHandover advertiserId={p.id} onComplete={onComplete} /> : null}
       <section className="admin-block">
         <h2>Recent adverts</h2>
         <div className="panel data-list">

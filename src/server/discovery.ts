@@ -127,7 +127,14 @@ export async function advertDetail(advertId: string) {
     db(),
     sql`select ${select} ${base} where a.id=${advertId} and ${visible}`,
   );
-  return { ...a, contacts: contactLinks(a.data, `${process.env.APP_ORIGIN}/adverts/${a.id}`) };
+  return {
+    ...a,
+    contacts: contactLinks(
+      a.data,
+      `${process.env.APP_ORIGIN}/adverts/${a.id}`,
+      a.category_name ?? undefined,
+    ),
+  };
 }
 export async function home() {
   const [fresh, trending, deals, featured] = await Promise.all([

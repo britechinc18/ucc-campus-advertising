@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from './db';
-import { actor, advertiser, audit, one, query } from './store';
+import { actor, advertiser, audit, one, query, limits } from './store';
 import { ensure } from './errors';
 import { id, phone } from './validation';
 const profile = z
@@ -115,5 +115,33 @@ export async function businessQueue(userId: string) {
       tx,
       sql`select * from business_profiles where pending is not null order by id limit 50`,
     );
+  });
+}
+
+export async function assistedBusinessContext(userId: string, sellerId: string) {
+  id.parse(sellerId);
+  return db().transaction(async (tx) => {
+    const user = await actor(tx, userId, true);
+    const p = await advertiser(tx, user, sellerId);
+    ensure(p.kind === 'business', 422, 'BUSINESS_REQUIRED', 'Choose a business advertiser');
+    const profile = await one<{ id: string; name: string; kind: string; suspended: boolean }>(
+      tx,
+      sql`select id,name,kind,suspended from advertisers where id=${sellerId}`,
+    );
+    const rows = await query(
+      tx,
+      sql`select * from business_profiles where advertiser_id=${sellerId}`,
+    );
+    return {
+      business: rows[0] ?? null,
+      account: {
+        role: user.role,
+        profile,
+        profiles: [],
+        settings: await limits(tx),
+        activeCount: 0,
+        dailyUsed: 0,
+      },
+    };
   });
 }

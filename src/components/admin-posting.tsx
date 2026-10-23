@@ -108,6 +108,11 @@ export function AdminPosting() {
               <button className="btn" disabled={!selected}>
                 Continue to advert
               </button>
+              {profiles.find((p) => p.id === selected)?.kind === 'business' ? (
+                <Link className="btn secondary" href={`/admin/businesses/${selected}/profile`}>
+                  Manage business profile
+                </Link>
+              ) : null}
             </form>
           )}
           <div className="form-actions">
@@ -148,7 +153,11 @@ export function AdminPosting() {
                   kind: data.get('kind'),
                   consent: true,
                 });
-                router.push(`/post?advertiserId=${p.id}`);
+                router.push(
+                  data.get('kind') === 'business'
+                    ? `/admin/businesses/${p.id}/profile`
+                    : `/post?advertiserId=${p.id}`,
+                );
               } catch (e) {
                 setError(e instanceof Error ? e.message : 'Could not create advertiser.');
               } finally {

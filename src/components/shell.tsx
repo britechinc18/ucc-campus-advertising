@@ -172,17 +172,25 @@ export function Shell({
                     : '/explore#market-search'
               }
               aria-label="Search MedStash"
-              onClick={() =>
-                document
-                  .getElementById(
-                    path === '/'
-                      ? 'home-search'
-                      : path.startsWith('/campus-360')
-                        ? 'campus-search'
-                        : 'market-search',
-                  )
-                  ?.focus()
-              }
+              onClick={(event) => {
+                const target = document.getElementById(
+                  path === '/'
+                    ? 'home-search'
+                    : path.startsWith('/campus-360')
+                      ? 'campus-search'
+                      : 'market-search',
+                );
+                if (target) {
+                  event.preventDefault();
+                  target.focus();
+                  target.scrollIntoView({
+                    block: 'center',
+                    behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
+                      ? 'instant'
+                      : 'smooth',
+                  });
+                }
+              }}
             >
               <Icon name="search" />
             </Link>
