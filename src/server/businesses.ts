@@ -6,6 +6,7 @@ import { ensure } from './errors';
 import { id, phone } from './validation';
 const profile = z
   .object({
+    name: z.string().trim().min(2).max(100).optional(),
     slug: z.string().regex(/^[a-z0-9-]{3,60}$/),
     description: z.string().trim().min(20).max(2000),
     location: z.string().trim().min(2).max(120),
@@ -23,7 +24,13 @@ export async function saveBusiness(userId: string, input: unknown, sellerId?: st
   const data = profile.parse(input);
   return db().transaction(async (tx) => {
     const user = await actor(tx, userId, !!sellerId);
-    const p = await advertiser(tx, user, sellerId);
+    const own = sellerId
+      ? null
+      : await query<{ id: string }>(
+          tx,
+          sql`select id from advertisers where user_id=${userId} and kind='business'`,
+        );
+    const p = await advertiser(tx, user, sellerId ?? own?.[0]?.id);
     ensure(p.kind === 'business', 422, 'BUSINESS_REQUIRED', 'Business advertiser required');
     if (data.logoMediaId) {
       const media = await one<{ advertiser_id: string; state: string }>(
@@ -93,10 +100,10 @@ export async function moderateBusiness(userId: string, businessId: string, input
     return { id: businessId, decision: data.decision };
   });
 }
-export async function listBusinesses(slug?: string) {
+export async function listBusinesses(slug?: string, search = '', offset = 0) {
   const rows = await query(
     db(),
-    sql`select b.id,b.advertiser_id,b.slug,b.approved,p.name from business_profiles b join advertisers p on p.id=b.advertiser_id left join users u on u.id=p.user_id where b.approved is not null and b.state<>'suspended' and not p.suspended and (u.id is null or not u.suspended) ${slug ? sql`and b.slug=${slug}` : sql``} order by p.name,b.id limit 50`,
+    sql`select b.id,b.advertiser_id,b.slug,b.approved,coalesce(b.approved->>'name',p.name) as name from business_profiles b join advertisers p on p.id=b.advertiser_id left join users u on u.id=p.user_id where b.approved is not null and b.state<>'suspended' and not p.suspended and (u.id is null or not u.suspended) ${slug ? sql`and b.slug=${slug}` : sql``} ${search ? sql`and (coalesce(b.approved->>'name',p.name) || ' ' || coalesce(b.approved->>'description','') || ' ' || coalesce(b.approved->>'location','')) ilike ${'%' + search.slice(0, 100).replace(/[\\%_]/g, '\\$&') + '%'}` : sql``} order by coalesce(b.approved->>'name',p.name),b.id limit 50 offset ${Math.max(0, Math.min(10000, offset))}`,
   );
   if (slug) ensure(rows[0], 404, 'NOT_FOUND', 'Business not found');
   return slug ? rows[0] : rows;

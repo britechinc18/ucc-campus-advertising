@@ -1,28 +1,12 @@
-import { listBusinesses } from '@/server/businesses';
-import { BusinessCard } from '@/components/businesses';
-import { Search } from '@/components/listings';
-import { EmptyState, ErrorMessage } from '@/components/ui';
-import type { Business } from '@/lib/market';
+import { BusinessDirectory } from '@/components/business-directory';
 import Link from 'next/link';
 export const metadata = { title: 'Local businesses' };
 export default async function Businesses({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; offset?: string }>;
 }) {
-  const { q = '' } = await searchParams;
-  let rows: Business[] = [];
-  let failed = false;
-  try {
-    rows = (await listBusinesses()) as Business[];
-  } catch {
-    failed = true;
-  }
-  const found = rows.filter((b) =>
-    `${b.name} ${b.approved.description} ${b.approved.location}`
-      .toLowerCase()
-      .includes(q.slice(0, 100).toLowerCase()),
-  );
+  const { q = '', offset } = await searchParams;
   return (
     <main id="main" className="container">
       <div className="page-head">
@@ -32,22 +16,7 @@ export default async function Businesses({
           <p>Discover the people and services around you.</p>
         </div>
       </div>
-      <Search placeholder="Search businesses and services…" action="/businesses" value={q} />
-      {failed ? (
-        <ErrorMessage message="Businesses couldn’t be loaded. Please try again shortly." />
-      ) : found.length ? (
-        <div className="business-grid">
-          {found.map((b) => (
-            <BusinessCard key={b.id} business={b} />
-          ))}
-        </div>
-      ) : (
-        <EmptyState
-          title={q ? 'No businesses match that search.' : 'Your local directory is taking shape.'}
-          message="Approved campus businesses will appear here with their profiles and available adverts."
-          action={false}
-        />
-      )}
+      <BusinessDirectory q={q} offset={Math.min(10000, Math.max(0, Number(offset) || 0))} />
       <div className="feature-band">
         <div>
           <h2>Run a campus business?</h2>

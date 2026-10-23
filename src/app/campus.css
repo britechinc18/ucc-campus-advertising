@@ -1115,3 +1115,34 @@
     padding-inline: 5px;
   }
 }
+
+.identity-options {
+  display: grid;
+  gap: 12px;
+  margin: 24px 0;
+}
+.identity-option {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 20px;
+  min-height: 72px;
+  transition:
+    border-color 180ms,
+    background-color 180ms;
+}
+.identity-option:hover,
+.identity-option:focus-visible {
+  border-color: var(--brand);
+  background: var(--surface);
+}
+.identity-option span {
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+.identity-option[aria-disabled] {
+  opacity: 0.65;
+  pointer-events: none;
+}

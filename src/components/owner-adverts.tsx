@@ -26,12 +26,14 @@ export function OwnerDashboard({
   offset,
   state,
   submitted,
+  identity = '',
 }: {
   page: OwnerPage;
   account: Account;
   offset: number;
   state: string;
   submitted: boolean;
+  identity?: string;
 }) {
   const count = (s: string) => page.counts.find((c) => c.state === s)?.count ?? 0;
   return (
@@ -43,12 +45,40 @@ export function OwnerDashboard({
           <p>Your items, services and Campus 360 adverts, all in one place.</p>
         </div>
       </div>
+      <nav className="tabs" aria-label="Selling identity">
+        <Link href="/my-adverts" aria-current={!identity ? 'page' : undefined}>
+          All identities
+        </Link>
+        {account.profiles.map((p) => (
+          <Link
+            key={p.id}
+            href={`/my-adverts?identity=${p.id}`}
+            aria-current={identity === p.id ? 'page' : undefined}
+          >
+            {p.name} · {p.kind === 'business' ? 'Business' : 'Personal'}
+          </Link>
+        ))}
+      </nav>
+      <p className="helper">
+        {!account.profiles.some((p) => p.kind === 'student') ? (
+          <Link href="/onboarding?kind=student&next=/my-adverts">Add personal identity →</Link>
+        ) : null}{' '}
+        {!account.profiles.some((p) => p.kind === 'business') ? (
+          <Link href="/onboarding?kind=business&next=/my-business">Add a business →</Link>
+        ) : (
+          <Link href="/my-business">Manage business →</Link>
+        )}
+      </p>
       {submitted ? (
         <p className="form-success" role="status">
           Your advert was submitted for approval. It will appear publicly after review.
         </p>
       ) : null}
-      {account.profile?.suspended ? (
+      {(
+        identity
+          ? account.profiles.find((p) => p.id === identity)?.suspended
+          : account.profiles.every((p) => p.suspended)
+      ) ? (
         <ErrorMessage message="This advertiser profile is suspended. Contact an administrator before posting." />
       ) : null}
       <section className="seller-launch" aria-label="Create an advert">
@@ -69,7 +99,10 @@ export function OwnerDashboard({
               ['business_ad', 'store', 'Advertise a business'],
             ] as const
           ).map(([kind, icon, label]) => (
-            <Link key={kind} href={`/post?kind=${kind}`}>
+            <Link
+              key={kind}
+              href={`/post?kind=${kind}${identity ? `&advertiserId=${identity}` : ''}`}
+            >
               <Icon name={icon} />
               <span>{label}</span>
               <Icon name="chevron" />
@@ -107,7 +140,7 @@ export function OwnerDashboard({
               <Link
                 className={state === key ? 'active' : ''}
                 key={key}
-                href={`/my-adverts${key ? `?state=${key}` : ''}`}
+                href={`/my-adverts?${new URLSearchParams({ ...(key ? { state: key } : {}), ...(identity ? { identity } : {}) })}`}
                 aria-current={state === key ? 'page' : undefined}
               >
                 {label}
@@ -126,6 +159,7 @@ export function OwnerDashboard({
                   </div>
                   <div className="row-main">
                     <h3>{d?.title ?? 'Untitled advert'}</h3>
+                    <p className="meta">{a.advertiser_name}</p>
                     {d ? <p className="price">{priceText(d)}</p> : null}
                     <p>
                       {a.revisions[0]?.status === 'rejected'
@@ -161,7 +195,7 @@ export function OwnerDashboard({
             {offset > 0 ? (
               <Link
                 className="btn secondary"
-                href={`/my-adverts?offset=${Math.max(0, offset - 20)}${state ? `&state=${state}` : ''}`}
+                href={`/my-adverts?offset=${Math.max(0, offset - 20)}${state ? `&state=${state}` : ''}${identity ? `&identity=${identity}` : ''}`}
               >
                 Previous
               </Link>
@@ -169,7 +203,7 @@ export function OwnerDashboard({
             {page.nextOffset !== null ? (
               <Link
                 className="btn secondary"
-                href={`/my-adverts?offset=${page.nextOffset}${state ? `&state=${state}` : ''}`}
+                href={`/my-adverts?offset=${page.nextOffset}${state ? `&state=${state}` : ''}${identity ? `&identity=${identity}` : ''}`}
               >
                 Next adverts
               </Link>
@@ -204,12 +238,12 @@ export function OwnerDashboard({
                   left today.
                 </p>
                 <p style={{ marginTop: 16 }}>
-                  Pending adverts reserve a slot. Editing an existing advert does not use another
-                  daily submission.
+                  Personal and business adverts share this allowance. Pending adverts reserve a
+                  slot. Editing an existing advert does not use another daily submission.
                 </p>
               </>
             )}
-            {account.profile?.kind === 'business' ? (
+            {account.profiles.some((p) => p.kind === 'business') ? (
               <Link className="text-link" href="/my-business">
                 Manage business profile →
               </Link>

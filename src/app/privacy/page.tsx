@@ -18,9 +18,10 @@ export default function PrivacyPage() {
         </p>
         <h2>Browsing and device storage</h2>
         <p>
-          Saved listings and appearance preferences are stored in your browser on this device.
-          Sign-in uses session cookies. Clearing browser storage can remove your bookmarks and
-          preferences.
+          Saved listings, recently viewed advert IDs and appearance preferences are stored in your
+          browser on this device. Sign-in uses session cookies. Clearing browser storage can remove
+          your bookmarks and preferences and browsing history. Recently viewed history stays on this
+          device and can be cleared from its page.
         </p>
         <h2>Safety and operation</h2>
         <p>

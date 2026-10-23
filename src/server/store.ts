@@ -30,12 +30,20 @@ export interface Advertiser {
   kind: string;
 }
 export async function advertiser(tx: Executor, user: Actor, advertiserId?: string) {
-  const value = await one<Advertiser>(
+  const candidates = await query<Advertiser>(
     tx,
     advertiserId
       ? sql`select * from advertisers where id=${advertiserId} for update`
-      : sql`select * from advertisers where user_id=${user.id} for update`,
+      : sql`select * from advertisers where user_id=${user.id} order by created_at,id for update`,
   );
+  ensure(candidates.length, 404, 'NOT_FOUND', 'Advertiser not found');
+  ensure(
+    advertiserId || candidates.length === 1,
+    422,
+    'IDENTITY_REQUIRED',
+    'Choose a personal or business identity',
+  );
+  const value = candidates[0];
   ensure(
     user.role === 'admin' || value.user_id === user.id,
     403,
@@ -81,3 +89,7 @@ export async function rateLimit(key: string, limit: number, seconds: number) {
 }
 // a,r,p,u aliases are fixed within public queries; never include unapproved revisions.
 export const visible = sql`a.state='published' and a.expires_at>now() and r.status='approved' and not p.suspended and (u.id is null or not u.suspended) and (r.data->'details'->>'endsAt' is null or (r.data->'details'->>'endsAt')::timestamptz>now())`;
+
+// The owner user row serializes submissions across personal and business identities.
+export const ownerIdentities = (sellerId: string) =>
+  sql`select p.id from advertisers p where p.id=${sellerId} or p.user_id=(select user_id from advertisers where id=${sellerId})`;

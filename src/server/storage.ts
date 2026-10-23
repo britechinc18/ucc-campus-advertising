@@ -144,7 +144,7 @@ export async function signUpload(
     .strict()
     .parse(input);
   const asset = await db().transaction(async (tx) => {
-    const user = await actor(tx, userId, !!data.advertiserId);
+    const user = await actor(tx, userId);
     const p = await advertiser(tx, user, data.advertiserId);
     const settings = await limits(tx);
     ensure(

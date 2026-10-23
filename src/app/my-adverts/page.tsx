@@ -7,7 +7,7 @@ export const metadata = { title: 'My adverts' };
 export default async function MyAdverts({
   searchParams,
 }: {
-  searchParams: Promise<{ offset?: string; state?: string; submitted?: string }>;
+  searchParams: Promise<{ offset?: string; state?: string; submitted?: string; identity?: string }>;
 }) {
   const p = await searchParams;
   const u = await requireViewer('/my-adverts');
@@ -25,10 +25,18 @@ export default async function MyAdverts({
     'suspended',
   ];
   const state = allowed.includes(p.state ?? '') ? (p.state ?? '') : '';
-  const page = await ownedAdverts(u.id, offset, undefined, state || undefined);
+  const identity = context.profiles.find((profile) => profile.id === p.identity)?.id ?? '';
+  const page = await ownedAdverts(
+    u.id,
+    offset,
+    undefined,
+    state || undefined,
+    identity || undefined,
+  );
   return (
     <main id="main" className="container">
       <OwnerDashboard
+        identity={identity}
         account={context as Account}
         page={JSON.parse(JSON.stringify(page)) as OwnerPage}
         offset={offset}

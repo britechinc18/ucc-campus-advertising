@@ -858,10 +858,81 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     expect(results[0]).toEqual(results[1]);
     expect(
       await createProfile(stranger, { name: 'Changed request', kind: 'business', consent: true }),
-    ).toEqual(results[0]);
+    ).not.toEqual(results[0]);
     expect(
       (await pool.query('select count(*)::int as n from advertisers where user_id=$1', [stranger]))
         .rows[0].n,
-    ).toBe(1);
+    ).toBe(2);
+  });
+  it('requires explicit identity and enforces shared concurrent quotas across both profiles', async () => {
+    const personal = (await accountContext(owner)).profile!;
+    const business = (await createProfile(owner, {
+      name: 'Campus Wardrobe',
+      kind: 'business',
+      consent: true,
+    })) as { id: string };
+    expect((await accountContext(owner)).profiles).toHaveLength(2);
+    await expect(createAdvert(owner, content())).rejects.toMatchObject({
+      code: 'IDENTITY_REQUIRED',
+    });
+    const drafts = await Promise.all(
+      Array.from({ length: 4 }, (_, i) =>
+        createAdvert(owner, content(`Identity service ${i}`), i % 2 ? business.id : personal.id),
+      ),
+    );
+    const submitted = await Promise.allSettled(
+      drafts.map((d) => submitAdvert(owner, d.advertId, d.revisionId, randomUUID())),
+    );
+    expect(submitted.filter((r) => r.status === 'fulfilled')).toHaveLength(3);
+    expect(submitted.filter((r) => r.status === 'rejected')).toHaveLength(1);
+    expect((await accountContext(owner)).dailyUsed).toBe(3);
+    expect((await accountContext(owner)).activeCount).toBe(3);
+    await pool.query('update platform_settings set daily_limit=20,max_active=3');
+    const remaining = drafts[submitted.findIndex((r) => r.status === 'rejected')];
+    await expect(
+      submitAdvert(owner, remaining.advertId, remaining.revisionId, randomUUID()),
+    ).rejects.toMatchObject({ code: 'ACTIVE_LIMIT' });
+    await expect(createAdvert(stranger, content(), business.id)).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
+    expect(
+      (
+        (await ownedAdverts(owner, 0, undefined, undefined, business.id)) as {
+          items: { advertiser_id: string }[];
+        }
+      ).items.every((a: unknown) => (a as { advertiser_id: string }).advertiser_id === business.id),
+    ).toBe(true);
+  });
+  it('keeps media bound to the selected identity and moderates business names', async () => {
+    const business = (await createProfile(owner, {
+      name: 'Original Brand',
+      kind: 'business',
+      consent: true,
+    })) as { id: string };
+    const personal = (await accountContext(owner)).profiles.find((p) => p.kind === 'student')!;
+    const mid = randomUUID();
+    await pool.query(
+      "insert into media_assets(id,advertiser_id,object_key,state,bytes) values($1,$2,$3,'ready',10)",
+      [mid, personal.id, `derived/${mid}.webp`],
+    );
+    await expect(
+      createAdvert(owner, { ...content(), mediaIds: [mid] }, business.id),
+    ).rejects.toMatchObject({ code: 'INVALID_MEDIA' });
+    const b = await saveBusiness(owner, {
+      name: 'Approved Brand',
+      slug: 'brand-profile',
+      description: 'Campus wardrobe business with useful clothing.',
+      location: 'UCC',
+    });
+    await moderateBusiness(admin, b.id, { decision: 'approve', reason: 'Reviewed business name' });
+    await saveBusiness(owner, {
+      name: 'Pending secret brand',
+      slug: 'brand-profile',
+      description: 'Unapproved business description for review.',
+      location: 'UCC',
+    });
+    expect(((await listBusinesses()) as { name: string }[])[0].name).toBe('Approved Brand');
+    expect(await listBusinesses(undefined, 'Pending secret')).toEqual([]);
+    expect((await listBusinesses(undefined, 'Approved Brand')) as unknown[]).toHaveLength(1);
   });
 });

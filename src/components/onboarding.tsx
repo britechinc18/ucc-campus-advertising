@@ -4,7 +4,15 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { safeReturn } from '@/lib/market';
 import { ErrorMessage } from './ui';
-export function Onboarding({ name, next }: { name: string; next: string }) {
+export function Onboarding({
+  name,
+  next,
+  kind,
+}: {
+  name: string;
+  next: string;
+  kind?: 'student' | 'business';
+}) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
@@ -18,7 +26,7 @@ export function Onboarding({ name, next }: { name: string; next: string }) {
         try {
           await api('me/profile', 'POST', {
             name: f.get('name'),
-            kind: f.get('kind'),
+            kind: kind ?? f.get('kind'),
             consent: true,
           });
           await api('me/mode', 'POST', { mode: 'seller' });
@@ -45,7 +53,7 @@ export function Onboarding({ name, next }: { name: string; next: string }) {
       </label>
       <label className="form-group">
         <span className="form-label">I’m advertising as</span>
-        <select className="field-input" name="kind">
+        <select className="field-input" name="kind" value={kind} disabled={!!kind}>
           <option value="student">A student</option>
           <option value="business">A business</option>
         </select>
@@ -62,7 +70,7 @@ export function Onboarding({ name, next }: { name: string; next: string }) {
         {busy ? 'Activating…' : 'Activate seller tools'}
       </button>
       <p className="meta">
-        Choose carefully: profile type cannot currently be changed through self-service.
+        One login can have a personal profile and one business. Posting limits are shared.
       </p>
     </form>
   );

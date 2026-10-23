@@ -80,6 +80,10 @@ export function PostForm({
   advertiserId?: string;
   initialKind?: AdvertContent['kind'];
 }) {
+  const assisted =
+    !!advertiserId &&
+    account.role === 'admin' &&
+    !account.profiles.some((p) => p.id === advertiserId);
   const [form, setForm] = useState<DraftForm>(() =>
     advert
       ? initialForm(advert)
@@ -250,9 +254,11 @@ export function PostForm({
               data,
             )
           : await api<{ advertId: string; revisionId: string }>(
-              advertiserId ? 'admin/adverts' : 'me/adverts',
+              assisted
+                ? 'admin/adverts'
+                : `me/adverts${advertiserId ? `?advertiserId=${advertiserId}` : ''}`,
               'POST',
-              advertiserId ? { advertiserId, content: data } : data,
+              assisted ? { advertiserId, content: data } : data,
             );
         saved.current = { ...result, key: crypto.randomUUID(), content: encoded };
       }
@@ -267,7 +273,7 @@ export function PostForm({
         try {
           sessionStorage.removeItem(storageKey);
         } catch {}
-        router.push(advertiserId ? '/admin/submissions' : '/my-adverts?submitted=1');
+        router.push(assisted ? '/admin/submissions' : '/my-adverts?submitted=1');
         router.refresh();
       } else {
         setSavedMessage(
@@ -307,17 +313,17 @@ export function PostForm({
               ? 'Renew advert'
               : advert
                 ? 'Edit advert'
-                : advertiserId
+                : assisted
                   ? 'Create assisted advert'
                   : 'Post an advert'}
           </h1>
           <p>
-            {advertiserId
+            {assisted
               ? 'Posting for the selected advertiser. Review and contact consent still apply.'
               : 'Make your next campus connection.'}
           </p>
         </div>
-        <Link className="text-link" href={advertiserId ? '/admin/adverts' : '/my-adverts'}>
+        <Link className="text-link" href={assisted ? '/admin/adverts' : '/my-adverts'}>
           Manage adverts <Icon name="arrow" />
         </Link>
       </div>

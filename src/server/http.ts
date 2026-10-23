@@ -32,7 +32,7 @@ import { listAdverts, advertDetail, home, reportAdvert, recordEvent } from './di
 import { businessQueue, listBusinesses, moderateBusiness, saveBusiness } from './businesses';
 import { signUpload, completeUpload, readMedia } from './storage';
 import { maintenance } from './maintenance';
-import { actor, one, query, rateLimit, limits } from './store';
+import { actor, query, rateLimit } from './store';
 import { accountContext, ownedAdverts, ownBusiness, adminView } from './frontend';
 import { db } from './db';
 import { id } from './validation';
@@ -220,7 +220,7 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
         .parse(await body(request));
       const context = await accountContext(userId);
       ensure(
-        context.profile && !context.profile.suspended,
+        context.profiles.some((p) => !p.suspended),
         403,
         'SELLER_REQUIRED',
         'Activate your seller profile first',
@@ -238,7 +238,10 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
     if (method === 'GET' && route === 'admin/system')
       return Response.json(await systemCheck(userId), { headers });
     if (method === 'GET' && route === 'me/context')
-      return Response.json(await accountContext(userId), { headers });
+      return Response.json(
+        await accountContext(userId, url.searchParams.get('advertiserId') ?? undefined),
+        { headers },
+      );
     if (method === 'GET' && route === 'me/business')
       return Response.json(await ownBusiness(userId), { headers });
     if (method === 'GET' && route === 'me/adverts')
@@ -249,6 +252,7 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
               pageOffset(url),
               undefined,
               url.searchParams.get('state') ?? undefined,
+              url.searchParams.get('advertiserId') ?? undefined,
             )
           : await myAdverts(userId),
         { headers },
@@ -281,33 +285,32 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
       path.length === 3
     )
       return Response.json(await adminView(userId, path[1], 0, path[2]), { headers });
-    if (method === 'GET' && route === 'me/profile')
-      return Response.json(
-        await db().transaction(async (tx) => {
-          await actor(tx, userId);
-          const profile = await one<{ id: string }>(
-            tx,
-            sql`select * from advertisers where user_id=${userId}`,
-          );
-          const settings = await limits(tx);
-          const usage = await query(
-            tx,
-            sql`select count from advertiser_daily_usage where advertiser_id=${profile.id} and day=to_char(now() at time zone 'Africa/Accra','YYYY-MM-DD')`,
-          );
-          return { profile, settings, usage: usage[0] ?? { count: 0 } };
-        }),
-        { headers },
+    if (method === 'GET' && route === 'me/profile') {
+      const context = await accountContext(
+        userId,
+        url.searchParams.get('advertiserId') ?? undefined,
       );
+      return Response.json({ ...context, usage: { count: context.dailyUsed } }, { headers });
+    }
     if (method === 'POST' && route === 'me/profile')
       return Response.json(await createProfile(userId, await body(request)), {
         headers,
         status: 201,
       });
     if (method === 'POST' && route === 'me/adverts')
-      return Response.json(await createAdvert(userId, await body(request)), {
-        headers,
-        status: 201,
-      });
+      return Response.json(
+        await createAdvert(
+          userId,
+          await body(request),
+          url.searchParams.has('advertiserId')
+            ? id.parse(url.searchParams.get('advertiserId'))
+            : undefined,
+        ),
+        {
+          headers,
+          status: 201,
+        },
+      );
     if (path[0] === 'me' && path[1] === 'adverts' && path.length >= 3) {
       id.parse(path[2]);
       if (method === 'PATCH' && path.length === 3)

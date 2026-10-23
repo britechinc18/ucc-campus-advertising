@@ -7,13 +7,14 @@ export const metadata = { title: 'Activate your seller profile' };
 export default async function OnboardingPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; kind?: string }>;
 }) {
   const params = await searchParams;
   const next = safeReturn(params.next);
   const u = await requireViewer(`/onboarding?next=${encodeURIComponent(next)}`);
   const context = await accountContext(u.id);
-  if (context.profile)
+  const kind = params.kind === 'student' || params.kind === 'business' ? params.kind : undefined;
+  if (kind ? context.profiles.some((p) => p.kind === kind) : context.profiles.length)
     return (
       <main id="main" className="container">
         <section className="narrow panel auth-panel">
@@ -29,7 +30,7 @@ export default async function OnboardingPage({
         <p className="eyebrow">BEFORE YOUR FIRST ADVERT</p>
         <h1>Your campus identity.</h1>
         <p>Tell people who they are connecting with.</p>
-        <Onboarding name={u.name ?? ''} next={next} />
+        <Onboarding name={kind === 'business' ? '' : (u.name ?? '')} next={next} kind={kind} />
       </section>
     </main>
   );

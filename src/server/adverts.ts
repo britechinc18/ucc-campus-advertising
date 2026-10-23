@@ -1,6 +1,16 @@
 import { sql } from 'drizzle-orm';
 import { db, type Executor } from './db';
-import { actor, advertiser, audit, limits, one, query, type Actor, type Settings } from './store';
+import {
+  actor,
+  advertiser,
+  audit,
+  limits,
+  one,
+  query,
+  type Actor,
+  type Settings,
+  ownerIdentities,
+} from './store';
 import { ensure } from './errors';
 import {
   contentSchema,
@@ -28,6 +38,12 @@ interface Revision {
 }
 async function owned(tx: Executor, user: Actor, advertId: string) {
   const a = await one<Advert>(tx, sql`select * from adverts where id=${id.parse(advertId)}`);
+  const owners = await query<{ user_id: string | null }>(
+    tx,
+    sql`select user_id from advertisers where id=${a.advertiser_id}`,
+  );
+  if (owners[0]?.user_id)
+    await tx.execute(sql`select id from users where id=${owners[0].user_id} for update`);
   const seller = await advertiser(tx, user, a.advertiser_id);
   // All lifecycle mutations lock advertiser first, then advert.
   const fresh = await one<Advert>(tx, sql`select * from adverts where id=${a.id} for update`);
@@ -77,10 +93,13 @@ export async function createProfile(userId: string, input: unknown) {
     await tx.execute(sql`select id from users where id=${userId} for update`);
     const existing = await query<{ id: string }>(
       tx,
-      sql`select id from advertisers where user_id=${userId}`,
+      sql`select id from advertisers where user_id=${userId} and kind=${data.kind}`,
     );
     if (existing.length)
-      return one(tx, sql`select id,name,kind from advertisers where user_id=${userId}`);
+      return one(
+        tx,
+        sql`select id,name,kind from advertisers where user_id=${userId} and kind=${data.kind}`,
+      );
     return one(
       tx,
       sql`insert into advertisers(user_id,name,kind,consent_at,created_by) values(${userId},${data.name},${data.kind},now(),${userId}) returning id,name,kind`,
@@ -90,7 +109,7 @@ export async function createProfile(userId: string, input: unknown) {
 export async function createAdvert(userId: string, input: unknown, sellerId?: string) {
   const data = contentSchema.parse(input);
   return db().transaction(async (tx) => {
-    const user = await actor(tx, userId, !!sellerId);
+    const user = await actor(tx, userId);
     const seller = await advertiser(tx, user, sellerId);
     const settings = await limits(tx);
     await validateContent(tx, seller.id, data, settings);
@@ -162,7 +181,7 @@ async function activeCount(tx: Executor, sellerId: string) {
   return (
     await one<{ count: number }>(
       tx,
-      sql`select count(*)::int as count from adverts a where advertiser_id=${sellerId} and ((a.state='published' and a.expires_at>now()) or exists(select 1 from advert_revisions r where r.advert_id=a.id and r.status='pending' and r.purpose in ('new','renew')))`,
+      sql`select count(*)::int as count from adverts a where advertiser_id in (${ownerIdentities(sellerId)}) and ((a.state='published' and a.expires_at>now()) or exists(select 1 from advert_revisions r where r.advert_id=a.id and r.status='pending' and r.purpose in ('new','renew')))`,
     )
   ).count;
 }
@@ -214,7 +233,7 @@ export async function submitAdvert(
       );
     const duplicates = await query(
       tx,
-      sql`select r.id from advert_revisions r join adverts other on other.id=r.advert_id where other.advertiser_id=${seller.id} and other.id<>${a.id} and (r.status='pending' or (r.id=other.approved_revision_id and other.state='published' and other.expires_at>now())) and (r.fingerprint=${r.fingerprint} or exists(select 1 from revision_media x join media_assets xm on xm.id=x.media_id join revision_media y on y.revision_id=${r.id} join media_assets ym on ym.id=y.media_id where x.revision_id=r.id and xm.checksum=ym.checksum)) limit 1`,
+      sql`select r.id from advert_revisions r join adverts other on other.id=r.advert_id where other.advertiser_id in (${ownerIdentities(seller.id)}) and other.id<>${a.id} and (r.status='pending' or (r.id=other.approved_revision_id and other.state='published' and other.expires_at>now())) and (r.fingerprint=${r.fingerprint} or exists(select 1 from revision_media x join media_assets xm on xm.id=x.media_id join revision_media y on y.revision_id=${r.id} join media_assets ym on ym.id=y.media_id where x.revision_id=r.id and xm.checksum=ym.checksum)) limit 1`,
     );
     ensure(
       !duplicates.length,
@@ -232,7 +251,7 @@ export async function submitAdvert(
       );
       const usage = await one<{ count: number }>(
         tx,
-        sql`select count from advertiser_daily_usage where advertiser_id=${seller.id} and day=${day.day} for update`,
+        sql`select coalesce(sum(count),0)::int as count from advertiser_daily_usage where advertiser_id in (${ownerIdentities(seller.id)}) and day=${day.day}`,
       );
       ensure(
         usage.count < settings.daily_limit,
