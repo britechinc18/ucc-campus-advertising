@@ -17,7 +17,7 @@ export default function Help() {
           <li>Never share passwords, verification codes or financial account details.</li>
           <li>Be cautious about deposits and requests to transfer money before meeting.</li>
         </ul>
-        <h2>When posting</h2>
+        <h2 id="rules">Platform rules</h2>
         <p>
           Describe the item or service honestly, use your own photographs and obtain permission for
           any contact details you publish. Do not advertise illegal, unsafe, stolen or prohibited

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { BusinessDirectory } from '@/components/business-directory';
+import { BusinessCallout } from '@/components/business-callout';
 import { notFound } from 'next/navigation';
 import { campusCategories } from '@/lib/campus';
 import { listAdverts } from '@/server/discovery';
@@ -79,11 +80,14 @@ export default async function CampusCategory({
         </nav>
       ) : null}
       {category === 'businesses' && p.view !== 'adverts' ? (
-        <BusinessDirectory
-          q={p.q}
-          offset={Math.min(10000, Math.max(0, Number(p.offset) || 0))}
-          action="/campus-360/businesses"
-        />
+        <>
+          <BusinessDirectory
+            q={p.q}
+            offset={Math.min(10000, Math.max(0, Number(p.offset) || 0))}
+            action="/campus-360/businesses"
+          />
+          <BusinessCallout />
+        </>
       ) : (
         <>
           <Search
@@ -96,7 +100,7 @@ export default async function CampusCategory({
             {failed ? (
               <ErrorMessage message="These updates couldn’t be loaded. Try clearing your search." />
             ) : items.length ? (
-              <FlyerGrid items={items} />
+              <FlyerGrid items={items} compact />
             ) : (
               <EmptyState
                 title={`No ${c.name.toLowerCase()} just yet.`}

@@ -74,13 +74,7 @@ export function RecentlyViewed() {
   return (
     <>
       <div className="page-head">
-        <div>
-          <p className="eyebrow">BACK TO A GOOD FIND</p>
-          <h1>Recently viewed</h1>
-          <p>
-            Your last 30 adverts, stored only on this browser and device. History does not sync.
-          </p>
-        </div>
+        <h1 className="recent-page-title">Recently viewed</h1>
         {ids.length ? (
           <button
             className="btn secondary"

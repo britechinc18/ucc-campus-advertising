@@ -41,9 +41,6 @@ export function SavedPage() {
   return (
     <>
       <h1 className="sr-only">Saved bookmarks</h1>
-      <p className="saved-device-note">
-        Bookmarks show on this browser and device. They do not automatically sync.
-      </p>
       {!ready ? (
         <Loading label="Checking your saved adverts…" />
       ) : result.error ? (

@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { safeReturn } from '@/lib/market';
@@ -27,7 +28,7 @@ export function Onboarding({
           await api('me/profile', 'POST', {
             name: f.get('name'),
             kind: kind ?? f.get('kind'),
-            consent: true,
+            consent: f.get('consent') === 'on',
           });
           await api('me/mode', 'POST', { mode: 'seller' });
           router.replace(safeReturn(next));
@@ -59,10 +60,11 @@ export function Onboarding({
         </select>
       </label>
       <label className="check" style={{ marginTop: 20, alignItems: 'flex-start' }}>
-        <input type="checkbox" required />
+        <input type="checkbox" name="consent" required />
         <span>
           I consent to create an advertiser profile and agree to publish only accurate adverts and
-          contacts I have permission to share.
+          contacts I have permission to share. I agree to the{' '}
+          <Link href="/help#rules">platform rules</Link>.
         </span>
       </label>
       {error ? <ErrorMessage message={error} /> : null}

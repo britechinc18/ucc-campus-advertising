@@ -17,15 +17,7 @@ export default async function Campus({ searchParams }: { searchParams: Promise<{
   }
   return (
     <main id="main" className="container campus-page campus-overview">
-      <div className="page-head">
-        <div>
-          <h1>Campus 360.</h1>
-          <p>Events, offers and updates from your community.</p>
-        </div>
-        <Link className="text-link" href="/businesses">
-          Business directory →
-        </Link>
-      </div>
+      <h1 className="sr-only">Campus 360</h1>
       <Search
         action="/campus-360"
         value={p.q}
@@ -42,7 +34,7 @@ export default async function Campus({ searchParams }: { searchParams: Promise<{
         {failed ? (
           <ErrorMessage message="Campus updates couldn’t be loaded. Please try again shortly." />
         ) : items.length ? (
-          <FlyerGrid items={items} />
+          <FlyerGrid items={items} compact />
         ) : (
           <EmptyState
             title="Good things are on their way."
