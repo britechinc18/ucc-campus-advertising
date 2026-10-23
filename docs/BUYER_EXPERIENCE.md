@@ -37,3 +37,7 @@ The workspace slide retains its original canvas-coloured fade. The campus slide 
 ## Flat object heroes — 23 October 2026
 
 Both hero slides use transparent editorial product arrangements on flat, theme-aware surfaces. No hero gradient, mask, photographic rectangle or image filter remains. Object-fit contain preserves proportions. Two-line heading slots align the short second title with the first title’s last line; subtitle and search stay at identical positions. Existing three-minute rotation, swipe, mouse drag, arrow keys, pause-on-focus and reduced-motion behavior remain. The approved promotional cards are unchanged.
+
+## Grounded studio hero and mobile layout
+
+Reuse the approved transparent editorial objects with subtle studio lighting and a soft contact shadow underneath. The shadow is limited to the depicted objects; the card has no elevation. Light and dark palettes retain readable copy. On phones, separate the copy/search from a larger centered product arrangement below, with an explicit Search button. Subtitle and search positions remain consistent across slides. No new image downloads, generated assets or dependencies.
