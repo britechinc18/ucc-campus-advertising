@@ -15,9 +15,9 @@ export function HomePromotions() {
         </div>
         <div className="promo-copy">
           <h2>
-            Great finds under <strong>GH₵300</strong>
+            Great finds under <strong>GH₵100</strong>
           </h2>
-          <Link className="btn" href="/explore?max=29999">
+          <Link className="btn" href="/explore?max=9999">
             Shop deals <Icon name="arrow" />
           </Link>
         </div>

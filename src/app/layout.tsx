@@ -5,6 +5,7 @@ import './marketplace.css';
 import './buyer-experience.css';
 import type { Metadata } from 'next';
 import { Shell } from '@/components/shell';
+import { SiteFooter } from '@/components/site-footer';
 import { viewer } from '@/server/viewer';
 export const dynamic = 'force-dynamic';
 export const metadata: Metadata = {
@@ -45,6 +46,7 @@ export default async function Layout({ children }: { children: React.ReactNode }
       </head>
       <body>
         <Shell
+          footer={<SiteFooter />}
           user={
             v.user
               ? {

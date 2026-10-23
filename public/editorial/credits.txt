@@ -18,3 +18,9 @@ Headphones: existing licensed Unsplash photograph. Source records retained in th
 Homepage promotion backgrounds (deals-banner.webp and selling-banner.webp): generated editorial illustrations, explicitly authorized by the owner on 23 October 2026. These are decorative examples, not photographs of actual listings. Prompt and production records: docs/PROMOTION_ASSETS.md in the source repository.
 
 hero-study.webp and hero-finds.webp: generated decorative editorial product arrangements, authorized by the owner on 23 October 2026. Transparent alpha WebP. Not photographs of actual listings. Prompts in docs/PROMOTION_ASSETS.md.
+
+Homepage collection photographs (editorial inspiration, not actual listed products or participating businesses):
+medical-books.webp: Bermix Studio. Medical student textbooks and stethoscope. Unsplash License. https://unsplash.com/photos/a-stethoscope-sitting-on-top-of-a-pile-of-books-vT-Hkq0_FBU
+electronics-desk.webp: Christopher Gower. Technology on a desk. Unsplash License. https://unsplash.com/photos/black-cordless-headphones-beside-closed-black-laptop-computer-and-smartphone-_aXa21cf7rY
+local-business.webp: Skyler Smith. Coffee shop counter. Unsplash License. https://unsplash.com/photos/coffee-shop-counter-with-colorful-cups-and-bags-hqh-85z1CFE
+All resized to a maximum width of 1000px and compressed as WebP. https://unsplash.com/license

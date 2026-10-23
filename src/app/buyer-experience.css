@@ -893,3 +893,162 @@
     font-size: 17px;
   }
 }
+
+/* Collections use the same light image-and-caption treatment as listing tiles. */
+.campus-edits .editorial-tile {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.campus-edits .edit-image {
+  aspect-ratio: 1.5;
+  border-radius: 10px;
+  background: var(--soft);
+}
+.campus-edits .edit-copy {
+  padding: 13px 0 0;
+}
+.campus-edits .edit-copy h3 {
+  margin: 0 0 7px;
+  font-size: 17px;
+  font-weight: 500;
+  letter-spacing: -0.3px;
+}
+.campus-edits .edit-copy > span {
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+}
+.home-campus .compact-flyer {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.home-campus .compact-flyer .flyer-art {
+  min-height: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  background: transparent;
+}
+.flyer-caption {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px 10px;
+  padding-top: 12px;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.flyer-caption .flyer-kind {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.85px;
+}
+.flyer-caption a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-weight: 500;
+}
+.flyer-caption time {
+  color: var(--muted);
+  font-size: 10px;
+}
+.site-footer {
+  display: block;
+  margin-top: 56px;
+  padding-block: 36px 24px;
+}
+.footer-main {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr 1fr;
+  gap: 32px;
+}
+.footer-main:has(nav[aria-label='MedStash social media']) {
+  grid-template-columns: 1.5fr 1fr 1fr 1fr;
+}
+.footer-brand p {
+  font-size: 12px;
+  line-height: 1.7;
+  margin: 12px 0;
+}
+.footer-brand .footer-assurances {
+  font-size: 11px;
+}
+.footer-main nav {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+}
+.footer-main h2 {
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 0 6px;
+}
+.footer-main a {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.footer-main .wordmark {
+  font-size: 23px;
+}
+.footer-bottom {
+  border-top: 1px solid var(--border);
+  margin-top: 28px;
+  padding-top: 18px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 10px;
+}
+.faq-page details {
+  border-bottom: 1px solid var(--border);
+  padding: 18px 0;
+}
+.faq-page summary {
+  cursor: pointer;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.faq-page > .text-link {
+  display: inline-block;
+  margin-top: 24px;
+}
+@media (max-width: 767px) {
+  .campus-edits .edit-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px 12px;
+  }
+  .campus-edits .editorial-tile:last-child {
+    grid-column: 1 / -1;
+  }
+  .campus-edits .editorial-tile:last-child .edit-image {
+    aspect-ratio: 2.6;
+  }
+  .campus-edits .edit-image {
+    border-radius: 8px;
+  }
+  .campus-edits .edit-copy h3 {
+    font-size: 14px;
+  }
+  .campus-edits .edit-copy > span {
+    font-size: 10px;
+    gap: 6px;
+  }
+  .flyer-caption {
+    grid-template-columns: minmax(0, 1fr);
+    font-size: 11px;
+    gap: 4px;
+  }
+  .site-footer .footer-main,
+  .site-footer .footer-main:has(nav[aria-label='MedStash social media']) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 26px 20px;
+  }
+  .footer-brand {
+    grid-column: 1 / -1;
+  }
+}

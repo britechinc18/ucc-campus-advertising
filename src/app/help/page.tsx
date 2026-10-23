@@ -23,7 +23,7 @@ export default function Help() {
           any contact details you publish. Do not advertise illegal, unsafe, stolen or prohibited
           goods. All adverts are reviewed before publication.
         </p>
-        <h2>Report a concern</h2>
+        <h2 id="report">Contact & reports</h2>
         <p>
           Use “Report advert” on the listing and explain the issue. Reports are reviewed by
           administrators; they do not automatically remove a listing. If you face immediate danger,

@@ -41,3 +41,9 @@ Both hero slides use transparent editorial product arrangements on flat, theme-a
 ## Grounded studio hero and mobile layout
 
 Reuse the approved transparent editorial objects with subtle studio lighting and a soft contact shadow underneath. The shadow is limited to the depicted objects; the card has no elevation. Light and dark palettes retain readable copy. On phones, separate the copy/search from a larger centered product arrangement below, with an explicit Search button. Subtitle and search positions remain consistent across slides. No new image downloads, generated assets or dependencies.
+
+## Homepage collections, flyers and footer
+
+Deals now say under GH₵100 and link to max=9999 pesewas (strictly below GH₵100). Collection cards use licensed web photographs of medical textbooks, electronics and a shop counter, with short captions and the existing category links. These editorial illustrations do not claim current inventory or business participation; provenance is available through Photo credits. Removed the introductory label and filler copy. Home Campus 360 shows full rounded flyers with kind, advertiser name and actual publication date outside the image, preserving accessible advert links and saved controls. Other flyer grids retain their existing layout.
+
+Footer contains the review/direct-contact notes, discovery, FAQ, safe trading, privacy and report links. Official email/phone/socials render only when configured through MEDSTASH_CONTACT_EMAIL, MEDSTASH_CONTACT_PHONE and MEDSTASH_{INSTAGRAM,TIKTOK,X}_URL; no invented contact details. New FAQ and privacy pages describe current behavior without retention or compliance promises.

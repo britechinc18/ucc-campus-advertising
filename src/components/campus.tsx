@@ -28,12 +28,12 @@ export function CampusBanners() {
     </div>
   );
 }
-export function FlyerGrid({ items }: { items: Listing[] }) {
+export function FlyerGrid({ items, compact = false }: { items: Listing[]; compact?: boolean }) {
   return (
     <div className="flyer-grid">
       {items.map((a) => (
-        <article className="flyer-card" key={a.id}>
-          <Link href={`/adverts/${a.id}`} className="flyer-link">
+        <article className={`flyer-card${compact ? ' compact-flyer' : ''}`} key={a.id}>
+          <Link href={`/adverts/${a.id}`} className="flyer-link" aria-label={a.data.title}>
             <div className="flyer-art">
               <MediaImage
                 variant="card"
@@ -41,15 +41,26 @@ export function FlyerGrid({ items }: { items: Listing[] }) {
                 alt={`${a.data.title} — advertiser supplied flyer`}
               />
             </div>
-            <div className="flyer-copy">
-              <p className="eyebrow">{kindName(a.data.kind)}</p>
-              <h3>{a.data.title}</h3>
-              <p>
-                {a.data.details?.startsAt ? dateText(a.data.details.startsAt) : a.data.location}
-              </p>
-              <span className="meta">{a.seller}</span>
-            </div>
+            {!compact ? (
+              <div className="flyer-copy">
+                <p className="eyebrow">{kindName(a.data.kind)}</p>
+                <h3>{a.data.title}</h3>
+                <p>
+                  {a.data.details?.startsAt ? dateText(a.data.details.startsAt) : a.data.location}
+                </p>
+                <span className="meta">{a.seller}</span>
+              </div>
+            ) : null}
           </Link>
+          {compact ? (
+            <div className="flyer-caption">
+              <span className="flyer-kind">{kindName(a.data.kind)}</span>
+              <Link href={`/sellers/${a.advertiser_id}`}>{a.seller}</Link>
+              <time dateTime={new Date(a.published_at).toISOString()}>
+                {dateText(a.published_at)}
+              </time>
+            </div>
+          ) : null}
           <SaveButton id={a.id} title={a.data.title} />
         </article>
       ))}
