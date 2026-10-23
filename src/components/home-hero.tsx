@@ -17,6 +17,7 @@ export function HomeHero({ search }: { search: ReactNode }) {
   const [index, setIndex] = useState(0);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
+  const hero = useRef<HTMLElement>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
   useEffect(() => {
     const reduced = matchMedia('(prefers-reduced-motion: reduce)');
@@ -35,22 +36,45 @@ export function HomeHero({ search }: { search: ReactNode }) {
       document.removeEventListener('visibilitychange', restart);
     };
   }, [index, hovered, focused]);
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.defaultPrevented ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.shiftKey ||
+        event.repeat
+      )
+        return;
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      const target = event.target;
+      if (
+        !(target instanceof HTMLElement) ||
+        target.closest(
+          'input,textarea,select,button,a,[contenteditable]:not([contenteditable="false"]),[role="dialog"],[role="menu"],[role="slider"],[role="combobox"]',
+        ) ||
+        document.querySelector('[aria-modal="true"],.account-menu[open],.notification-menu[open]')
+      )
+        return;
+      const box = hero.current?.getBoundingClientRect();
+      if (!box || box.bottom <= 0 || box.top >= window.innerHeight) return;
+      event.preventDefault();
+      setIndex((i) => (i + (event.key === 'ArrowLeft' ? -1 : 1) + slides.length) % slides.length);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
   const move = (direction: number) =>
     setIndex((i) => (i + direction + slides.length) % slides.length);
   return (
     <section
+      ref={hero}
       className="campus-hero hero-carousel"
       aria-labelledby="home-heading"
       aria-roledescription="carousel"
       aria-describedby="hero-instructions"
       tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.target !== e.currentTarget) return;
-        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-          e.preventDefault();
-          move(e.key === 'ArrowLeft' ? -1 : 1);
-        }
-      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocusCapture={() => setFocused(true)}
@@ -58,9 +82,18 @@ export function HomeHero({ search }: { search: ReactNode }) {
         if (!e.currentTarget.contains(e.relatedTarget)) setFocused(false);
       }}
       onPointerDown={(e) => {
-        if (e.pointerType === 'mouse' || (e.target as HTMLElement).closest('input,button,a'))
+        if (
+          !e.isPrimary ||
+          e.button !== 0 ||
+          (e.target as HTMLElement).closest('input,button,a,textarea,select')
+        )
           return;
         pointer.current = { x: e.clientX, y: e.clientY };
+        if (e.pointerType === 'mouse') e.currentTarget.setPointerCapture(e.pointerId);
+      }}
+      onDragStart={(e) => e.preventDefault()}
+      onLostPointerCapture={() => {
+        pointer.current = null;
       }}
       onPointerCancel={() => {
         pointer.current = null;
@@ -68,6 +101,8 @@ export function HomeHero({ search }: { search: ReactNode }) {
       onPointerUp={(e) => {
         const start = pointer.current;
         pointer.current = null;
+        if (e.currentTarget.hasPointerCapture(e.pointerId))
+          e.currentTarget.releasePointerCapture(e.pointerId);
         if (!start) return;
         const dx = e.clientX - start.x,
           dy = e.clientY - start.y;
@@ -108,8 +143,8 @@ export function HomeHero({ search }: { search: ReactNode }) {
         </div>
       </div>
       <span id="hero-instructions" className="sr-only">
-        Swipe or use the left and right arrow keys to change the photograph. Automatic rotation
-        pauses while this area is focused.
+        Swipe, drag or use the left and right arrow keys to change the photograph. Automatic
+        rotation pauses while this area is focused.
       </span>
       <span className={`sr-only ${index === 1 ? 'campus-day-description' : ''}`}>
         {slides[index].alt}

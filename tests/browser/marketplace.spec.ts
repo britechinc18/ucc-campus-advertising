@@ -855,7 +855,11 @@ test('hero rotates without controls, supports swipe and keeps search state', asy
   await expect(heading).toContainText('Your next great find');
   await hero.press('ArrowLeft');
   await expect(heading).toContainText('Everything you need');
-  await page.getByRole('link', { name: 'MedStash home', exact: true }).first().focus();
+  await page.mouse.click(5, 5);
+  await page.keyboard.press('ArrowRight');
+  await expect(heading).toContainText('Your next great find');
+  await page.keyboard.press('ArrowLeft');
+  await expect(heading).toContainText('Everything you need');
   await page.mouse.move(0, 0);
   await page.clock.runFor(100);
   await page.clock.fastForward(179000);
@@ -863,12 +867,40 @@ test('hero rotates without controls, supports swipe and keeps search state', asy
   await page.clock.fastForward(1100);
   await expect(heading).toContainText('Your next great find');
   await hero.getByRole('searchbox').fill('textbooks');
+  await hero.getByRole('searchbox').press('ArrowLeft');
+  await expect(heading).toContainText('Your next great find');
   await page.clock.fastForward(180100);
   await expect(heading).toContainText('Your next great find');
-  await hero.dispatchEvent('pointerdown', { pointerType: 'touch', clientX: 300, clientY: 150 });
-  await hero.dispatchEvent('pointerup', { pointerType: 'touch', clientX: 100, clientY: 150 });
+  await hero.dispatchEvent('pointerdown', {
+    pointerType: 'touch',
+    isPrimary: true,
+    button: 0,
+    pointerId: 1,
+    clientX: 300,
+    clientY: 150,
+  });
+  await hero.dispatchEvent('pointerup', {
+    pointerType: 'touch',
+    isPrimary: true,
+    button: 0,
+    pointerId: 1,
+    clientX: 100,
+    clientY: 150,
+  });
   await expect(heading).toContainText('Everything you need');
   await expect(hero.getByRole('searchbox')).toHaveValue('textbooks');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  const box = (await hero.boundingBox())!;
+  await page.mouse.move(box.x + box.width - 40, box.y + 40);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width - 200, box.y + 40, { steps: 8 });
+  await page.mouse.up();
+  await expect(heading).toContainText('Your next great find');
+  await page.mouse.move(box.x + box.width - 200, box.y + 40);
+  await page.mouse.down();
+  await page.mouse.move(box.x + box.width - 40, box.y + 40, { steps: 8 });
+  await page.mouse.up();
+  await expect(heading).toContainText('Everything you need');
   await hero.focus();
   await hero.press('ArrowRight');
   await expect(heading).toContainText('Your next great find');
