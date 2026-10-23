@@ -128,7 +128,7 @@ test('advertiser submits, admin approves, public search finds it, advertiser mar
   await page.getByRole('button', { name: 'Mark as completed' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Mark as completed' })).toHaveCount(0);
-  await publicPage.reload();
+  await publicPage.goto('/explore?q=appointment');
   await expect(publicPage.locator('.listing')).toHaveCount(0);
   await adminContext.close();
   await publicContext.close();
