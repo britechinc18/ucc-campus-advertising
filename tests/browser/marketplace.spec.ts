@@ -394,9 +394,7 @@ test('anonymous buyer discovers all Campus 360 categories and saves without an a
   await page.reload();
   await expect(page.locator('.flyer-card')).toHaveCount(1);
   await page.getByRole('button', { name: /^Unsave advert:/ }).click();
-  await expect(page.locator('.saved-device-note')).toHaveText(
-    'Bookmarks show on this browser and device. They do not automatically sync.',
-  );
+  await expect(page.locator('.saved-device-note')).toHaveCount(0);
   await expect(page.locator('.empty-state')).toHaveCount(0);
   await page.goto('/explore');
   await expect(page.locator('.flyer-card')).toHaveCount(0);
@@ -408,7 +406,6 @@ test('anonymous buyer discovers all Campus 360 categories and saves without an a
   await page.goto('/saved');
   await expect(page.locator('.listing')).toHaveCount(1);
   await page.goto('/sell');
-  await page.getByRole('link', { name: 'Start selling with MedStash' }).click();
   await expect(page).toHaveURL(/sign-in/);
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
 });
@@ -522,6 +519,8 @@ test('new buyer screens are responsive, accessible and honor reduced motion in b
       '/campus-360/announcements',
       '/campus-360/businesses',
       '/saved',
+      '/recently-viewed',
+      '/businesses',
       '/sell',
     ]) {
       await page.goto(path);
@@ -1183,4 +1182,46 @@ test('admin creates an assisted business and hands management to a verified owne
   );
   expect(protectedSearch.status()).toBe(403);
   await publicContext.close();
+});
+
+test('simplified discovery and seller welcome keep essential navigation and consent', async ({
+  page,
+}) => {
+  await page.goto('/campus-360');
+  await expect(
+    page.getByText('Events, offers and updates from your community.', { exact: true }),
+  ).toHaveCount(0);
+  await expect(page.locator('.page-head')).toHaveCount(0);
+  await expect(page.locator('.flyer-card').first()).toHaveClass(/compact-flyer/);
+  await expect(page.locator('.flyer-copy')).toHaveCount(0);
+  await expect(page.locator('.flyer-caption').first().locator('time')).toHaveAttribute(
+    'datetime',
+    /T.*Z$/,
+  );
+  await page.goto('/businesses');
+  await expect(page.getByText('CLOSE TO CAMPUS', { exact: true })).toHaveCount(0);
+  await expect(page.locator('.directory-intro')).toHaveText(
+    'Discover the people and services around you.',
+  );
+  await expect(
+    page.locator('.business-promo').getByRole('link', { name: 'Create your profile' }),
+  ).toHaveAttribute('href', '/my-business');
+  await page.goto('/saved');
+  await expect(page.locator('.saved-device-note')).toHaveCount(0);
+  await page.goto('/recently-viewed');
+  await expect(page.locator('.mobile-header-title')).toHaveText('Recently viewed');
+  await expect(page.locator('.recent-page-title')).not.toBeVisible();
+  await expect(page.getByText('BACK TO A GOOD FIND', { exact: true })).toHaveCount(0);
+  await page.getByLabel('Menu', { exact: true }).click();
+  await expect(page.locator('.account-dropdown > a').last()).toHaveText('Help & safe trading');
+  await page.goto('/sell');
+  await expect(page).toHaveURL(/sign-in/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome to MedStash.');
+  await expect(page.locator('.sign-in-story')).toHaveCount(0);
+  const consent = page.getByRole('checkbox');
+  await expect(consent).toHaveAttribute('required', '');
+  expect(await consent.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(false);
+  await consent.check();
+  expect(await consent.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(true);
+  await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
 });

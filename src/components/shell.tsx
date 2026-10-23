@@ -115,17 +115,27 @@ export function Shell({
         Skip to content
       </a>
       <header
-        className={`site-header ${path === '/' ? 'home-header' : ''} ${path === '/explore' ? 'market-header' : ''} ${detail ? 'advert-header' : ''} ${path.startsWith('/campus-360') ? 'campus-header' : ''}`}
+        className={`site-header ${path === '/' ? 'home-header' : ''} ${path === '/explore' ? 'market-header' : ''} ${detail ? 'advert-header' : ''} ${path === '/recently-viewed' ? 'recent-header' : ''} ${path.startsWith('/campus-360') ? 'campus-header' : ''}`}
       >
         <div className="container header-inner">
           <Wordmark />
-          {path === '/explore' || path.startsWith('/campus-360') ? (
+          {path === '/explore' || path === '/recently-viewed' || path.startsWith('/campus-360') ? (
             <span
               className="wordmark mobile-header-title"
-              role={path === '/campus-360' || path === '/explore' ? 'heading' : undefined}
-              aria-level={path === '/campus-360' || path === '/explore' ? 1 : undefined}
+              role={
+                ['/campus-360', '/explore', '/recently-viewed'].includes(path)
+                  ? 'heading'
+                  : undefined
+              }
+              aria-level={
+                ['/campus-360', '/explore', '/recently-viewed'].includes(path) ? 1 : undefined
+              }
             >
-              {path === '/explore' ? 'Market' : 'Campus 360'}
+              {path === '/explore'
+                ? 'Market'
+                : path === '/recently-viewed'
+                  ? 'Recently viewed'
+                  : 'Campus 360'}
             </span>
           ) : null}
           <nav className="desktop-nav" aria-label="Main navigation">
@@ -236,9 +246,6 @@ export function Shell({
               </summary>
               <div className="account-dropdown">
                 {seller ? <p>{user?.name ?? 'Your seller account'}</p> : null}
-                <Link href="/help">Help & safe trading</Link>
-                <Link href="/saved">Saved adverts</Link>
-                <Link href="/recently-viewed">Recently viewed</Link>
                 {seller ? (
                   <>
                     <Link href="/my-adverts">My adverts</Link>
@@ -247,6 +254,8 @@ export function Shell({
                 ) : !user?.sellerActive ? (
                   <Link href="/sell">Start Selling</Link>
                 ) : null}
+                <Link href="/saved">Saved adverts</Link>
+                <Link href="/recently-viewed">Recently viewed</Link>
                 {user?.sellerActive ? (
                   <AccountModeSwitch mode={seller ? 'buyer' : 'seller'} />
                 ) : null}
@@ -270,6 +279,7 @@ export function Shell({
                   <span>Appearance</span>
                   <ThemeButton />
                 </div>
+                <Link href="/help">Help & safe trading</Link>
               </div>
             </details>
           </div>
