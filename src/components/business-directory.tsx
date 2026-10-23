@@ -24,7 +24,6 @@ export async function BusinessDirectory({
   return (
     <>
       <Search action={action} value={q} placeholder="Search businesses and services…" />
-      <p className="directory-intro">Discover the people and services around you.</p>
       {businesses.length ? (
         <div className="business-grid">
           {businesses.map((b) => (

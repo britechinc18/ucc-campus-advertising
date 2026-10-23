@@ -39,19 +39,8 @@ export default async function CampusCategory({
     failed = true;
   }
   return (
-    <main id="main" className="container campus-page">
-      <div className="breadcrumbs">
-        <Link href="/campus-360">Campus 360</Link>
-        <span>/</span>
-        <span>{c.name}</span>
-      </div>
-      <div className="page-head">
-        <div>
-          <p className="eyebrow">CAMPUS 360</p>
-          <h1>{c.name}</h1>
-          <p>{c.description}</p>
-        </div>
-      </div>
+    <main id="main" className="container campus-page campus-category-page">
+      <h1 className="sr-only">{c.name}</h1>
       <nav className="campus-tabs" aria-label="Campus categories">
         {campusCategories.map((cat) => (
           <Link

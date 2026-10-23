@@ -2,7 +2,7 @@ import { SavedPage } from '@/components/saved';
 export const metadata = { title: 'Saved adverts' };
 export default function Saved() {
   return (
-    <main id="main" className="container">
+    <main id="main" className="container saved-page">
       <SavedPage />
     </main>
   );

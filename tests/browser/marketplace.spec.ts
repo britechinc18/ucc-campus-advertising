@@ -1209,9 +1209,7 @@ test('simplified discovery and seller welcome keep essential navigation and cons
   );
   await page.goto('/businesses');
   await expect(page.getByText('CLOSE TO CAMPUS', { exact: true })).toHaveCount(0);
-  await expect(page.locator('.directory-intro')).toHaveText(
-    'Discover the people and services around you.',
-  );
+  await expect(page.locator('.directory-intro')).toHaveCount(0);
   await expect(
     page.locator('.business-promo').getByRole('link', { name: 'Create your profile' }),
   ).toHaveAttribute('href', '/my-business');
