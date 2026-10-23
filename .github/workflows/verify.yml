@@ -77,7 +77,13 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
+      - name: Use installed Chrome or install Chromium
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            printf 'PLAYWRIGHT_CHROMIUM_PATH=%s\n' "$(command -v google-chrome)" >> "$GITHUB_ENV"
+          else
+            timeout 180 npx playwright install --with-deps chromium
+          fi
       - run: npm run db:migrate
       - run: npm run test:browser:seed
       - run: npm run build
