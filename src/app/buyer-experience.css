@@ -1101,10 +1101,8 @@
 }
 .business-promo .promo-copy {
   width: 100%;
-  max-width: 550px;
-  margin-inline: auto;
   padding: 32px 24px 24px;
-  text-align: center;
+  text-align: left;
 }
 .business-promo .promo-copy h2 {
   font-size: 25px;
