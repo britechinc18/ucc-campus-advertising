@@ -47,9 +47,11 @@ export default async function Detail({ params }: { params: Promise<{ id: string 
       <div className="breadcrumbs">
         {isFlyer(advert.data.kind) ? (
           <Link
+            aria-label="Back to Campus 360"
             href={`/campus-360/${campusCategories.find((c) => c.kind === advert.data.kind)?.slug ?? ''}`}
           >
-            ← Campus 360
+            <Icon name="back" />
+            <span className="browse-back-label">Campus 360</span>
           </Link>
         ) : (
           <BrowseBack />

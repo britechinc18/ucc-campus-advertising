@@ -113,10 +113,19 @@ export function Shell({
         Skip to content
       </a>
       <header
-        className={`site-header ${path === '/' ? 'home-header' : ''} ${path === '/explore' ? 'market-header' : ''} ${detail ? 'advert-header' : ''}`}
+        className={`site-header ${path === '/' ? 'home-header' : ''} ${path === '/explore' ? 'market-header' : ''} ${detail ? 'advert-header' : ''} ${path.startsWith('/campus-360') ? 'campus-header' : ''}`}
       >
         <div className="container header-inner">
           <Wordmark />
+          {path === '/explore' || path.startsWith('/campus-360') ? (
+            <span
+              className="wordmark mobile-header-title"
+              role={path === '/campus-360' || path === '/explore' ? 'heading' : undefined}
+              aria-level={path === '/campus-360' || path === '/explore' ? 1 : undefined}
+            >
+              {path === '/explore' ? 'Market' : 'Campus 360'}
+            </span>
+          ) : null}
           <nav className="desktop-nav" aria-label="Main navigation">
             {[
               ['/', 'Home'],
@@ -257,11 +266,7 @@ export function Shell({
       {children}
       <footer className="container footer">
         <Wordmark showLogo />
-        <p>
-          For the UCC medical-student community.
-          <br />
-          Contact advertisers directly.
-        </p>
+        <p>Contact advertisers directly.</p>
         <Link className="text-link" href="/help">
           Safe trading & help <Icon name="arrow" />
         </Link>

@@ -71,6 +71,12 @@ test('advertiser submits, admin approves, public search finds it, advertiser mar
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
   await page.getByLabel('WhatsApp number', { exact: true }).fill('0241234567');
+  await page
+    .getByLabel('TikTok profile URL', { exact: true })
+    .fill('https://www.tiktok.com/@campus_seller');
+  await page
+    .getByLabel('Snapchat profile URL', { exact: true })
+    .fill('https://www.snapchat.com/add/campus_seller');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Review advert' }).click();
   await page.getByRole('button', { name: 'Submit for approval' }).click();
@@ -99,6 +105,17 @@ test('advertiser submits, admin approves, public search finds it, advertiser mar
   await publicPage.goto('/explore?q=appointment');
   await expect(publicPage.locator('.listing')).toHaveCount(1);
   await expect(publicPage.locator('.listing .price')).toHaveText('GH₵65.50');
+  await publicPage.locator('.listing-link').click();
+  await expect(
+    publicPage.getByRole('link', { name: 'TikTok: @campus_seller', exact: true }),
+  ).toHaveAttribute('href', 'https://www.tiktok.com/@campus_seller');
+  await expect(
+    publicPage.getByRole('link', { name: 'Snapchat: @campus_seller', exact: true }),
+  ).toHaveAttribute('href', 'https://www.snapchat.com/add/campus_seller');
+  await publicPage.locator('.seller-link').click();
+  await expect(publicPage).toHaveURL(/\/sellers\//);
+  await expect(publicPage.locator('.listing')).not.toHaveCount(0);
+
   await page.goto('/my-adverts');
   await page
     .locator('.advert-row')
@@ -765,6 +782,9 @@ test('shared cards and galleries preserve responsive geometry in both themes', a
         );
         await expect(grid.locator('.listing-location').first()).not.toBeEmpty();
         await expect(grid.locator('time').first()).toHaveAttribute('datetime', /\d{4}-/);
+        const heart = await page.locator('.listing .save-button').first().boundingBox();
+        expect(Math.abs(heart!.width - heart!.height)).toBeLessThan(1);
+
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );
@@ -801,7 +821,7 @@ test('shared cards and galleries preserve responsive geometry in both themes', a
           await expect(page.locator('.public-detail .detail-content .description')).toBeAttached();
           const panel = await page.locator('.public-detail .detail-content').boundingBox();
           const photo = await image.boundingBox();
-          expect(panel!.y).toBeGreaterThanOrEqual(photo!.y + photo!.height - 1);
+          expect(panel!.y).toBeCloseTo(photo!.y + photo!.height - 20, 0);
         }
         await page.getByRole('button', { name: 'Enlarge advert photograph' }).click();
         await expect(page.locator('.enlarged-image img')).toHaveCSS('object-fit', 'contain');

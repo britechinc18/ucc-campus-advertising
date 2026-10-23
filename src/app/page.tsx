@@ -76,7 +76,7 @@ export default async function HomePage() {
             <br />
             on campus.
           </h1>
-          <p>Buy, discover and connect within the UCC community.</p>
+          <p>Buy, sell, discover and connect within the community.</p>
           <Search id="home-search" placeholder="Search for books, gadgets, rooms…" />
         </div>
       </section>

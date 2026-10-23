@@ -109,3 +109,32 @@ it('invalid flyer URLs report validation errors rather than throwing URL parser 
     }).success,
   ).toBe(false);
 });
+
+it('validates and normalizes optional social profile URLs in advert content', () => {
+  const value = contentSchema.parse({
+    ...base,
+    socials: {
+      tiktok: 'https://www.tiktok.com/@campus_seller?lang=en',
+      snapchat: 'https://www.snapchat.com/add/campus_seller',
+      instagram: 'https://instagram.com/campus_seller/',
+      x: 'https://twitter.com/campus_seller',
+    },
+  });
+  expect(value.socials?.instagram).toBe('https://www.instagram.com/campus_seller');
+  expect(value.socials?.x).toBe('https://x.com/campus_seller');
+  expect(value.socials?.tiktok).toBe('https://www.tiktok.com/@campus_seller');
+  for (const url of [
+    'javascript:alert(1)',
+    'http://www.tiktok.com/@seller',
+    'https://www.tiktok.com.evil.test/@seller',
+    'https://www.tiktok.com@evil.test/@seller',
+    'https://www.tiktok.com/@seller/video/1',
+  ]) {
+    expect(contentSchema.safeParse({ ...base, socials: { tiktok: url } }).success).toBe(false);
+  }
+  expect(
+    contentSchema.safeParse({ ...base, socials: { instagram: 'https://instagram.com/accounts' } })
+      .success,
+  ).toBe(false);
+  expect(contentSchema.safeParse(base).success).toBe(true);
+});

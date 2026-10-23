@@ -1,3 +1,4 @@
+import type { SocialLinks } from './socials';
 import { isFlyer, kindName } from './campus';
 export interface AdvertContent {
   title: string;
@@ -11,6 +12,7 @@ export interface AdvertContent {
   location: string;
   phone?: string;
   whatsapp?: string;
+  socials?: SocialLinks;
   contactConsent: true;
   mediaIds: string[];
 }
