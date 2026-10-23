@@ -270,12 +270,13 @@ test('responsive pages and both themes have no serious/critical automated access
   }
 });
 
-test('business edits remain private until approved and upload failure never looks successful', async ({
+test('business edits appear immediately and upload failure never looks successful', async ({
   page,
   browser,
 }) => {
   await session(page.context(), 'business');
   await page.goto('/my-business');
+  await page.getByRole('button', { name: 'Edit profile' }).click();
   await page
     .getByLabel('About your business')
     .fill('Browser business profile updated through the real moderation workflow.');
@@ -284,30 +285,11 @@ test('business edits remain private until approved and upload failure never look
   await page
     .getByLabel('I consent to publish the visible contact details and social profiles above.')
     .check();
-  await page.getByRole('button', { name: 'Submit for approval' }).click();
-  await expect(page.getByRole('status')).toContainText('submitted');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('button', { name: 'Edit profile' })).toBeVisible();
   const publicContext = await browser.newContext({ baseURL: 'http://localhost:3000' });
   const pub = await publicContext.newPage();
   await pub.goto('/businesses/browser-test-services');
-  await expect(pub.locator('.description')).not.toContainText(
-    'updated through the real moderation',
-  );
-  const adminContext = await browser.newContext({ baseURL: 'http://localhost:3000' });
-  await session(adminContext, 'admin');
-  const admin = await adminContext.newPage();
-  await admin.goto('/admin/businesses');
-  await admin
-    .locator('.data-row')
-    .filter({ hasText: 'Browser Test Campus Services' })
-    .getByRole('button', { name: 'Approve', exact: true })
-    .click();
-  await admin
-    .getByRole('dialog')
-    .getByLabel('Reason for the audit trail')
-    .fill('Reviewed business contact changes in local browser test.');
-  await admin.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
-  await expect(admin.getByRole('dialog')).toHaveCount(0);
-  await pub.reload();
   await expect(pub.locator('.description')).toContainText('updated through the real moderation');
   await expect(pub.getByRole('link', { name: 'WhatsApp', exact: true })).toHaveAttribute(
     'href',
@@ -337,7 +319,6 @@ test('business edits remain private until approved and upload failure never look
     'temporarily unavailable',
   );
   await expect(page.locator('.uploaded-photo')).toHaveCount(0);
-  await adminContext.close();
   await publicContext.close();
 });
 
@@ -559,9 +540,7 @@ test('new buyer screens are responsive, accessible and honor reduced motion in b
   ).toBe('0s');
 });
 
-test('brand icons, buyer menu, seller avatar and real notification panels work', async ({
-  page,
-}) => {
+test('brand icons, buyer and seller menus and real notification panels work', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('.site-header .wordmark')).toHaveText('medstash.');
   await expect(page.locator('.site-header .mark')).toHaveCount(0);
@@ -609,8 +588,9 @@ test('brand icons, buyer menu, seller avatar and real notification panels work',
   );
   await session(page.context(), 'owner');
   await page.goto('/my-adverts');
-  await expect(page.getByLabel('Account menu')).toBeVisible();
-  await expect(page.locator('.seller-avatar')).toBeVisible();
+  await expect(page.getByLabel('Menu')).toBeVisible();
+  await expect(page.locator('.account-menu > summary svg')).toBeVisible();
+  await expect(page.locator('.seller-avatar')).toHaveCount(0);
   await page.locator('.notification-menu > summary').click();
   await expect(page.locator('.notification-content')).toHaveAttribute('aria-busy', 'false');
   await expect(page.locator('.notification-content')).toContainText('Advert approved');
@@ -642,7 +622,7 @@ test('seller switches buyer and seller views without signing out or losing listi
 }) => {
   await session(page.context(), 'owner');
   await page.goto('/');
-  await page.getByLabel('Account menu', { exact: true }).click();
+  await page.getByLabel('Menu', { exact: true }).click();
   await expect(
     page.locator('.account-dropdown').getByText('Appearance', { exact: true }),
   ).toBeVisible();
@@ -1061,8 +1041,8 @@ test('one owner can add a business, select posting identity and filter My Ads', 
   await page
     .getByLabel('I consent to publish the visible contact details and social profiles above.')
     .check();
-  await page.getByRole('button', { name: 'Submit for approval' }).click();
-  await expect(page.getByRole('status')).toHaveText('Profile submitted for administrator review.');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('button', { name: 'Edit profile' })).toBeVisible();
   await page.goto('/post?kind=service');
   await expect(page.getByRole('heading', { name: 'Who are you posting as?' })).toBeVisible();
   await page.getByRole('link', { name: 'Campus Wardrobe Business' }).click();
@@ -1130,20 +1110,8 @@ test('admin creates an assisted business and hands management to a verified owne
   await page
     .getByLabel('I consent to publish the visible contact details and social profiles above.')
     .check();
-  await page.getByRole('button', { name: 'Submit for approval' }).click();
-  await expect(page.getByRole('status')).toContainText('submitted');
-  await page.goto('/admin/businesses');
-  await page
-    .locator('.data-row')
-    .filter({ hasText: 'Assisted Campus Clothing' })
-    .getByRole('button', { name: 'Approve', exact: true })
-    .click();
-  await page
-    .getByRole('dialog')
-    .getByLabel('Reason for the audit trail')
-    .fill('Checked business identity and contact consent.');
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
-  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('button', { name: 'Edit profile' })).toBeVisible();
   const publicContext = await browser.newContext({ baseURL: 'http://localhost:3000' });
   const pub = await publicContext.newPage();
   await pub.goto('/campus-360/businesses?q=Assisted%20Campus');
@@ -1196,6 +1164,7 @@ test('admin creates an assisted business and hands management to a verified owne
   await expect(page.getByText('Claimed', { exact: false }).first()).toBeVisible();
   await session(pub.context(), 'stranger');
   await pub.goto('/my-business');
+  await pub.getByRole('button', { name: 'Edit profile' }).click();
   await expect(pub.getByLabel('Business URL')).toHaveValue('assisted-campus-clothing');
   const protectedSearch = await pub.request.get(
     `/api/v1/admin/advertisers/${identity}/claimants?q=browser`,
@@ -1242,4 +1211,66 @@ test('simplified discovery and seller welcome keep essential navigation and cons
   await consent.check();
   expect(await consent.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(true);
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+});
+
+test('personal profile opens as a profile and saves directly on mobile and desktop', async ({
+  page,
+}, testInfo) => {
+  await session(page.context(), 'owner');
+  await page.goto('/my-personal-profile');
+  await expect(page.locator('.profile-overview')).toBeVisible();
+  await expect(page.getByLabel('Display name')).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit profile' }).click();
+  await page.getByLabel('Display name').fill('Browser Profile Seller');
+  await page.getByLabel('Default location').fill('Science Market');
+  await page.getByLabel('Short bio (optional)').fill('Medical books and useful campus essentials.');
+  await page.getByLabel('WhatsApp number', { exact: true }).fill('0543982307');
+  await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
+  await expect(page.getByText('Show WhatsApp', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Show phone', { exact: true })).toHaveCount(0);
+  await page
+    .getByLabel('I consent to publish the visible contact details and social profiles above.')
+    .check();
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(page.locator('.profile-overview h1')).toHaveText('Browser Profile Seller');
+  await page.reload();
+  await expect(page.locator('.profile-bio')).toHaveText(
+    'Medical books and useful campus essentials.',
+  );
+  const result = await (await page.request.get('/api/v1/me/personal')).json();
+  expect(result.state).toBe('approved');
+  expect(result.approvedVersion).toBe(result.version);
+  for (const width of [320, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate((value) => {
+        localStorage.setItem('ucc-theme', value);
+        document.documentElement.dataset.theme = value;
+      }, theme);
+      await expect(page.getByLabel('Menu', { exact: true })).toBeVisible();
+      await expect(page.locator('.header-search')).toHaveCount(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+      await page.evaluate(async () => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        await Promise.all(
+          document
+            .getAnimations()
+            .filter((a) => a instanceof CSSTransition)
+            .map((a) => a.finished.catch(() => undefined)),
+        );
+      });
+      await page.screenshot({
+        path: testInfo.outputPath(`personal-profile-${width}-${theme}.png`),
+        fullPage: true,
+      });
+    }
+  }
+  await page.setViewportSize({ width: 390, height: 844 });
+  const accessibility = await new AxeBuilder({ page }).analyze();
+  expect(
+    accessibility.violations.filter((v) => ['serious', 'critical'].includes(v.impact ?? '')),
+  ).toEqual([]);
 });

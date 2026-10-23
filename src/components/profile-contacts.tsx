@@ -11,12 +11,13 @@ export function readProfileContacts(f: FormData) {
       ? { whatsapp: String(f.get('whatsapp')).trim() }
       : {}),
     socials,
-    visibility: Object.fromEntries(
-      ['phone', 'whatsapp', ...socialPlatforms, 'photo'].map((p) => [
-        p,
-        f.get(`visible.${p}`) === 'on',
-      ]),
-    ),
+    visibility: {
+      phone: true,
+      whatsapp: true,
+      ...Object.fromEntries(
+        [...socialPlatforms, 'photo'].map((p) => [p, f.get(`visible.${p}`) === 'on']),
+      ),
+    },
     contactConsent: f.get('consent') === 'on',
   };
 }
@@ -74,26 +75,17 @@ export function ProfileContacts({
       <fieldset className="profile-fields">
         <legend>Public visibility</legend>
         <p className="helper">
-          Hiding a linked contact takes effect immediately. Adverts left without a public contact
-          are hidden until reviewed and restored. Advert-specific overrides remain separate.
+          Choose which optional socials and photo appear publicly. Phone and WhatsApp are always
+          shown.
         </p>
-        {(['whatsapp', 'phone', ...socialPlatforms, 'photo'] as const).map((p) => (
+        {([...socialPlatforms, 'photo'] as const).map((p) => (
           <label className="check" key={p}>
             <input
               type="checkbox"
               name={`visible.${p}`}
               defaultChecked={data.visibility?.[p] !== false}
             />
-            <span>
-              Show{' '}
-              {p === 'photo'
-                ? 'profile photo / logo'
-                : p === 'x'
-                  ? 'X'
-                  : p === 'whatsapp'
-                    ? 'WhatsApp'
-                    : p}
-            </span>
+            <span>Show {p === 'photo' ? 'profile photo / logo' : p === 'x' ? 'X' : p}</span>
           </label>
         ))}
       </fieldset>

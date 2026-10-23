@@ -136,6 +136,7 @@ export async function savePersonalProfile(userId: string, input: unknown, seller
     })
     .strict()
     .parse(input);
+  data.profile.visibility = { ...data.profile.visibility, phone: true, whatsapp: true };
   return db().transaction(async (tx) => {
     const user = await actor(tx, userId, !!sellerId);
     const own =
@@ -163,12 +164,12 @@ export async function savePersonalProfile(userId: string, input: unknown, seller
     await applyPrivacy(tx, own, data.profile.visibility);
     const saved = await one<{ version: number }>(
       tx,
-      sql`update advertisers set draft_defaults=${JSON.stringify(data.profile)}::jsonb,defaults_version=defaults_version+1,profile_state=${data.submit ? 'pending' : 'incomplete'},profile_reason=null,automatic_personal=false where id=${own} returning defaults_version as version`,
+      sql`update advertisers set draft_defaults=${JSON.stringify(data.profile)}::jsonb,defaults_version=defaults_version+1,profile_state=${data.submit ? 'approved' : 'incomplete'},approved_defaults=case when ${data.submit} then ${JSON.stringify(data.profile)}::jsonb else approved_defaults end,approved_defaults_version=case when ${data.submit} then defaults_version+1 else approved_defaults_version end,name=case when ${data.submit} then coalesce(${data.profile.name ?? null},name) else name end,privacy=case when ${data.submit} then ${JSON.stringify(data.profile.visibility)}::jsonb else privacy end,profile_reason=null,automatic_personal=false where id=${own} returning defaults_version as version`,
     );
     await audit(
       tx,
       userId,
-      data.submit ? 'personal_profile_submitted' : 'personal_profile_draft_saved',
+      data.submit ? 'personal_profile_saved' : 'personal_profile_draft_saved',
       own,
       { version: saved.version, previous: old.draft_defaults, submitted: data.profile },
     );
