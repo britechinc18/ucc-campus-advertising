@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { BusinessDirectory } from '@/components/business-directory';
 import { notFound } from 'next/navigation';
 import { campusCategories } from '@/lib/campus';
 import { listAdverts } from '@/server/discovery';
@@ -11,7 +12,7 @@ export default async function CampusCategory({
   searchParams,
 }: {
   params: Promise<{ category: string }>;
-  searchParams: Promise<{ q?: string; cursor?: string }>;
+  searchParams: Promise<{ q?: string; cursor?: string; view?: string; offset?: string }>;
 }) {
   const { category } = await params;
   const c = campusCategories.find((c) => c.slug === category);
@@ -21,13 +22,16 @@ export default async function CampusCategory({
   let cursor: string | null = null;
   let failed = false;
   try {
-    const r = await listAdverts({
-      surface: 'campus',
-      kind: c.kind,
-      q: (p.q ?? '').slice(0, 100),
-      ...(p.cursor ? { cursor: p.cursor } : {}),
-      limit: 20,
-    });
+    const r =
+      category === 'businesses' && p.view !== 'adverts'
+        ? { items: [], nextCursor: null }
+        : await listAdverts({
+            surface: 'campus',
+            kind: c.kind,
+            q: (p.q ?? '').slice(0, 100),
+            ...(p.cursor ? { cursor: p.cursor } : {}),
+            limit: 20,
+          });
     items = r.items as unknown as Listing[];
     cursor = r.nextCursor;
   } catch {
@@ -58,34 +62,61 @@ export default async function CampusCategory({
           </Link>
         ))}
       </nav>
-      <Search
-        value={p.q}
-        action={`/campus-360/${category}`}
-        placeholder={`Search ${c.name.toLowerCase()}…`}
-      />
-      <section className="section" aria-label={`${c.name} gallery`}>
-        {failed ? (
-          <ErrorMessage message="These updates couldn’t be loaded. Try clearing your search." />
-        ) : items.length ? (
-          <FlyerGrid items={items} />
-        ) : (
-          <EmptyState
-            title={`No ${c.name.toLowerCase()} just yet.`}
-            message="Approved, current adverts appear here. Check back soon, or share your own campus update."
-            action={false}
-          />
-        )}
-      </section>
-      {cursor ? (
-        <div className="load-more">
+      {category === 'businesses' ? (
+        <nav className="tabs" aria-label="Business discovery">
           <Link
-            className="btn secondary"
-            href={`/campus-360/${category}?${new URLSearchParams({ cursor, ...(p.q ? { q: p.q } : {}) })}`}
+            href="/campus-360/businesses"
+            aria-current={p.view !== 'adverts' ? 'page' : undefined}
           >
-            More updates →
+            Business directory
           </Link>
-        </div>
+          <Link
+            href="/campus-360/businesses?view=adverts"
+            aria-current={p.view === 'adverts' ? 'page' : undefined}
+          >
+            Business adverts
+          </Link>
+        </nav>
       ) : null}
+      {category === 'businesses' && p.view !== 'adverts' ? (
+        <BusinessDirectory
+          q={p.q}
+          offset={Math.min(10000, Math.max(0, Number(p.offset) || 0))}
+          action="/campus-360/businesses"
+        />
+      ) : (
+        <>
+          <Search
+            value={p.q}
+            action={`/campus-360/${category}`}
+            placeholder={`Search ${c.name.toLowerCase()}…`}
+            params={category === 'businesses' ? { view: 'adverts' } : undefined}
+          />
+          <section className="section" aria-label={`${c.name} gallery`}>
+            {failed ? (
+              <ErrorMessage message="These updates couldn’t be loaded. Try clearing your search." />
+            ) : items.length ? (
+              <FlyerGrid items={items} />
+            ) : (
+              <EmptyState
+                title={`No ${c.name.toLowerCase()} just yet.`}
+                message="Approved, current adverts appear here. Check back soon, or share your own campus update."
+                action={false}
+              />
+            )}
+          </section>
+          {cursor ? (
+            <div className="load-more">
+              <Link
+                className="btn secondary"
+                href={`/campus-360/${category}?${new URLSearchParams({ cursor, ...(p.q ? { q: p.q } : {}), ...(category === 'businesses' ? { view: 'adverts' } : {}) })}`}
+              >
+                More updates →
+              </Link>
+            </div>
+          ) : null}
+        </>
+      )}
     </main>
   );
 }

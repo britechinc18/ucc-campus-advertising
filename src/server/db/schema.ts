@@ -66,9 +66,7 @@ export const advertisers = pgTable(
   'advertisers',
   {
     id: uuid('id').primaryKey().defaultRandom(),
-    userId: uuid('user_id')
-      .unique()
-      .references(() => users.id),
+    userId: uuid('user_id').references(() => users.id),
     name: text('name').notNull(),
     kind: text('kind').notNull(),
     suspended: boolean('suspended').notNull().default(false),
@@ -79,7 +77,10 @@ export const advertisers = pgTable(
       .references(() => users.id),
     createdAt: time('created_at').defaultNow().notNull(),
   },
-  (t) => [check('advertiser_kind', sql`${t.kind} in ('student','business')`)],
+  (t) => [
+    check('advertiser_kind', sql`${t.kind} in ('student','business')`),
+    uniqueIndex('advertisers_user_kind_unique').on(t.userId, t.kind),
+  ],
 );
 export const categories = pgTable('categories', {
   id: uuid('id').primaryKey().defaultRandom(),

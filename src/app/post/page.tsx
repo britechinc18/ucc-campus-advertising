@@ -1,3 +1,4 @@
+import { IdentityPicker } from '@/components/identity-picker';
 import { redirect } from 'next/navigation';
 import { sql } from 'drizzle-orm';
 import { requireViewer } from '@/server/viewer';
@@ -18,11 +19,22 @@ export default async function PostPage({
   const parsedKind = contentSchema.shape.kind.safeParse(p.kind);
   const initialKind = parsedKind.success ? parsedKind.data : 'product';
   const u = await requireViewer(`/post${p.edit ? `?edit=${p.edit}` : ''}`);
-  const context = await accountContext(u.id);
+  let context = await accountContext(u.id);
+  const selected = id.safeParse(p.advertiserId).success ? p.advertiserId : undefined;
   const assisted =
-    u.role === 'admin' && id.safeParse(p.advertiserId).success ? p.advertiserId : undefined;
-  if (!context.profile && !assisted) redirect('/onboarding?next=/post');
-  if (context.profile?.suspended)
+    u.role === 'admin' && selected && !context.profiles.some((profile) => profile.id === selected)
+      ? selected
+      : undefined;
+  if (selected && !assisted) context = await accountContext(u.id, selected);
+  if (!p.edit && !selected && context.profiles.length > 1)
+    return (
+      <main id="main" className="container">
+        <IdentityPicker profiles={context.profiles} kind={initialKind} />
+      </main>
+    );
+  if (!context.profiles.length && !assisted && !(p.edit && u.role === 'admin'))
+    redirect('/onboarding?next=/post');
+  if (!p.edit && !assisted && context.profile?.suspended)
     return (
       <main id="main" className="container">
         <EmptyState
@@ -56,12 +68,22 @@ export default async function PostPage({
     if (advert.revisions.some((r) => r.status === 'pending') || advert.state === 'suspended')
       redirect(`/my-adverts/${advert.id}`);
   }
+  const identityId = advert?.advertiser_id ?? assisted ?? selected ?? context.profile?.id;
+  const ownIdentity = context.profiles.find((profile) => profile.id === identityId);
+  if (ownIdentity) context = { ...context, profile: ownIdentity };
   const categories = await query<Category>(
     db(),
     sql`select id,name,slug from categories where active order by name`,
   );
   return (
     <main id="main" className="container">
+      {!assistedName && ownIdentity ? (
+        <p className="inline-notice">
+          Posting as <strong>{ownIdentity.name}</strong> ·{' '}
+          {ownIdentity.kind === 'business' ? 'Business' : 'Personal'}. The identity stays with this
+          advert.
+        </p>
+      ) : null}
       {assistedName ? (
         <p className="inline-notice">
           Posting for <strong>{assistedName}</strong>. Enter their phone and WhatsApp details, with
@@ -69,14 +91,14 @@ export default async function PostPage({
         </p>
       ) : null}
       <PostForm
-        key={p.edit ?? assisted ?? initialKind}
+        key={p.edit ?? identityId ?? initialKind}
         initialKind={initialKind}
         account={context as Account}
         categories={categories}
         userId={u.id}
         advert={advert}
         renew={p.renew === '1'}
-        advertiserId={assisted ?? (u.role === 'admin' ? advert?.advertiser_id : undefined)}
+        advertiserId={identityId}
       />
     </main>
   );

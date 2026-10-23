@@ -52,6 +52,7 @@ export interface Category {
   active?: boolean;
 }
 export interface BusinessProfile {
+  name?: string;
   slug: string;
   description: string;
   location: string;
@@ -67,7 +68,14 @@ export interface Business {
   name: string;
   approved: BusinessProfile;
 }
+export interface SellerIdentity {
+  id: string;
+  name: string;
+  kind: string;
+  suspended: boolean;
+}
 export interface Account {
+  profiles: SellerIdentity[];
   role: string;
   profile: { id: string; name: string; kind: string; suspended: boolean } | null;
   settings: {

@@ -16,9 +16,13 @@ export interface OwnBusiness {
 export function BusinessForm({
   business,
   account,
+  advertiserId,
+  assisted = false,
 }: {
   business: OwnBusiness | null;
   account: Account;
+  advertiserId?: string;
+  assisted?: boolean;
 }) {
   const data = business?.pending ?? business?.approved;
   const [logo, setLogo] = useState<string[]>(data?.logoMediaId ? [data.logoMediaId] : []);
@@ -58,7 +62,8 @@ export function BusinessForm({
           setError('');
           setSaved(false);
           try {
-            await api('me/business', 'POST', {
+            const profile = {
+              name: f.get('name'),
               slug: f.get('slug'),
               description: f.get('description'),
               location: f.get('location'),
@@ -68,7 +73,12 @@ export function BusinessForm({
                 ? { whatsapp: String(f.get('whatsapp')).trim() }
                 : {}),
               ...(f.get('consent') ? { contactConsent: true } : {}),
-            });
+            };
+            await api(
+              assisted ? 'admin/businesses' : 'me/business',
+              'POST',
+              assisted ? { advertiserId, profile } : profile,
+            );
             setSaved(true);
             router.refresh();
           } catch (e) {
@@ -78,6 +88,17 @@ export function BusinessForm({
           }
         }}
       >
+        <label className="form-group">
+          <span className="form-label">Business name</span>
+          <input
+            className="field-input"
+            name="name"
+            required
+            minLength={2}
+            maxLength={100}
+            defaultValue={data?.name ?? account.profile?.name ?? ''}
+          />
+        </label>
         <label className="form-group">
           <span className="form-label">Business URL</span>
           <input
@@ -119,6 +140,7 @@ export function BusinessForm({
         <div className="form-group">
           <span className="form-label">Logo (optional)</span>
           <Uploads
+            advertiserId={advertiserId ?? account.profiles?.find((p) => p.kind === 'business')?.id}
             ids={logo}
             onChange={setLogo}
             max={1}
