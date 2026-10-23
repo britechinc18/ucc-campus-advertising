@@ -842,38 +842,61 @@ test('shared cards and galleries preserve responsive geometry in both themes', a
   }
 });
 
-test('hero rotates after three minutes, supports swipe and preserves search', async ({ page }) => {
+test('hero rotates without controls, supports swipe and keeps search state', async ({ page }) => {
   await page.clock.install();
   await page.goto('/');
   const hero = page.locator('.hero-carousel');
-  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Everything you need');
+  const heading = hero.getByRole('heading', { level: 1 });
+  await expect(heading).toContainText('Everything you need');
+  await expect(hero.getByRole('button')).toHaveCount(1);
   await page.clock.fastForward(179000);
-  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Everything you need');
+  await expect(heading).toContainText('Everything you need');
   await page.clock.fastForward(1100);
-  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Find it');
-  const input = hero.getByRole('searchbox');
-  await input.fill('textbooks');
-  await hero.getByRole('button', { name: 'Next hero image', exact: true }).click();
-  await expect(input).toHaveValue('textbooks');
+  await expect(heading).toContainText('Your next great find');
+  await hero.getByRole('searchbox').fill('textbooks');
+  await page.clock.fastForward(180100);
+  await expect(heading).toContainText('Your next great find');
   await hero.dispatchEvent('pointerdown', { pointerType: 'touch', clientX: 300, clientY: 150 });
   await hero.dispatchEvent('pointerup', { pointerType: 'touch', clientX: 100, clientY: 150 });
-  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Find it');
-  await hero.getByRole('button', { name: 'Pause automatic hero rotation' }).click();
-  await page.getByRole('heading', { name: 'Fresh Finds', exact: true }).click();
-  await page.clock.fastForward(180100);
-  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Find it');
+  await expect(heading).toContainText('Everything you need');
+  await expect(hero.getByRole('searchbox')).toHaveValue('textbooks');
+  await hero.focus();
+  await hero.press('ArrowRight');
+  await expect(heading).toContainText('Your next great find');
   await expect(page.getByRole('link', { name: 'Shop deals' })).toHaveAttribute(
     'href',
     '/explore?max=29999',
   );
 });
 
-test('hero respects reduced motion', async ({ page }) => {
+test('hero respects reduced motion and theme photographs at responsive sizes', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
   await page.goto('/');
+  const hero = page.locator('.hero-carousel');
   await page.clock.fastForward(360100);
   await expect(page.locator('#home-heading')).toContainText('Everything you need');
-  await page.getByRole('button', { name: 'Show hero image 2', exact: true }).click();
-  await expect(page.locator('#home-heading')).toContainText('Find it');
+  await hero.focus();
+  await hero.press('ArrowRight');
+  await expect(page.locator('#home-heading')).toContainText('Your next great find');
+  await expect(page.locator('.hero-photographs')).toHaveCSS('transition-duration', '0s');
+  for (const width of [320, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate(
+        (theme) => document.documentElement.setAttribute('data-theme', theme),
+        theme,
+      );
+      await expect(page.locator('.campus-day')).toBeVisible({ visible: theme === 'light' });
+      await expect(page.locator('.campus-night')).toBeVisible({ visible: theme === 'dark' });
+      const sizes = await page.locator('#home-heading').evaluate((el) => ({
+        height: el.getBoundingClientRect().height,
+        line: parseFloat(getComputedStyle(el).lineHeight),
+        overflow: document.documentElement.scrollWidth > innerWidth,
+      }));
+      expect(sizes.overflow).toBe(false);
+      expect(sizes.height / sizes.line).toBeCloseTo(2, 0);
+      await expect(page.locator('.home-promo').first()).toHaveCSS('background-image', 'none');
+    }
+  }
 });
