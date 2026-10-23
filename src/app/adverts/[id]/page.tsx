@@ -1,4 +1,7 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
+import { cache } from 'react';
+import { sharingMetadata } from '@/server/sharing';
 import { advertDetail, listAdverts } from '@/server/discovery';
 import { AppError } from '@/server/errors';
 import { AdvertDetail } from '@/components/advert-detail';
@@ -9,12 +12,34 @@ import { EmptyState } from '@/components/ui';
 import { Icon } from '@/components/icon';
 import { BrowseBack } from '@/components/browse-link';
 import type { Listing } from '@/lib/market';
-export const metadata = { title: 'Advert details' };
+const publicAdvert = cache(advertDetail);
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  try {
+    const a = await publicAdvert((await params).id);
+    return sharingMetadata(
+      a.data.title,
+      a.data.description,
+      `/adverts/${a.id}`,
+      a.data.mediaIds[0],
+    );
+  } catch {
+    return {
+      title: 'Advert unavailable',
+      robots: { index: false, follow: false },
+      openGraph: { title: 'Advert unavailable', images: [] },
+      twitter: { card: 'summary', images: [] },
+    };
+  }
+}
 export default async function Detail({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   let advert: Awaited<ReturnType<typeof advertDetail>>;
   try {
-    advert = await advertDetail(id);
+    advert = await publicAdvert(id);
   } catch (e) {
     const unavailable =
       (e instanceof AppError && e.status === 404) || (e instanceof Error && e.name === 'ZodError');

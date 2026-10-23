@@ -6,6 +6,7 @@ import { Dialog, MediaImage, SafeNote, ErrorMessage } from './ui';
 import { Icon } from './icon';
 import { SaveButton } from './bookmark-button';
 import { isFlyer, kindName, safeExternalUrl } from '@/lib/campus';
+import { rememberAdvert } from './recently-viewed';
 import { api } from '@/lib/api';
 import { priceText, initials, dateText, type Listing } from '@/lib/market';
 export function AdvertDetail({ advert }: { advert: Listing }) {
@@ -18,6 +19,7 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
   const flyer = isFlyer(d.kind);
   const safeExternal = safeExternalUrl(d.details?.externalUrl);
   useEffect(() => {
+    rememberAdvert(advert.id);
     try {
       const key = `viewed:${advert.id}`;
       if (sessionStorage.getItem(key)) return;
@@ -41,7 +43,7 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
     return () => document.removeEventListener('keydown', navigate);
   }, [modal, d.mediaIds.length]);
   async function share() {
-    const url = location.href;
+    const url = `${location.origin}/adverts/${advert.id}`;
     try {
       if (navigator.share) {
         await navigator.share({ title: d.title, url });

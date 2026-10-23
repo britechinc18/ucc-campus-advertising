@@ -1,11 +1,27 @@
 import Link from 'next/link';
+import { cache } from 'react';
+import { sharingMetadata } from '@/server/sharing';
+import { businessEnquiry } from '@/lib/enquiries';
 import { listBusinesses } from '@/server/businesses';
 import { listAdverts } from '@/server/discovery';
 import { ListingGrid } from '@/components/listings';
 import { EmptyState, MediaImage, SafeNote } from '@/components/ui';
 import { Icon } from '@/components/icon';
 import { initials, type Business, type Listing } from '@/lib/market';
-export const metadata = { title: 'Campus business' };
+const publicBusiness = cache(listBusinesses);
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+  try {
+    const b = (await publicBusiness((await params).slug)) as Business;
+    return sharingMetadata(
+      b.name,
+      b.approved.description,
+      `/businesses/${b.slug}`,
+      b.approved.logoMediaId,
+    );
+  } catch {
+    return { title: 'Business unavailable', robots: { index: false }, openGraph: { images: [] } };
+  }
+}
 export default async function BusinessPage({
   params,
   searchParams,
@@ -19,7 +35,7 @@ export default async function BusinessPage({
   let items: Listing[] = [];
   let next: string | null = null;
   try {
-    b = (await listBusinesses(slug)) as Business;
+    b = (await publicBusiness(slug)) as Business;
     const list = await listAdverts({
       business: b.advertiser_id,
       limit: 20,
@@ -69,7 +85,7 @@ export default async function BusinessPage({
             {b.approved.whatsapp ? (
               <a
                 className="btn"
-                href={`https://wa.me/${b.approved.whatsapp.replace(/\D/g, '')}`}
+                href={`https://wa.me/${b.approved.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(businessEnquiry(b.name, `${process.env.APP_ORIGIN}/businesses/${b.slug}`))}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

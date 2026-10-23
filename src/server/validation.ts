@@ -1,3 +1,4 @@
+import { enquiryMessage } from '../lib/enquiries';
 import { z } from 'zod';
 import { socialProfile, type SocialPlatform } from '../lib/socials';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
@@ -199,7 +200,7 @@ export function contactLinks(v: Content, url: string) {
   return {
     phone: v.phone ? `tel:${v.phone}` : null,
     whatsapp: v.whatsapp
-      ? `https://wa.me/${v.whatsapp.slice(1)}?text=${encodeURIComponent(`${v.title} — ${url}`)}`
+      ? `https://wa.me/${v.whatsapp.slice(1)}?text=${encodeURIComponent(enquiryMessage(v.kind, v.title, url))}`
       : null,
   };
 }

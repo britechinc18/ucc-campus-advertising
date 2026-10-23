@@ -230,6 +230,7 @@ export function Shell({
                 {seller ? <p>{user?.name ?? 'Your seller account'}</p> : null}
                 <Link href="/help">Help & safe trading</Link>
                 <Link href="/saved">Saved adverts</Link>
+                <Link href="/recently-viewed">Recently viewed</Link>
                 {seller ? (
                   <>
                     <Link href="/my-adverts">My adverts</Link>
