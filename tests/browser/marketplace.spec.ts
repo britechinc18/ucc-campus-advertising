@@ -1164,6 +1164,15 @@ test('admin creates an assisted business and hands management to a verified owne
         true,
       );
     }
+    // Measure the settled theme, not intermediate colors during its transition.
+    await page.evaluate(async () => {
+      await Promise.all(
+        document
+          .getAnimations()
+          .filter((animation) => animation instanceof CSSTransition)
+          .map((animation) => animation.finished.catch(() => undefined)),
+      );
+    });
     const accessibility = await new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21aa'])
       .analyze();
