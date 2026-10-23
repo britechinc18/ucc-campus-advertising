@@ -521,7 +521,7 @@ test('new buyer screens are responsive, accessible and honor reduced motion in b
       '/saved',
       '/recently-viewed',
       '/businesses',
-      '/sell',
+      '/sign-in',
     ]) {
       await page.goto(path);
       for (const width of [320, 390, 768, 1024, 1440]) {
@@ -785,7 +785,7 @@ test('anonymous enquiries, sharing metadata and local recent history work', asyn
 
 test('published flyer provides artwork metadata for WhatsApp previews', async ({ page }) => {
   await page.goto('/campus-360/events');
-  await page.locator('.flyer-card').first().click();
+  await page.locator('.flyer-card').first().locator('.flyer-link').click();
   await expect(page).toHaveURL(/\/adverts\//);
   await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
     'content',
