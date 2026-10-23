@@ -54,9 +54,11 @@ export function ThemeButton() {
 }
 export function Shell({
   children,
+  footer,
   user,
 }: {
   children: React.ReactNode;
+  footer: React.ReactNode;
   user: {
     name: string | null;
     role: string;
@@ -265,16 +267,7 @@ export function Shell({
         </div>
       </header>
       {children}
-      <footer className="container footer">
-        <Wordmark showLogo />
-        <p>Contact advertisers directly.</p>
-        <a className="photo-credit" href="/editorial/credits.txt">
-          Photo credits
-        </a>
-        <Link className="text-link" href="/help">
-          Safe trading & help <Icon name="arrow" />
-        </Link>
-      </footer>
+      {footer}
       {!detail ? (
         <nav
           className={`bottom-nav ${seller ? 'seller-nav' : 'buyer-nav'}`}

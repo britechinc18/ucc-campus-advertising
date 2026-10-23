@@ -113,7 +113,6 @@ export default async function HomePage() {
       <section className="section campus-edits" aria-labelledby="edits-heading">
         <div className="section-head">
           <div>
-            <p className="eyebrow">A LITTLE INSPIRATION</p>
             <h2 id="edits-heading">For your kind of campus life.</h2>
           </div>
         </div>
@@ -124,15 +123,14 @@ export default async function HomePage() {
           >
             <div className="edit-image">
               <Image
-                src="/editorial/books.webp"
-                alt="Books ready for a new chapter"
+                src="/editorial/medical-books.webp"
+                alt="Medical textbooks and a stethoscope on a desk"
                 fill
                 sizes="(max-width: 599px) 100vw, 33vw"
               />
             </div>
             <div className="edit-copy">
-              <p className="eyebrow">THE STUDY EDIT</p>
-              <h3>Big ideas. Fresh pages.</h3>
+              <h3>Medical textbooks</h3>
               <span>
                 Browse books <Icon name="arrow" />
               </span>
@@ -144,50 +142,48 @@ export default async function HomePage() {
           >
             <div className="edit-image">
               <Image
-                src="/editorial/sound.webp"
-                alt="Headphones on a warm yellow background"
+                src="/editorial/electronics-desk.webp"
+                alt="Headphones, a laptop and phone on a desk"
                 fill
                 sizes="(max-width: 599px) 100vw, 33vw"
               />
             </div>
             <div className="edit-copy">
-              <p className="eyebrow">EVERYDAY UPGRADES</p>
-              <h3>Find your next favourite.</h3>
+              <h3>Everyday upgrades</h3>
               <span>
                 Explore electronics <Icon name="arrow" />
               </span>
             </div>
           </Link>
-          <Link className="business-editorial" href="/businesses">
-            <p className="eyebrow">GOOD PEOPLE. GREAT IDEAS.</p>
-            <Icon name="store" />
-            <h3>
-              Small businesses.
-              <br />A bigger campus.
-            </h3>
-            <p>Discover the people making things happen around you.</p>
-            <span>
-              Meet local businesses <Icon name="arrow" />
-            </span>
+          <Link className="editorial-tile" href="/businesses">
+            <div className="edit-image">
+              <Image
+                src="/editorial/local-business.webp"
+                alt="A coffee shop counter with cups and coffee equipment"
+                fill
+                sizes="(max-width: 599px) 100vw, 33vw"
+              />
+            </div>
+            <div className="edit-copy">
+              <h3>Small businesses</h3>
+              <span>
+                Meet local businesses <Icon name="arrow" />
+              </span>
+            </div>
           </Link>
         </div>
-        <p className="editorial-disclaimer">
-          Editorial inspiration. Browse each collection for currently available adverts.
-        </p>
       </section>
       <section className="section home-campus">
         <div className="section-head">
           <div>
-            <p className="eyebrow">BEYOND THE MARKET</p>
-            <h2>Campus, in full colour.</h2>
-            <p>Events, offers, announcements and the people behind them.</p>
+            <h2>Beyond the Market</h2>
           </div>
           <Link className="text-link" href="/campus-360">
             Campus 360 <Icon name="arrow" />
           </Link>
         </div>
         {campusItems.length ? (
-          <FlyerGrid items={campusItems} />
+          <FlyerGrid items={campusItems} compact />
         ) : (
           <Link className="campus-home-invitation" href="/campus-360">
             <Icon name="calendar" />
@@ -199,14 +195,6 @@ export default async function HomePage() {
           </Link>
         )}
       </section>
-      <div className="market-promise">
-        <span>
-          <Icon name="shield" /> Reviewed before publishing
-        </span>
-        <span>
-          <Icon name="chat" /> Connect directly with advertisers
-        </span>
-      </div>
     </main>
   );
 }

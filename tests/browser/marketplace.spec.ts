@@ -906,7 +906,7 @@ test('hero rotates without controls, supports swipe and keeps search state', asy
   await expect(heading).toContainText('Find it on campus.');
   await expect(page.getByRole('link', { name: 'Shop deals' })).toHaveAttribute(
     'href',
-    '/explore?max=29999',
+    '/explore?max=9999',
   );
 });
 
@@ -974,4 +974,31 @@ test('hero respects reduced motion and keeps copy aligned across responsive them
       await expect(page.locator('.home-promo').first()).toHaveCSS('background-image', 'none');
     }
   }
+});
+
+test('homepage collections, budget deals and footer links remain usable', async ({ page }) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'Great finds under GH₵100' })).toBeVisible();
+  await expect(page.getByText('A LITTLE INSPIRATION', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'For your kind of campus life.' })).toBeVisible();
+  await expect(page.locator('.campus-edits .editorial-tile')).toHaveCount(3);
+  await expect(page.getByRole('heading', { name: 'Beyond the Market', exact: true })).toBeVisible();
+  await expect(page.locator('.market-promise')).toHaveCount(0);
+  await expect(page.locator('.home-campus .flyer-copy')).toHaveCount(0);
+  const footer = page.getByRole('contentinfo');
+  await expect(footer).toContainText('Reviewed before publishing.');
+  await footer.getByRole('link', { name: 'FAQ', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Frequently asked questions');
+  await page.getByText('What does “under GH₵100” mean?', { exact: true }).click();
+  await expect(page.getByText(/strictly below GH₵100/)).toBeVisible();
+  await footer.getByRole('link', { name: 'Privacy policy', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Privacy policy');
+  await footer.getByRole('link', { name: 'Contact & reports', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Contact & reports', exact: true })).toBeVisible();
+  await page.goto('/');
+  await page.getByRole('link', { name: 'Shop deals' }).click();
+  await expect(page).toHaveURL(/max=9999/);
+  const prices = await page.locator('.listing .price').allTextContents();
+  expect(prices.length).toBeGreaterThan(0);
+  for (const price of prices) expect(Number(price.replace(/[^0-9.]/g, ''))).toBeLessThan(100);
 });
