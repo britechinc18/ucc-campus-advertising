@@ -1,3 +1,4 @@
+import { contactFields } from '../lib/seller-profile';
 import { enquiryMessage } from '../lib/enquiries';
 import { z } from 'zod';
 import { socialProfile, type SocialPlatform } from '../lib/socials';
@@ -16,7 +17,7 @@ export const phone = z
     }
     return p.number;
   });
-const socialUrl = (platform: SocialPlatform) =>
+export const socialUrl = (platform: SocialPlatform) =>
   z
     .string()
     .trim()
@@ -31,6 +32,9 @@ const socialUrl = (platform: SocialPlatform) =>
     });
 export const contentSchema = z
   .object({
+    displayName: z.string().trim().min(2).max(100).optional(),
+    contactSources: z.array(z.enum(contactFields)).max(8).optional(),
+    profileVersion: z.number().int().min(0).optional(),
     title: z.string().trim().min(5).max(120),
     description: z.string().trim().min(20).max(5000),
     categoryId: id,
@@ -80,6 +84,15 @@ export const contentSchema = z
   })
   .strict()
   .superRefine((v, ctx) => {
+    if (
+      v.contactSources &&
+      (v.profileVersion === undefined || new Set(v.contactSources).size !== v.contactSources.length)
+    )
+      ctx.addIssue({
+        code: 'custom',
+        path: ['contactSources'],
+        message: 'Profile links need a version and unique fields',
+      });
     if (isFlyer(v.kind)) {
       if (!v.mediaIds.length)
         ctx.addIssue({

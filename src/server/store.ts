@@ -1,3 +1,4 @@
+import { effectiveContent, activeIdentity } from './profile-visibility';
 import { sql, type SQL } from 'drizzle-orm';
 import { db, type Executor } from './db';
 import { ensure } from './errors';
@@ -28,13 +29,15 @@ export interface Advertiser {
   user_id: string | null;
   suspended: boolean;
   kind: string;
+  closed_at: Date | null;
+  deactivated_at: Date | null;
 }
 export async function advertiser(tx: Executor, user: Actor, advertiserId?: string) {
   const candidates = await query<Advertiser>(
     tx,
     advertiserId
       ? sql`select * from advertisers where id=${advertiserId} for update`
-      : sql`select * from advertisers where user_id=${user.id} order by created_at,id for update`,
+      : sql`select * from advertisers where user_id=${user.id} and closed_at is null order by created_at,id for update`,
   );
   ensure(candidates.length, 404, 'NOT_FOUND', 'Advertiser not found');
   ensure(
@@ -50,6 +53,7 @@ export async function advertiser(tx: Executor, user: Actor, advertiserId?: strin
     'FORBIDDEN',
     'Advertiser ownership required',
   );
+  ensure(!value.closed_at, 409, 'PROFILE_CLOSED', 'This profile is closed');
   ensure(!value.suspended, 403, 'SUSPENDED', 'Advertiser suspended');
   return value;
 }
@@ -88,7 +92,7 @@ export async function rateLimit(key: string, limit: number, seconds: number) {
   );
 }
 // a,r,p,u aliases are fixed within public queries; never include unapproved revisions.
-export const visible = sql`a.state='published' and a.expires_at>now() and r.status='approved' and not p.suspended and (u.id is null or not u.suspended) and (r.data->'details'->>'endsAt' is null or (r.data->'details'->>'endsAt')::timestamptz>now())`;
+export const visible = sql`a.state='published' and a.expires_at>now() and not a.privacy_hidden and ${activeIdentity} and (nullif(${effectiveContent}->>'phone','') is not null or nullif(${effectiveContent}->>'whatsapp','') is not null) and r.status='approved' and not p.suspended and (u.id is null or not u.suspended) and (r.data->'details'->>'endsAt' is null or (r.data->'details'->>'endsAt')::timestamptz>now())`;
 
 // The owner user row serializes submissions across personal and business identities.
 export const ownerIdentities = (sellerId: string) =>

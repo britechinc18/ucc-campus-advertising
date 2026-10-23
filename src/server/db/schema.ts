@@ -69,6 +69,17 @@ export const advertisers = pgTable(
     userId: uuid('user_id').references(() => users.id),
     name: text('name').notNull(),
     kind: text('kind').notNull(),
+    closedAt: time('closed_at'),
+    deactivatedAt: time('deactivated_at'),
+    reactivationPending: boolean('reactivation_pending').notNull().default(false),
+    automaticPersonal: boolean('automatic_personal').notNull().default(false),
+    draftDefaults: jsonb('draft_defaults').$type<Record<string, unknown>>(),
+    approvedDefaults: jsonb('approved_defaults').$type<Record<string, unknown>>(),
+    defaultsVersion: integer('defaults_version').notNull().default(0),
+    approvedDefaultsVersion: integer('approved_defaults_version').notNull().default(0),
+    profileState: text('profile_state').notNull().default('incomplete'),
+    profileReason: text('profile_reason'),
+    privacy: jsonb('privacy').notNull().default({}).$type<Record<string, boolean>>(),
     suspended: boolean('suspended').notNull().default(false),
     trusted: boolean('trusted').notNull().default(false),
     consentAt: time('consent_at').notNull(),
@@ -79,7 +90,9 @@ export const advertisers = pgTable(
   },
   (t) => [
     check('advertiser_kind', sql`${t.kind} in ('student','business')`),
-    uniqueIndex('advertisers_user_kind_unique').on(t.userId, t.kind),
+    uniqueIndex('advertisers_user_kind_unique')
+      .on(t.userId, t.kind)
+      .where(sql`${t.closedAt} is null`),
   ],
 );
 export const categories = pgTable('categories', {
@@ -119,6 +132,7 @@ export const adverts = pgTable(
     createdBy: uuid('created_by')
       .notNull()
       .references(() => users.id),
+    privacyHidden: boolean('privacy_hidden').notNull().default(false),
     state: text('state').notNull().default('draft'),
     approvedRevisionId: uuid('approved_revision_id'),
     publishedAt: time('published_at'),

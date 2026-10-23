@@ -1,3 +1,4 @@
+import { requireCompleteDefaults } from './profiles';
 import { sql } from 'drizzle-orm';
 import { db, type Executor } from './db';
 import {
@@ -50,6 +51,37 @@ async function owned(tx: Executor, user: Actor, advertId: string) {
   return { a: fresh, seller };
 }
 async function validateContent(tx: Executor, sellerId: string, data: Content, settings: Settings) {
+  if (data.contactSources) {
+    const p = await one<{
+      defaults_version: number;
+      draft_defaults: unknown;
+      kind: string;
+      closed_at: Date | null;
+      deactivated_at: Date | null;
+    }>(tx, sql`select * from advertisers where id=${sellerId}`);
+    ensure(
+      !p.closed_at && !p.deactivated_at,
+      409,
+      'PROFILE_INACTIVE',
+      'Reactivate the selected profile before posting',
+    );
+    ensure(
+      data.profileVersion === p.defaults_version,
+      409,
+      'PROFILE_CHANGED',
+      'Your profile changed. Restore current defaults or reload this advert before saving',
+    );
+    const defaults =
+      p.kind === 'business'
+        ? (
+            await one<{ latest: unknown }>(
+              tx,
+              sql`select coalesce(pending,approved) as latest from business_profiles where advertiser_id=${sellerId}`,
+            )
+          ).latest
+        : p.draft_defaults;
+    requireCompleteDefaults(defaults as Parameters<typeof requireCompleteDefaults>[0]);
+  }
   const c = await one<{ active: boolean }>(
     tx,
     sql`select active from categories where id=${data.categoryId} for share`,
@@ -76,6 +108,13 @@ async function writeRevision(
   purpose: string,
   charged = false,
 ) {
+  if (!data.displayName) {
+    const identity = await one<{ name: string }>(
+      tx,
+      sql`select coalesce(b.approved->>'name',p.name) as name from advertisers p left join business_profiles b on b.advertiser_id=p.id where p.id=${a.advertiser_id}`,
+    );
+    data = { ...data, displayName: identity.name };
+  }
   const r = await one<Revision>(
     tx,
     sql`insert into advert_revisions(advert_id,category_id,data,fingerprint,purpose,quota_charged) values(${a.id},${data.categoryId},${JSON.stringify(data)}::jsonb,${fingerprint(data)},${purpose},${charged}) returning *`,
@@ -91,18 +130,19 @@ export async function createProfile(userId: string, input: unknown) {
   return db().transaction(async (tx) => {
     await actor(tx, userId);
     await tx.execute(sql`select id from users where id=${userId} for update`);
+    if (data.kind === 'business') await ensurePersonal(tx, userId);
     const existing = await query<{ id: string }>(
       tx,
-      sql`select id from advertisers where user_id=${userId} and kind=${data.kind}`,
+      sql`select id from advertisers where user_id=${userId} and kind=${data.kind} and closed_at is null`,
     );
     if (existing.length)
       return one(
         tx,
-        sql`select id,name,kind from advertisers where user_id=${userId} and kind=${data.kind}`,
+        sql`select id,name,kind from advertisers where user_id=${userId} and kind=${data.kind} and closed_at is null`,
       );
     return one(
       tx,
-      sql`insert into advertisers(user_id,name,kind,consent_at,created_by) values(${userId},${data.name},${data.kind},now(),${userId}) returning id,name,kind`,
+      sql`insert into advertisers(user_id,name,kind,consent_at,created_by,automatic_personal) values(${userId},${data.name},${data.kind},now(),${userId},${data.kind === 'student'}) returning id,name,kind`,
     );
   });
 }
@@ -285,6 +325,7 @@ export async function moderate(
   revisionId: string,
   decision: 'approve' | 'reject',
   reason: string,
+  profileVersion?: number,
 ) {
   id.parse(revisionId);
   ensure(
@@ -306,6 +347,18 @@ export async function moderate(
       sql`select * from advert_revisions where id=${revisionId} for update`,
     );
     ensure(r.status === 'pending', 409, 'STATE_CONFLICT', 'Submission is no longer pending');
+    if (r.data.contactSources) {
+      const current = await one<{ defaults_version: number }>(
+        tx,
+        sql`select defaults_version from advertisers where id=${seller.id}`,
+      );
+      ensure(
+        profileVersion === current.defaults_version,
+        409,
+        'PROFILE_CHANGED',
+        'The profile changed; reload the advert review',
+      );
+    }
     if (decision === 'approve') {
       const linked = await query<{ suspended: boolean }>(
         tx,
@@ -338,7 +391,7 @@ export async function moderate(
         sql`update advert_revisions set status='approved',reviewed_at=now(),reason=${reason} where id=${r.id}`,
       );
       await tx.execute(
-        sql`update adverts set approved_revision_id=${r.id},state='published',published_at=case when ${r.purpose}='edit' then published_at else now() end,expires_at=case when ${r.purpose}='edit' then expires_at else now()+${settings.duration_days}*interval '1 day' end where id=${a.id}`,
+        sql`update adverts set approved_revision_id=${r.id},privacy_hidden=false,state='published',published_at=case when ${r.purpose}='edit' then published_at else now() end,expires_at=case when ${r.purpose}='edit' then expires_at else now()+${settings.duration_days}*interval '1 day' end where id=${a.id}`,
       );
     } else {
       await tx.execute(
@@ -389,4 +442,10 @@ export async function myAdverts(userId: string) {
       sql`select a.*,coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc) from advert_revisions r where r.advert_id=a.id),'[]'::jsonb) as revisions from adverts a join advertisers p on p.id=a.advertiser_id where p.user_id=${userId} order by a.created_at desc limit 100`,
     );
   });
+}
+
+export async function ensurePersonal(tx: Executor, userId: string) {
+  await tx.execute(
+    sql`insert into advertisers(user_id,name,kind,consent_at,created_by,automatic_personal) select u.id,coalesce(nullif(u.name,''),'Personal seller'),'student',now(),u.id,true from users u where u.id=${userId} and not exists(select 1 from advertisers p where p.user_id=u.id and p.kind='student' and p.closed_at is null) on conflict do nothing`,
+  );
 }

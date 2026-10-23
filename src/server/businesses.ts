@@ -1,3 +1,4 @@
+import { applyPrivacy, requireCompleteDefaults, socialsSchema, visibilitySchema } from './profiles';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from './db';
@@ -6,6 +7,11 @@ import { ensure } from './errors';
 import { id, phone } from './validation';
 const profile = z
   .object({
+    version: z.number().int().min(0).optional(),
+    defaultsEnabled: z.boolean().optional(),
+    categoryId: id.optional(),
+    socials: socialsSchema.optional(),
+    visibility: visibilitySchema.optional(),
     name: z.string().trim().min(2).max(100).optional(),
     slug: z.string().regex(/^[a-z0-9-]{3,60}$/),
     description: z.string().trim().min(20).max(2000),
@@ -28,9 +34,23 @@ export async function saveBusiness(userId: string, input: unknown, sellerId?: st
       ? null
       : await query<{ id: string }>(
           tx,
-          sql`select id from advertisers where user_id=${userId} and kind='business'`,
+          sql`select id from advertisers where user_id=${userId} and kind='business' and closed_at is null`,
         );
     const p = await advertiser(tx, user, sellerId ?? own?.[0]?.id);
+    if (data.defaultsEnabled) requireCompleteDefaults(data);
+    const version = await one<{ defaults_version: number }>(
+      tx,
+      sql`select defaults_version from advertisers where id=${p.id}`,
+    );
+    ensure(
+      data.version === undefined || data.version === version.defaults_version,
+      409,
+      'PROFILE_CHANGED',
+      'Business profile changed. Reload before saving',
+    );
+    if (data.categoryId)
+      await one(tx, sql`select id from categories where id=${data.categoryId} and active`);
+    await applyPrivacy(tx, p.id, data.visibility);
     ensure(p.kind === 'business', 422, 'BUSINESS_REQUIRED', 'Business advertiser required');
     if (data.logoMediaId) {
       const media = await one<{ advertiser_id: string; state: string }>(
@@ -59,6 +79,9 @@ export async function saveBusiness(userId: string, input: unknown, sellerId?: st
       tx,
       sql`insert into business_profiles(advertiser_id,slug,pending) values(${p.id},${data.slug},${JSON.stringify(data)}::jsonb) on conflict(advertiser_id) do update set pending=excluded.pending,state='pending',reason=null returning id`,
     );
+    await tx.execute(
+      sql`update advertisers set defaults_version=defaults_version+1 where id=${p.id}`,
+    );
     await audit(tx, userId, 'business_submitted', b.id);
     return b;
   });
@@ -67,6 +90,7 @@ export async function moderateBusiness(userId: string, businessId: string, input
   id.parse(businessId);
   const data = z
     .object({
+      version: z.number().int().min(0).optional(),
       decision: z.enum(['approve', 'reject', 'suspend']),
       reason: z.string().trim().min(3).max(1000),
     })
@@ -74,16 +98,28 @@ export async function moderateBusiness(userId: string, businessId: string, input
     .parse(input);
   return db().transaction(async (tx) => {
     await actor(tx, userId, true);
-    const b = await one<{ pending: unknown }>(
-      tx,
-      sql`select * from business_profiles where id=${businessId} for update`,
-    );
+    const b = await one<{
+      pending: { defaultsEnabled?: boolean; visibility?: Record<string, boolean> };
+      advertiser_id: string;
+    }>(tx, sql`select * from business_profiles where id=${businessId} for update`);
     ensure(
       data.decision === 'suspend' || b.pending,
       409,
       'STATE_CONFLICT',
       'No business revision pending',
     );
+    const owner = await one<{ defaults_version: number }>(
+      tx,
+      sql`select defaults_version from advertisers where id=${b.advertiser_id} for update`,
+    );
+    ensure(
+      !b.pending?.defaultsEnabled || data.version === owner.defaults_version,
+      409,
+      'PROFILE_CHANGED',
+      'Reload the business review before deciding',
+    );
+    if (data.decision === 'approve' && b.pending?.defaultsEnabled)
+      requireCompleteDefaults(b.pending);
     if (data.decision === 'approve')
       await tx.execute(
         sql`update business_profiles set approved=pending,pending=null,state='approved',reason=${data.reason} where id=${businessId}`,
@@ -96,6 +132,10 @@ export async function moderateBusiness(userId: string, businessId: string, input
       await tx.execute(
         sql`update business_profiles set state='suspended',pending=null,approved=null,reason=${data.reason} where id=${businessId}`,
       );
+    if (data.decision === 'approve')
+      await tx.execute(
+        sql`update advertisers set approved_defaults_version=defaults_version,privacy=${JSON.stringify(b.pending?.visibility ?? {})}::jsonb where id=${b.advertiser_id}`,
+      );
     await audit(tx, userId, 'business_moderated', businessId, data);
     return { id: businessId, decision: data.decision };
   });
@@ -103,7 +143,7 @@ export async function moderateBusiness(userId: string, businessId: string, input
 export async function listBusinesses(slug?: string, search = '', offset = 0) {
   const rows = await query(
     db(),
-    sql`select b.id,b.advertiser_id,b.slug,b.approved,coalesce(b.approved->>'name',p.name) as name from business_profiles b join advertisers p on p.id=b.advertiser_id left join users u on u.id=p.user_id where b.approved is not null and b.state<>'suspended' and not p.suspended and (u.id is null or not u.suspended) ${slug ? sql`and b.slug=${slug}` : sql``} ${search ? sql`and (coalesce(b.approved->>'name',p.name) || ' ' || coalesce(b.approved->>'description','') || ' ' || coalesce(b.approved->>'location','')) ilike ${'%' + search.slice(0, 100).replace(/[\\%_]/g, '\\$&') + '%'}` : sql``} order by coalesce(b.approved->>'name',p.name),b.id limit 50 offset ${Math.max(0, Math.min(10000, offset))}`,
+    sql`select b.id,b.advertiser_id,b.slug,medstash_effective_content(b.approved || jsonb_build_object('contactSources',jsonb_build_array('phone','whatsapp','tiktok','snapchat','instagram','x'),'profileVersion',p.approved_defaults_version),b.approved,p.approved_defaults_version,p.privacy) - 'contactSources' - 'profileVersion' as approved,coalesce(b.approved->>'name',p.name) as name from business_profiles b join advertisers p on p.id=b.advertiser_id left join users u on u.id=p.user_id where b.approved is not null and b.state<>'suspended' and not p.suspended and p.closed_at is null and p.deactivated_at is null and (u.id is null or not u.suspended) ${slug ? sql`and b.slug=${slug}` : sql``} ${search ? sql`and (coalesce(b.approved->>'name',p.name) || ' ' || coalesce(b.approved->>'description','') || ' ' || coalesce(b.approved->>'location','')) ilike ${'%' + search.slice(0, 100).replace(/[\\%_]/g, '\\$&') + '%'}` : sql``} order by coalesce(b.approved->>'name',p.name),b.id limit 50 offset ${Math.max(0, Math.min(10000, offset))}`,
   );
   if (slug) ensure(rows[0], 404, 'NOT_FOUND', 'Business not found');
   return slug ? rows[0] : rows;
@@ -113,7 +153,7 @@ export async function businessQueue(userId: string) {
     await actor(tx, userId, true);
     return query(
       tx,
-      sql`select * from business_profiles where pending is not null order by id limit 50`,
+      sql`select b.*,p.defaults_version as version from business_profiles b join advertisers p on p.id=b.advertiser_id where b.pending is not null and p.closed_at is null order by b.id limit 50`,
     );
   });
 }
@@ -130,7 +170,7 @@ export async function assistedBusinessContext(userId: string, sellerId: string) 
     );
     const rows = await query(
       tx,
-      sql`select * from business_profiles where advertiser_id=${sellerId}`,
+      sql`select b.*,p.defaults_version as version from business_profiles b join advertisers p on p.id=b.advertiser_id where advertiser_id=${sellerId}`,
     );
     return {
       business: rows[0] ?? null,

@@ -1,6 +1,10 @@
+import type { ContactField, ProfileDefaults, ProfileVisibility } from './seller-profile';
 import type { SocialLinks } from './socials';
 import { isFlyer, kindName } from './campus';
 export interface AdvertContent {
+  displayName?: string;
+  contactSources?: ContactField[];
+  profileVersion?: number;
   title: string;
   description: string;
   categoryId: string;
@@ -40,6 +44,7 @@ export interface OwnAdvert {
   id: string;
   state: string;
   approved_revision_id: string | null;
+  privacy_hidden?: boolean;
   expires_at: string | null;
   revisions: Revision[];
   advertiser_name?: string;
@@ -52,6 +57,11 @@ export interface Category {
   active?: boolean;
 }
 export interface BusinessProfile {
+  defaultsEnabled?: boolean;
+  version?: number;
+  visibility?: ProfileVisibility;
+  socials?: SocialLinks;
+  categoryId?: string;
   name?: string;
   slug: string;
   description: string;
@@ -73,6 +83,12 @@ export interface SellerIdentity {
   name: string;
   kind: string;
   suspended: boolean;
+  version?: number;
+  approvedVersion?: number;
+  defaults?: ProfileDefaults | null;
+  approvedDefaults?: ProfileDefaults | null;
+  deactivated?: boolean;
+  reactivationPending?: boolean;
 }
 export interface Account {
   profiles: SellerIdentity[];
