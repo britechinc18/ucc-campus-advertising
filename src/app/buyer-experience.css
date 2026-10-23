@@ -657,6 +657,7 @@
 
 /* Two photographs move as one rail; text and search remain stationary. */
 .hero-carousel {
+  background: var(--soft);
   touch-action: pan-y;
   user-select: none;
   cursor: grab;
@@ -695,7 +696,8 @@
 }
 .campus-scene {
   position: absolute;
-  inset: 0 0 0 38%;
+  inset: 0 0 0 28%;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 42%);
 }
 .campus-scene img {
   object-position: 50% 35%;
@@ -718,9 +720,9 @@
 .hero-carousel::after {
   background: linear-gradient(
     90deg,
-    var(--canvas) 0%,
-    var(--canvas) 36%,
-    color-mix(in srgb, var(--canvas) 85%, transparent) 45%,
+    var(--soft) 0%,
+    var(--soft) 36%,
+    color-mix(in srgb, var(--soft) 85%, transparent) 45%,
     transparent 65%
   );
 }
@@ -731,7 +733,8 @@
   margin-top: 30px;
 }
 .home-promo {
-  display: flex;
+  position: relative;
+  isolation: isolate;
   min-width: 0;
   min-height: 225px;
   overflow: hidden;
@@ -739,20 +742,27 @@
   background: var(--soft);
 }
 .promo-photo {
-  position: relative;
-  order: 2;
-  flex: 0 0 42%;
-  min-width: 0;
+  position: absolute;
+  inset: 0 0 0 auto;
+  width: 64%;
+  z-index: -1;
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgb(0 0 0 / 12%) 14%,
+    rgb(0 0 0 / 55%) 32%,
+    #000 56%
+  );
 }
 .promo-photo img {
   object-fit: cover;
   object-position: 55% center;
 }
 .promo-copy {
-  flex: 1;
+  position: relative;
+  width: 64%;
   min-width: 0;
   padding: 28px;
-  align-self: center;
 }
 .promo-copy h2 {
   font-size: 23px;
@@ -775,10 +785,6 @@
   min-height: 36px;
   padding: 8px 14px;
   font-size: 11px;
-}
-.sell-promo {
-  background: var(--surface);
-  border: 1px solid var(--border);
 }
 .sell-promo .promo-photo img {
   object-position: 42% center;
@@ -810,8 +816,8 @@
   .promo-copy h2 strong {
     font-size: 29px;
   }
-  .promo-photo {
-    flex-basis: 36%;
+  .promo-copy {
+    width: 68%;
   }
 }
 @media (max-width: 767px) {
@@ -819,7 +825,7 @@
     object-position: 60% 50%;
   }
   .campus-scene {
-    left: 18%;
+    left: 8%;
   }
   .campus-scene img {
     object-position: 50% 35%;
@@ -827,9 +833,9 @@
   .hero-carousel::after {
     background: linear-gradient(
       90deg,
-      var(--canvas) 0%,
-      color-mix(in srgb, var(--canvas) 94%, transparent) 32%,
-      color-mix(in srgb, var(--canvas) 55%, transparent) 55%,
+      var(--soft) 0%,
+      color-mix(in srgb, var(--soft) 94%, transparent) 32%,
+      color-mix(in srgb, var(--soft) 55%, transparent) 55%,
       transparent 88%
     );
   }
