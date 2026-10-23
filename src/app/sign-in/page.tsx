@@ -20,6 +20,7 @@ export default async function SignInPage({
         <Image
           src="/icons/icon-192.png?v=2"
           alt=""
+          unoptimized
           className="welcome-logo"
           width={58}
           height={58}
