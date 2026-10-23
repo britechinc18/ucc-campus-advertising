@@ -217,7 +217,8 @@ textarea {
   font-size: 8px;
 }
 /* Natural document flow eliminates the empty bands for every photograph shape. */
-.public-detail .gallery-main {
+.public-detail .gallery-main,
+.public-detail.flyer-detail .gallery-main {
   display: block;
   width: 100%;
   height: auto;

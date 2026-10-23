@@ -77,12 +77,12 @@ export async function ownedAdverts(
         : sql`p.user_id=${userId} ${identity ? sql`and p.id=${identity}` : sql``}`;
     const rows = await query(
       tx,
-      sql`select a.*,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc,r.id desc) from advert_revisions r where r.advert_id=a.id),'[]'::jsonb) as revisions from adverts a join advertisers p on p.id=a.advertiser_id where ${ownership} ${status === 'pending' ? sql`and exists(select 1 from advert_revisions pr where pr.advert_id=a.id and pr.status='pending')` : status ? sql`and (case when a.state='published' and a.expires_at<=now() then 'expired' else a.state end)=${status}` : sql``} ${advertId ? sql`and a.id=${advertId}` : sql``} order by a.created_at desc,a.id desc limit 21 offset ${offset}`,
+      sql`select a.*,p.closed_at is not null as profile_closed,p.deactivated_at is not null as profile_deactivated,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc,r.id desc) from advert_revisions r where r.advert_id=a.id),'[]'::jsonb) as revisions from adverts a join advertisers p on p.id=a.advertiser_id where ${ownership} ${status === 'pending' ? sql`and exists(select 1 from advert_revisions pr where pr.advert_id=a.id and pr.status='pending')` : status ? sql`and (case when a.state='published' and a.expires_at<=now() then 'expired' else a.state end)=${status}` : sql``} ${advertId ? sql`and a.id=${advertId}` : sql``} order by a.created_at desc,a.id desc limit 21 offset ${offset}`,
     );
     if (advertId)
       return one(
         tx,
-        sql`select a.*,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc,r.id desc) from advert_revisions r where r.advert_id=a.id),'[]'::jsonb) as revisions from adverts a join advertisers p on p.id=a.advertiser_id where a.id=${advertId} and ${ownership}`,
+        sql`select a.*,p.closed_at is not null as profile_closed,p.deactivated_at is not null as profile_deactivated,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc,r.id desc) from advert_revisions r where r.advert_id=a.id),'[]'::jsonb) as revisions from adverts a join advertisers p on p.id=a.advertiser_id where a.id=${advertId} and ${ownership}`,
       );
     const counts = await query<{ state: string; count: number }>(
       tx,
@@ -158,11 +158,11 @@ export async function adminView(
       if (target)
         return one(
           tx,
-          sql`select a.*,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc,r.id desc) from advert_revisions r where r.advert_id=a.id),'[]'::jsonb) as revisions from adverts a join advertisers p on p.id=a.advertiser_id where a.id=${target}`,
+          sql`select a.*,p.closed_at is not null as profile_closed,p.deactivated_at is not null as profile_deactivated,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc,r.id desc) from advert_revisions r where r.advert_id=a.id),'[]'::jsonb) as revisions from adverts a join advertisers p on p.id=a.advertiser_id where a.id=${target}`,
         );
       return query(
         tx,
-        sql`select a.*,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce(r.data,(select x.data from advert_revisions x where x.advert_id=a.id order by x.created_at desc,x.id desc limit 1)) as data from adverts a join advertisers p on p.id=a.advertiser_id left join advert_revisions r on r.id=a.approved_revision_id where (${search}='' or strpos(lower(p.name||' '||coalesce(r.data->>'title',(select x.data->>'title' from advert_revisions x where x.advert_id=a.id order by x.created_at desc,x.id desc limit 1),'')||' '||a.state),lower(${search}))>0) order by a.created_at desc,a.id desc limit 50 offset ${offset}`,
+        sql`select a.*,p.closed_at is not null as profile_closed,p.deactivated_at is not null as profile_deactivated,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce(r.data,(select x.data from advert_revisions x where x.advert_id=a.id order by x.created_at desc,x.id desc limit 1)) as data from adverts a join advertisers p on p.id=a.advertiser_id left join advert_revisions r on r.id=a.approved_revision_id where (${search}='' or strpos(lower(p.name||' '||coalesce(r.data->>'title',(select x.data->>'title' from advert_revisions x where x.advert_id=a.id order by x.created_at desc,x.id desc limit 1),'')||' '||a.state),lower(${search}))>0) order by a.created_at desc,a.id desc limit 50 offset ${offset}`,
       );
     }
     return [];

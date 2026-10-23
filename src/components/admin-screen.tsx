@@ -225,6 +225,10 @@ export function AdminScreen({ resource, target }: { resource: string; target?: s
       title: decision === 'approve' ? 'Approve and publish advert' : 'Reject submission',
       path: `admin/submissions/${row.id}/${decision}`,
       fields: [reason],
+      build: (f) => ({
+        reason: f.get('reason'),
+        ...(row.data?.contactSources ? { profileVersion: row.profile_version } : {}),
+      }),
       description:
         decision === 'approve'
           ? 'Approve only after reviewing all content and photos. New adverts publish for the configured duration; edits retain the existing expiry.'
@@ -236,7 +240,7 @@ export function AdminScreen({ resource, target }: { resource: string; target?: s
       title: `${decision[0].toUpperCase() + decision.slice(1)} business profile`,
       path: `admin/businesses/${row.id}`,
       fields: [reason],
-      build: (f) => ({ decision, reason: f.get('reason') }),
+      build: (f) => ({ decision, version: row.version, reason: f.get('reason') }),
     });
   const suspendAdvert = (row: Row) =>
     setAction({
@@ -981,6 +985,11 @@ function AdvertiserDetails({
           >
             {p.suspended ? 'Restore advertiser' : 'Suspend advertiser'}
           </button>
+          {p.kind === 'student' ? (
+            <Link className="btn secondary" href={`/admin/personal/${p.id}`}>
+              Manage personal profile
+            </Link>
+          ) : null}
           {p.kind === 'business' ? (
             <Link className="btn secondary" href={`/admin/businesses/${p.id}/profile`}>
               Manage business profile

@@ -2,7 +2,13 @@
 import { useState } from 'react';
 import { api } from '@/lib/api';
 import { ErrorMessage, Loading } from './ui';
-type Claimant = { id: string; name: string | null; email: string; conflict: boolean };
+type Claimant = {
+  id: string;
+  name: string | null;
+  email: string;
+  conflict: boolean;
+  replaceable: boolean;
+};
 export function AdminHandover({
   advertiserId,
   onComplete,
@@ -79,6 +85,7 @@ export function AdminHandover({
                 evidenceReference: f.get('evidence'),
                 contactVerified: f.get('ownership') === 'on',
                 consent: f.get('consent') === 'on',
+                replaceUnusedPersonal: f.get('replaceUnused') === 'on',
               });
               setDone(true);
               onComplete();
@@ -108,6 +115,15 @@ export function AdminHandover({
                 </span>
               </label>
             ))}
+            {users.find((u) => u.id === selected)?.replaceable ? (
+              <label className="check" key={selected}>
+                <input type="checkbox" name="replaceUnused" required />
+                <span>
+                  Replace this account’s unused automatic personal profile. Existing assisted
+                  adverts and their history will stay with the assigned profile.
+                </span>
+              </label>
+            ) : null}
             <label className="form-group">
               <span className="form-label">Private verification evidence reference</span>
               <input

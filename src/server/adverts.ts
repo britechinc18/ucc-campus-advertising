@@ -1,3 +1,4 @@
+import { profileComplete } from '../lib/seller-profile';
 import { requireCompleteDefaults } from './profiles';
 import { sql } from 'drizzle-orm';
 import { db, type Executor } from './db';
@@ -55,6 +56,7 @@ async function validateContent(tx: Executor, sellerId: string, data: Content, se
     const p = await one<{
       defaults_version: number;
       draft_defaults: unknown;
+      approved_defaults: unknown;
       kind: string;
       closed_at: Date | null;
       deactivated_at: Date | null;
@@ -76,10 +78,12 @@ async function validateContent(tx: Executor, sellerId: string, data: Content, se
         ? (
             await one<{ latest: unknown }>(
               tx,
-              sql`select coalesce(pending,approved) as latest from business_profiles where advertiser_id=${sellerId}`,
+              sql`select case when pending->>'phone' is not null and pending->>'whatsapp' is not null then pending else coalesce(approved,pending) end as latest from business_profiles where advertiser_id=${sellerId}`,
             )
           ).latest
-        : p.draft_defaults;
+        : profileComplete(p.draft_defaults as Parameters<typeof profileComplete>[0])
+          ? p.draft_defaults
+          : p.approved_defaults;
     requireCompleteDefaults(defaults as Parameters<typeof requireCompleteDefaults>[0]);
   }
   const c = await one<{ active: boolean }>(
@@ -251,6 +255,12 @@ export async function submitAdvert(
       );
       return old[0].response;
     }
+    ensure(
+      !seller.deactivated_at,
+      409,
+      'PROFILE_INACTIVE',
+      'Reactivate this business before submitting adverts',
+    );
     ensure(a.state !== 'suspended', 409, 'STATE_CONFLICT', 'Suspended advert cannot be submitted');
     const r = await one<Revision>(
       tx,
@@ -360,6 +370,22 @@ export async function moderate(
       );
     }
     if (decision === 'approve') {
+      const visibility = await one<{ contact: boolean }>(
+        tx,
+        sql`select (nullif(medstash_effective_content(${JSON.stringify(r.data)}::jsonb,case when p.kind='business' then b.approved else p.approved_defaults end,p.approved_defaults_version,p.privacy)->>'phone','') is not null or nullif(medstash_effective_content(${JSON.stringify(r.data)}::jsonb,case when p.kind='business' then b.approved else p.approved_defaults end,p.approved_defaults_version,p.privacy)->>'whatsapp','') is not null) as contact from advertisers p left join business_profiles b on b.advertiser_id=p.id where p.id=${seller.id}`,
+      );
+      ensure(
+        visibility.contact,
+        409,
+        'CONTACT_HIDDEN',
+        'Approve a usable visible contact or request an advert-specific contact override',
+      );
+      ensure(
+        !seller.deactivated_at,
+        409,
+        'PROFILE_INACTIVE',
+        'Reactivate this business before publishing',
+      );
       const linked = await query<{ suspended: boolean }>(
         tx,
         sql`select suspended from users where id=${seller.user_id}`,

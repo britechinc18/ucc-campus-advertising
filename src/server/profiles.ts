@@ -148,9 +148,9 @@ export async function savePersonalProfile(userId: string, input: unknown, seller
       ).id;
     const p = await advertiser(tx, user, own);
     ensure(p.kind === 'student', 422, 'PERSONAL_REQUIRED', 'Choose a personal profile');
-    const old = await one<{ defaults_version: number }>(
+    const old = await one<{ defaults_version: number; draft_defaults: ProfileDefaults | null }>(
       tx,
-      sql`select defaults_version from advertisers where id=${own}`,
+      sql`select defaults_version,draft_defaults from advertisers where id=${own}`,
     );
     ensure(
       old.defaults_version === data.version,
@@ -170,7 +170,7 @@ export async function savePersonalProfile(userId: string, input: unknown, seller
       userId,
       data.submit ? 'personal_profile_submitted' : 'personal_profile_draft_saved',
       own,
-      { version: saved.version },
+      { version: saved.version, previous: old.draft_defaults, submitted: data.profile },
     );
     return saved;
   });
@@ -223,6 +223,7 @@ export async function moderatePersonalProfile(userId: string, sellerId: string, 
     await audit(tx, userId, 'personal_profile_' + data.decision, sellerId, {
       version: data.version,
       reason: data.reason,
+      profile: p.draft_defaults,
     });
     return { id: sellerId, decision: data.decision };
   });

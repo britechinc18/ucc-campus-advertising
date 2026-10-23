@@ -279,8 +279,11 @@ test('business edits remain private until approved and upload failure never look
   await page
     .getByLabel('About your business')
     .fill('Browser business profile updated through the real moderation workflow.');
-  await page.getByLabel('WhatsApp (optional)').fill('0241234567');
-  await page.getByRole('checkbox').check();
+  await page.getByLabel('Business WhatsApp', { exact: true }).fill('0241234567');
+  await page.getByLabel('Business phone', { exact: true }).fill('0241234567');
+  await page
+    .getByLabel('I consent to publish the visible contact details and social profiles above.')
+    .check();
   await page.getByRole('button', { name: 'Submit for approval' }).click();
   await expect(page.getByRole('status')).toContainText('submitted');
   const publicContext = await browser.newContext({ baseURL: 'http://localhost:3000' });
@@ -1053,6 +1056,11 @@ test('one owner can add a business, select posting identity and filter My Ads', 
     .getByLabel('About your business')
     .fill('Student-owned clothing and accessories for the campus community.');
   await page.getByLabel('Campus location').fill('UCC campus');
+  await page.getByLabel('Business phone', { exact: true }).fill('0241234567');
+  await page.getByLabel('Business WhatsApp', { exact: true }).fill('0543982307');
+  await page
+    .getByLabel('I consent to publish the visible contact details and social profiles above.')
+    .check();
   await page.getByRole('button', { name: 'Submit for approval' }).click();
   await expect(page.getByRole('status')).toHaveText('Profile submitted for administrator review.');
   await page.goto('/post?kind=service');
@@ -1117,8 +1125,11 @@ test('admin creates an assisted business and hands management to a verified owne
     .getByLabel('About your business')
     .fill('Student clothing business managed by MedStash with owner permission.');
   await page.getByLabel('Campus location').fill('UCC campus');
-  await page.getByLabel('WhatsApp (optional)').fill('0543982307');
-  await page.getByRole('checkbox').check();
+  await page.getByLabel('Business WhatsApp', { exact: true }).fill('0543982307');
+  await page.getByLabel('Business phone', { exact: true }).fill('0543982307');
+  await page
+    .getByLabel('I consent to publish the visible contact details and social profiles above.')
+    .check();
   await page.getByRole('button', { name: 'Submit for approval' }).click();
   await expect(page.getByRole('status')).toContainText('submitted');
   await page.goto('/admin/businesses');

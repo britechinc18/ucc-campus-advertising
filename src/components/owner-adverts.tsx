@@ -55,7 +55,7 @@ export function OwnerDashboard({
             href={`/my-adverts?identity=${p.id}`}
             aria-current={identity === p.id ? 'page' : undefined}
           >
-            {p.name} · {p.kind === 'business' ? 'Business' : 'Personal'}
+            {p.kind === 'business' ? 'Business' : 'Personal'}
           </Link>
         ))}
       </nav>
@@ -173,9 +173,15 @@ export function OwnerDashboard({
                     <span
                       className={`badge ${pending ? 'pending' : status === 'rejected' ? 'rejected' : ''}`}
                     >
-                      {pending && status === 'published'
-                        ? 'Live · edit pending'
-                        : stateLabel(status, d?.kind)}
+                      {a.profile_closed
+                        ? 'Closed business'
+                        : a.profile_deactivated
+                          ? 'Business inactive'
+                          : a.privacy_hidden
+                            ? 'Hidden: contact privacy'
+                            : pending && status === 'published'
+                              ? 'Live · edit pending'
+                              : stateLabel(status, d?.kind)}
                     </span>
                   </div>
                   <Link className="btn secondary small" href={`/my-adverts/${a.id}`}>
@@ -293,7 +299,15 @@ export function OwnerDetail({ advert }: { advert: OwnAdvert }) {
       </div>
       <div className="page-head">
         <div>
-          <p className="eyebrow">{stateLabel(status, d?.kind)}</p>
+          <p className="eyebrow">
+            {advert.profile_closed
+              ? 'Closed business'
+              : advert.profile_deactivated
+                ? 'Business inactive'
+                : advert.privacy_hidden
+                  ? 'Hidden: contact privacy'
+                  : stateLabel(status, d?.kind)}
+          </p>
           <h1>{d?.title ?? 'Your advert'}</h1>
           {d ? (
             <p>
@@ -302,6 +316,25 @@ export function OwnerDetail({ advert }: { advert: OwnAdvert }) {
           ) : null}
         </div>
       </div>
+      {advert.privacy_hidden ? (
+        <p className="inline-notice">
+          This advert is hidden because its linked public contact was removed. Restore a visible
+          contact in your profile or customize it here, then submit this advert for review. Its
+          original expiry stays unchanged.
+        </p>
+      ) : null}
+      {advert.profile_closed ? (
+        <p className="inline-notice">
+          This business is closed. This advert is retained as history and cannot be renewed under
+          the closed identity.
+        </p>
+      ) : null}
+      {advert.profile_deactivated && !advert.profile_closed ? (
+        <p className="inline-notice">
+          This business is inactive. Manage its availability from My Business before submitting
+          adverts.
+        </p>
+      ) : null}
       {pending ? (
         <div className="inline-notice">
           <Icon name="clock" />
@@ -317,22 +350,29 @@ export function OwnerDetail({ advert }: { advert: OwnAdvert }) {
         <ErrorMessage message={`Changes requested: ${advert.revisions[0].reason}`} />
       ) : null}
       <div className="form-actions">
-        {!pending && status !== 'suspended' ? (
+        {!advert.profile_closed && !pending && status !== 'suspended' ? (
           <Link className="btn" href={`/post?edit=${advert.id}${inactive ? '&renew=1' : ''}`}>
-            {inactive ? 'Prepare renewal' : 'Edit advert'}
+            {advert.privacy_hidden
+              ? 'Review & restore'
+              : inactive
+                ? 'Prepare renewal'
+                : 'Edit advert'}
           </Link>
         ) : null}
-        {status === 'published' ? (
+        {!advert.profile_closed && status === 'published' ? (
           <>
-            <Link className="btn secondary" href={`/adverts/${advert.id}`}>
-              View live advert
-            </Link>
+            {!advert.privacy_hidden && !advert.profile_deactivated ? (
+              <Link className="btn secondary" href={`/adverts/${advert.id}`}>
+                View live advert
+              </Link>
+            ) : null}
             <button className="btn secondary" onClick={() => setState('fulfill')}>
               Mark as {fulfilled}
             </button>
           </>
         ) : null}
-        {!['withdrawn', 'fulfilled', 'suspended'].includes(status) || pending ? (
+        {!advert.profile_closed &&
+        (!['withdrawn', 'fulfilled', 'suspended'].includes(status) || pending) ? (
           <button className="btn secondary" onClick={() => setState('withdraw')}>
             {pending ? 'Withdraw submission' : 'Withdraw advert'}
           </button>

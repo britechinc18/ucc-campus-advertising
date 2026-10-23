@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { publicSeller } from '@/server/discovery';
 import { AppError } from '@/server/errors';
+import { MediaImage } from '@/components/ui';
 import { ListingGrid } from '@/components/listings';
 import { SocialProfiles } from '@/components/social-profiles';
 import { initials, type Listing } from '@/lib/market';
@@ -32,14 +33,22 @@ export default async function SellerPage({
         ← Market
       </Link>
       <header className="seller-profile-heading">
-        <div className="avatar">{initials(result.seller.name)}</div>
+        <div className="avatar">
+          {result.seller.photoMediaId ? (
+            <MediaImage id={result.seller.photoMediaId} alt={result.seller.name} />
+          ) : (
+            initials(result.seller.name)
+          )}
+        </div>
         <div>
           <h1>{result.seller.name}</h1>
           <p>{result.seller.kind === 'business' ? 'Business' : 'Seller'}</p>
         </div>
       </header>
+      {result.seller.bio ? <p className="description">{result.seller.bio}</p> : null}
       <SocialProfiles
         socials={
+          result.seller.socials ??
           result.items.find((item) => item.data.socials && Object.keys(item.data.socials).length)
             ?.data.socials
         }

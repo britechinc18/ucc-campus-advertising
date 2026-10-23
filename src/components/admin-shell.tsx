@@ -9,6 +9,7 @@ export const adminLinks = [
   ['/admin', 'grid', 'Overview'],
   ['/admin/post', 'plus', 'Post for someone'],
   ['/admin/system', 'settings', 'System check'],
+  ['/admin/profiles', 'users', 'Profile reviews'],
   ['/admin/submissions', 'clock', 'Pending queue'],
   ['/admin/adverts', 'list', 'All adverts'],
   ['/admin/reports', 'flag', 'Reports'],

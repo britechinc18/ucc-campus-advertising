@@ -150,10 +150,30 @@ try {
     "insert into business_profiles(advertiser_id,slug,approved,state) values($1,$2,$3,'approved')",
     [businessSeller, bp.slug, bp],
   );
+  const extraProfiles: Record<string, string> = {};
+  for (const label of ['profilesOwner', 'lifecycleOwner', 'placeholderOwner']) {
+    const uid = randomUUID(),
+      token = randomBytes(24).toString('hex');
+    await pool.query(
+      "insert into users(id,name,email,email_verified,role) values($1,$2,$3,now(),'advertiser')",
+      [uid, label, `${label.toLowerCase()}@test.invalid`],
+    );
+    await pool.query(
+      "insert into sessions(session_token,user_id,expires) values($1,$2,now()+interval '1 day')",
+      [token, uid],
+    );
+    await pool.query(
+      "insert into advertisers(user_id,name,kind,consent_at,created_by,automatic_personal) values($1,$2,'student',now(),$1,true)",
+      [uid, label],
+    );
+    extraProfiles[label + 'Token'] = token;
+    extraProfiles[label + 'Id'] = uid;
+  }
   const out = process.env.BROWSER_FIXTURE_FILE ?? '/tmp/ucc-browser-fixtures.json';
   writeFileSync(
     out,
     JSON.stringify({
+      ...extraProfiles,
       owner,
       admin,
       stranger,

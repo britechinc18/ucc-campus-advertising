@@ -4,6 +4,9 @@ import { db } from './db';
 import { actor, audit, one, query } from './store';
 import { ensure } from './errors';
 import { id, profileSchema, settingsSchema } from './validation';
+import { ensurePersonal } from './adverts';
+
+const unusedPersonal = sql`p.kind='student' and p.automatic_personal and p.draft_defaults is null and p.approved_defaults is null and not exists(select 1 from adverts a where a.advertiser_id=p.id) and not exists(select 1 from media_assets m where m.advertiser_id=p.id) and not exists(select 1 from advertiser_daily_usage d where d.advertiser_id=p.id) and not exists(select 1 from business_profiles b where b.advertiser_id=p.id)`;
 export async function createAssistedProfile(userId: string, input: unknown) {
   const data = profileSchema.parse(input);
   return db().transaction(async (tx) => {
@@ -159,6 +162,7 @@ export async function claimAdvertiser(userId: string, sellerId: string, input: u
       contactVerified: z.literal(true),
       consent: z.literal(true),
       evidenceReference: z.string().trim().min(5).max(200),
+      replaceUnusedPersonal: z.boolean().optional().default(false),
     })
     .strict()
     .parse(input);
@@ -176,16 +180,20 @@ export async function claimAdvertiser(userId: string, sellerId: string, input: u
     );
     const source = await one<{ id: string; user_id: string | null; kind: string }>(
       tx,
-      sql`select id,user_id,kind from advertisers where id=${sellerId} for update`,
+      sql`select id,user_id,kind from advertisers where id=${sellerId} and closed_at is null for update`,
     );
     if (source.user_id === data.userId) return { id: source.id };
     ensure(!source.user_id, 409, 'ALREADY_CLAIMED', 'This advertiser already has an owner');
-    const existing = await query(
+    const existing = await query<{ id: string; replaceable: boolean }>(
       tx,
-      sql`select id from advertisers where user_id=${data.userId} and kind=${source.kind}`,
+      sql`select p.id,(${unusedPersonal}) as replaceable from advertisers p where p.user_id=${data.userId} and p.kind=${source.kind} and p.closed_at is null for update`,
     );
+    const placeholder = existing[0];
+    if (placeholder?.replaceable && data.replaceUnusedPersonal) {
+      await tx.execute(sql`update advertisers set closed_at=now() where id=${placeholder.id}`);
+    }
     ensure(
-      !existing.length,
+      !placeholder || (placeholder.replaceable && data.replaceUnusedPersonal),
       409,
       'PROFILE_EXISTS',
       'Claimant already has this identity type; profiles cannot be merged automatically',
@@ -194,8 +202,10 @@ export async function claimAdvertiser(userId: string, sellerId: string, input: u
       tx,
       sql`update advertisers set user_id=${data.userId} where id=${sellerId} and user_id is null returning id`,
     );
+    if (source.kind === 'business') await ensurePersonal(tx, data.userId);
     await audit(tx, userId, 'assisted_profile_claimed', sellerId, {
       claimantId: data.userId,
+      supersededPlaceholderId: placeholder?.id ?? null,
       evidenceReference: data.evidenceReference,
       contactVerified: true,
       consent: true,
@@ -211,11 +221,11 @@ export async function findClaimants(userId: string, sellerId: string, input: unk
     await actor(tx, userId, true);
     const source = await one<{ kind: string }>(
       tx,
-      sql`select kind from advertisers where id=${sellerId}`,
+      sql`select kind from advertisers where id=${sellerId} and closed_at is null`,
     );
     return query(
       tx,
-      sql`select u.id,u.name,u.email,exists(select 1 from advertisers p where p.user_id=u.id and p.kind=${source.kind}) as conflict from users u where not u.suspended and u.email_verified is not null and strpos(lower(coalesce(u.name,'')||' '||coalesce(u.email,'')),lower(${search}))>0 order by u.name,u.id limit 20`,
+      sql`select u.id,u.name,u.email,exists(select 1 from advertisers p where p.user_id=u.id and p.kind=${source.kind} and p.closed_at is null and not (${unusedPersonal})) as conflict,exists(select 1 from advertisers p where p.user_id=u.id and p.kind=${source.kind} and p.closed_at is null and (${unusedPersonal})) as replaceable from users u where not u.suspended and u.email_verified is not null and strpos(lower(coalesce(u.name,'')||' '||coalesce(u.email,'')),lower(${search}))>0 order by u.name,u.id limit 20`,
     );
   });
 }
