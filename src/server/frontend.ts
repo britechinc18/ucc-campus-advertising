@@ -4,15 +4,16 @@ import { db } from './db';
 import { actor, one, query, limits } from './store';
 import { id } from './validation';
 import { z } from 'zod';
+import type { SellerIdentity } from '../lib/market';
 import { ensure } from './errors';
 
 // Additive, bounded reads for frontend screens. Every private read checks the actor.
 export async function accountContext(userId: string, selectedId?: string) {
   return db().transaction(async (tx) => {
     const user = await actor(tx, userId);
-    const profiles = await query<{ id: string; name: string; kind: string; suspended: boolean }>(
+    const profiles = await query<SellerIdentity>(
       tx,
-      sql`select id,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=advertisers.id and b.approved is not null and b.state<>'suspended'),name) as name,kind,suspended from advertisers where user_id=${userId} order by created_at,id`,
+      sql`select id,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=advertisers.id and b.approved is not null and b.state<>'suspended'),name) as name,kind,suspended,defaults_version as version,approved_defaults_version as "approvedVersion",reactivation_pending as "reactivationPending",deactivated_at is not null as deactivated,case when kind='business' then (select coalesce(b.pending,b.approved) from business_profiles b where b.advertiser_id=advertisers.id) else coalesce(draft_defaults,approved_defaults) end as defaults,case when kind='business' then (select b.approved from business_profiles b where b.advertiser_id=advertisers.id) else approved_defaults end as "approvedDefaults" from advertisers where user_id=${userId} and closed_at is null order by created_at,id`,
     );
     if (selectedId) id.parse(selectedId);
     const profile = selectedId
@@ -104,7 +105,7 @@ export async function ownBusiness(userId: string) {
     await actor(tx, userId);
     const rows = await query(
       tx,
-      sql`select b.* from business_profiles b join advertisers p on p.id=b.advertiser_id where p.user_id=${userId}`,
+      sql`select b.*,p.defaults_version as version from business_profiles b join advertisers p on p.id=b.advertiser_id where p.user_id=${userId} and p.closed_at is null`,
     );
     return rows[0] ?? null;
   });
@@ -133,7 +134,7 @@ export async function adminView(
     if (resource === 'businesses')
       return query(
         tx,
-        sql`select b.*,p.name as advertiser_name from business_profiles b join advertisers p on p.id=b.advertiser_id order by b.id limit 50 offset ${offset}`,
+        sql`select b.*,p.defaults_version as version,p.name as advertiser_name from business_profiles b join advertisers p on p.id=b.advertiser_id order by b.id limit 50 offset ${offset}`,
       );
     if (resource === 'categories') return query(tx, sql`select * from categories order by name,id`);
     if (resource === 'advertisers' && target) {
@@ -151,7 +152,7 @@ export async function adminView(
     if (resource === 'submissions' && target)
       return one(
         tx,
-        sql`select r.*,exists(select 1 from advert_revisions x join adverts other on other.id=x.advert_id where x.advert_id<>r.advert_id and other.advertiser_id<>a.advertiser_id and x.fingerprint=r.fingerprint and (x.status='pending' or x.id=other.approved_revision_id)) as possible_duplicate,a.state as advert_state,a.advertiser_id,p.name as advertiser_name,p.kind as advertiser_kind from advert_revisions r join adverts a on a.id=r.advert_id join advertisers p on p.id=a.advertiser_id where r.id=${target}`,
+        sql`select r.*,p.defaults_version as profile_version,exists(select 1 from advert_revisions x join adverts other on other.id=x.advert_id where x.advert_id<>r.advert_id and other.advertiser_id<>a.advertiser_id and x.fingerprint=r.fingerprint and (x.status='pending' or x.id=other.approved_revision_id)) as possible_duplicate,a.state as advert_state,a.advertiser_id,p.name as advertiser_name,p.kind as advertiser_kind from advert_revisions r join adverts a on a.id=r.advert_id join advertisers p on p.id=a.advertiser_id where r.id=${target}`,
       );
     if (resource === 'adverts') {
       if (target)

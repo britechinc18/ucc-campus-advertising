@@ -22,7 +22,7 @@ export const viewer = cache(async () => {
       seller_active: boolean;
     }>(
       db(),
-      sql`select u.id,u.name,u.image,u.role,u.suspended,exists(select 1 from advertisers p where p.user_id=u.id and not p.suspended) as seller_active from users u where u.id=${session.user.id}`,
+      sql`select u.id,u.name,u.image,u.role,u.suspended,exists(select 1 from advertisers p where p.user_id=u.id and not p.suspended and p.closed_at is null) as seller_active from users u where u.id=${session.user.id}`,
     );
     const user = rows[0];
     if (!user) return { configured, user: null };

@@ -1,3 +1,11 @@
+import {
+  personalProfile,
+  savePersonalProfile,
+  personalProfileQueue,
+  moderatePersonalProfile,
+  businessLifecycle,
+  reviewReactivation,
+} from './profiles';
 import 'server-only';
 import { randomUUID, createHmac, timingSafeEqual } from 'node:crypto';
 import { z, ZodError } from 'zod';
@@ -246,6 +254,47 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
       return Response.json(await findClaimants(userId, path[2], url.searchParams.get('q')), {
         headers,
       });
+    if (method === 'GET' && route === 'me/personal')
+      return Response.json(await personalProfile(userId), { headers });
+    if (method === 'PUT' && route === 'me/personal')
+      return Response.json(await savePersonalProfile(userId, await body(request)), { headers });
+    if (method === 'POST' && route === 'me/business/lifecycle')
+      return Response.json(await businessLifecycle(userId, await body(request)), { headers });
+    if (method === 'GET' && route === 'admin/profiles')
+      return Response.json(
+        {
+          personal: await personalProfileQueue(userId),
+          reactivations: await db().transaction(async (tx) => {
+            await actor(tx, userId, true);
+            return query(
+              tx,
+              sql`select id,name from advertisers where reactivation_pending and closed_at is null order by created_at,id limit 50`,
+            );
+          }),
+        },
+        { headers },
+      );
+    if (path[0] === 'admin' && path[1] === 'personal' && path.length === 3) {
+      if (method === 'GET')
+        return Response.json(await personalProfile(userId, path[2]), { headers });
+      if (method === 'PUT')
+        return Response.json(await savePersonalProfile(userId, await body(request), path[2]), {
+          headers,
+        });
+      if (method === 'POST')
+        return Response.json(await moderatePersonalProfile(userId, path[2], await body(request)), {
+          headers,
+        });
+    }
+    if (
+      method === 'POST' &&
+      path[0] === 'admin' &&
+      path[1] === 'reactivations' &&
+      path.length === 3
+    )
+      return Response.json(await reviewReactivation(userId, path[2], await body(request)), {
+        headers,
+      });
     if (method === 'GET' && route === 'admin/system')
       return Response.json(await systemCheck(userId), { headers });
     if (method === 'GET' && route === 'me/context')
@@ -437,10 +486,13 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
       if (method === 'POST' && path[1] === 'submissions' && path.length === 4) {
         const decision = z.enum(['approve', 'reject']).parse(path[3]);
         const data = z
-          .object({ reason: z.string() })
+          .object({ reason: z.string(), profileVersion: z.number().int().min(0).optional() })
           .strict()
           .parse(await body(request));
-        return Response.json(await moderate(userId, path[2], decision, data.reason), { headers });
+        return Response.json(
+          await moderate(userId, path[2], decision, data.reason, data.profileVersion),
+          { headers },
+        );
       }
       if (method === 'POST' && path[1] === 'adverts' && path.length === 4) {
         if (path[3] === 'feature')

@@ -243,9 +243,14 @@ export async function readMedia(
   if (publicAsset[0]) return objects.read(publicAsset[0].object_key, 5242880);
   const logo = await query<{ object_key: string }>(
     db(),
-    sql`select m.object_key from media_assets m join business_profiles b on b.approved->>'logoMediaId'=m.id::text join advertisers p on p.id=b.advertiser_id left join users u on u.id=p.user_id where m.id=${mediaId} and m.state='ready' and b.state<>'suspended' and not p.suspended and (u.id is null or not u.suspended) limit 1`,
+    sql`select m.object_key from media_assets m join business_profiles b on b.approved->>'logoMediaId'=m.id::text join advertisers p on p.id=b.advertiser_id left join users u on u.id=p.user_id where m.id=${mediaId} and m.state='ready' and b.state<>'suspended' and p.closed_at is null and p.deactivated_at is null and not p.suspended and (u.id is null or not u.suspended) limit 1`,
   );
   if (logo[0]) return objects.read(logo[0].object_key, 5242880);
+  const photo = await query<{ object_key: string }>(
+    db(),
+    sql`select m.object_key from media_assets m join advertisers p on p.approved_defaults->>'photoMediaId'=m.id::text left join users u on u.id=p.user_id where m.id=${mediaId} and m.state='ready' and p.closed_at is null and not p.suspended and (u.id is null or not u.suspended) and p.privacy->>'photo' is distinct from 'false' and exists(select 1 from adverts a join advert_revisions r on a.approved_revision_id=r.id where a.advertiser_id=p.id and ${visible}) limit 1`,
+  );
+  if (photo[0]) return objects.read(photo[0].object_key, 5242880);
   ensure(userId, 404, 'NOT_FOUND', 'Image not found');
   const key = await db().transaction(async (tx) => {
     const user = await actor(tx, userId);

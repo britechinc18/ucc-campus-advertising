@@ -1,3 +1,10 @@
+import {
+  personalProfile,
+  savePersonalProfile,
+  moderatePersonalProfile,
+  businessLifecycle,
+  reviewReactivation,
+} from '../src/server/profiles';
 import { beforeAll, beforeEach, afterAll, describe, it, expect, vi } from 'vitest';
 import { Pool } from 'pg';
 import { randomUUID } from 'node:crypto';
@@ -1017,5 +1024,181 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     await submitAdvert(admin, ad.advertId, ad.revisionId, randomUUID());
     await moderate(admin, ad.revisionId, 'approve', 'Reviewed for publication');
     expect(JSON.stringify(await advertDetail(ad.advertId))).not.toContain('verification');
+  });
+  const defaults = (name = 'Campus Seller') => ({
+    name,
+    phone: '0241234567',
+    whatsapp: '0543982307',
+    location: 'UCC campus',
+    bio: 'Student selling personal items.',
+    contactConsent: true,
+    visibility: { phone: true, whatsapp: true },
+  });
+  it('saves private personal defaults with optimistic versions and moderated public changes', async () => {
+    const profile = await personalProfile(owner);
+    await savePersonalProfile(owner, {
+      version: 0,
+      submit: false,
+      profile: { name: 'Private draft' },
+    });
+    expect((await personalProfile(owner)).state).toBe('incomplete');
+    await expect(
+      savePersonalProfile(owner, { version: 0, profile: defaults() }),
+    ).rejects.toMatchObject({ code: 'PROFILE_CHANGED' });
+    await expect(
+      savePersonalProfile(owner, { version: 1, profile: { name: 'Missing contact' } }),
+    ).rejects.toMatchObject({ code: 'PROFILE_INCOMPLETE' });
+    await savePersonalProfile(owner, { version: 1, profile: defaults('Approved personal name') });
+    await expect(
+      moderatePersonalProfile(stranger, profile.id, {
+        version: 2,
+        decision: 'approve',
+        reason: 'Unauthorized review',
+      }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      moderatePersonalProfile(admin, profile.id, {
+        version: 1,
+        decision: 'approve',
+        reason: 'Stale review',
+      }),
+    ).rejects.toMatchObject({ code: 'PROFILE_CHANGED' });
+    expect((await personalProfile(owner)).approved).toBeNull();
+    await moderatePersonalProfile(admin, profile.id, {
+      version: 2,
+      decision: 'approve',
+      reason: 'Reviewed name and consent',
+    });
+    expect((await personalProfile(owner)).approved?.name).toBe('Approved personal name');
+    await expect(personalProfile(stranger, profile.id)).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
+  });
+  it('resolves approved linked defaults, preserves overrides and applies privacy immediately', async () => {
+    const profile = await personalProfile(owner);
+    await savePersonalProfile(owner, { version: 0, profile: defaults() });
+    const linked = {
+      ...content('Profile-linked campus service'),
+      displayName: 'Campus Seller',
+      phone: '+233241234567',
+      whatsapp: '+233543982307',
+      contactSources: ['displayName', 'phone', 'whatsapp', 'location'],
+      profileVersion: 1,
+    };
+    const a = await createAdvert(owner, linked, profile.id);
+    await submitAdvert(owner, a.advertId, a.revisionId, randomUUID());
+    await moderate(admin, a.revisionId, 'approve', 'Reviewed submitted contact snapshot', 1);
+    const override = await createAdvert(
+      owner,
+      {
+        ...linked,
+        title: 'Customized contact service',
+        phone: '+233201234567',
+        contactSources: ['whatsapp', 'location'],
+      },
+      profile.id,
+    );
+    await submitAdvert(owner, override.advertId, override.revisionId, randomUUID());
+    await moderate(admin, override.revisionId, 'approve', 'Reviewed override contact', 1);
+    await savePersonalProfile(owner, {
+      version: 1,
+      profile: { ...defaults(), location: 'Cape Coast central' },
+    });
+    expect((await advertDetail(a.advertId)).data.location).toBe('UCC campus');
+    await moderatePersonalProfile(admin, profile.id, {
+      version: 2,
+      decision: 'approve',
+      reason: 'Reviewed shared default change',
+    });
+    expect((await advertDetail(a.advertId)).data.location).toBe('Cape Coast central');
+    expect((await advertDetail(override.advertId)).data.phone).toBe('+233201234567');
+    expect((await listAdverts({ location: 'Cape Coast central' })).items).toHaveLength(2);
+    const expiry = (await advertDetail(a.advertId)).expires_at;
+    await savePersonalProfile(owner, {
+      version: 2,
+      profile: { ...defaults(), visibility: { phone: false, whatsapp: false } },
+    });
+    await expect(advertDetail(a.advertId)).rejects.toMatchObject({ status: 404 });
+    expect((await advertDetail(override.advertId)).contacts.phone).toBe('tel:+233201234567');
+    await moderatePersonalProfile(admin, profile.id, {
+      version: 3,
+      decision: 'approve',
+      reason: 'Privacy change reviewed',
+    });
+    await savePersonalProfile(owner, { version: 3, profile: defaults() });
+    await moderatePersonalProfile(admin, profile.id, {
+      version: 4,
+      decision: 'approve',
+      reason: 'Contact visibility restored',
+    });
+    await expect(advertDetail(a.advertId)).rejects.toMatchObject({ status: 404 });
+    const edit = await saveAdvert(owner, a.advertId, { ...linked, profileVersion: 4 });
+    await submitAdvert(owner, a.advertId, edit.revisionId, randomUUID());
+    await expect(
+      moderate(admin, edit.revisionId, 'approve', 'Old contact review', 3),
+    ).rejects.toMatchObject({ code: 'PROFILE_CHANGED' });
+    await moderate(admin, edit.revisionId, 'approve', 'Explicitly restored advert', 4);
+    expect((await advertDetail(a.advertId)).expires_at).toEqual(expiry);
+  });
+  it('keeps legacy snapshots independent from profile updates', async () => {
+    const ad = await submit('Legacy contact stays unchanged');
+    await moderate(admin, ad.revisionId, 'approve', 'Reviewed legacy advert');
+    const p = await personalProfile(owner);
+    await savePersonalProfile(owner, {
+      version: 0,
+      profile: { ...defaults('New default name'), visibility: { phone: false, whatsapp: false } },
+    });
+    await moderatePersonalProfile(admin, p.id, {
+      version: 1,
+      decision: 'approve',
+      reason: 'Reviewed new personal profile',
+    });
+    const visible = await advertDetail(ad.advertId);
+    expect(visible.data.phone).toBe('+233241234567');
+    expect(visible.seller).toBe('Campus Seller');
+  });
+  it('deactivates and closes businesses safely, retaining history and permitting one replacement', async () => {
+    const p = (await createProfile(owner, {
+      name: 'Old Brand',
+      kind: 'business',
+      consent: true,
+    })) as { id: string };
+    const b = await saveBusiness(owner, {
+      name: 'Old Brand',
+      slug: 'old-brand',
+      description: 'A campus business with an approved storefront.',
+      location: 'UCC',
+    });
+    await moderateBusiness(admin, b.id, { decision: 'approve', reason: 'Reviewed old business' });
+    const ad = await createAdvert(owner, content('Business-owned campus service'), p.id);
+    await submitAdvert(owner, ad.advertId, ad.revisionId, randomUUID());
+    await moderate(admin, ad.revisionId, 'approve', 'Reviewed business advert');
+    const expiry = (await advertDetail(ad.advertId)).expires_at;
+    await businessLifecycle(owner, { action: 'deactivate', confirm: true });
+    await expect(advertDetail(ad.advertId)).rejects.toMatchObject({ status: 404 });
+    await expect(listBusinesses('old-brand')).rejects.toMatchObject({ status: 404 });
+    await businessLifecycle(owner, { action: 'reactivate', confirm: true });
+    await expect(
+      reviewReactivation(stranger, p.id, { decision: 'approve', reason: 'Invalid administrator' }),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await reviewReactivation(admin, p.id, {
+      decision: 'approve',
+      reason: 'Reviewed business reactivation',
+    });
+    expect((await advertDetail(ad.advertId)).expires_at).toEqual(expiry);
+    await businessLifecycle(owner, { action: 'close', confirm: true, name: 'Old Brand' });
+    await expect(listBusinesses('old-brand')).rejects.toMatchObject({ status: 404 });
+    const replacement = (await createProfile(owner, {
+      name: 'Replacement Brand',
+      kind: 'business',
+      consent: true,
+    })) as { id: string };
+    expect(replacement.id).not.toBe(p.id);
+    expect((await accountContext(owner)).profiles).toHaveLength(2);
+    expect((await accountContext(owner)).dailyUsed).toBe(1);
+    expect(
+      (await pool.query('select count(*)::int n from adverts where advertiser_id=$1', [p.id]))
+        .rows[0].n,
+    ).toBe(1);
   });
 });
