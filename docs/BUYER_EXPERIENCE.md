@@ -29,3 +29,7 @@ Real photographs, downloaded from their Unsplash image URLs and compressed to We
 ### Real dusk photo for dark mode
 
 `public/editorial/campus-dusk.webp`: Afrank4436, [Academic City University campus building illuminated at dusk](https://commons.wikimedia.org/wiki/File:Academic_City_University_campus_building_illuminated_at_dusk.jpg), 25 March 2021. [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Cropped (left 0, top 1400, width 3266, height 1900), resized to 1400px and compressed WebP quality 82. The adapted image is distributed under the same license. This is a separate real evening campus scene, not a synthetic day-to-night edit of the University of Ghana tower. A footer link exposes the source, license and changes in `/editorial/credits.txt`.
+
+## Current hero and promotional treatment
+
+The workspace slide retains its original canvas-coloured fade. The campus slide retains the sage fade in light mode and restores the earlier canvas fade in dark mode. Its title is now “Find it on campus.”, with “Buy, sell and discover what students have to offer.” directly below, without a reserved second heading line. The two promotional cards use full mint and teal editorial backgrounds, with no CSS fade over a separate photo panel. The owner authorized these generated decorative assets after reusable photo search; prompts and provenance are recorded in PROMOTION_ASSETS.md. The under-GH₵300 filter and existing selling link are preserved.

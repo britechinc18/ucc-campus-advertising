@@ -7,8 +7,8 @@ export function HomePromotions() {
       <article className="home-promo deals-promo">
         <div className="promo-photo">
           <Image
-            src="/editorial/sound.webp"
-            alt="Real over-ear headphones on a yellow background"
+            src="/editorial/deals-banner.webp"
+            alt="Editorial illustration of headphones, earbuds and a watch on mint"
             fill
             sizes="(max-width: 767px) 100vw, 650px"
           />
@@ -25,8 +25,8 @@ export function HomePromotions() {
       <article className="home-promo sell-promo">
         <div className="promo-photo">
           <Image
-            src="/editorial/selling.webp"
-            alt="A real smartphone held beside a red backpack"
+            src="/editorial/selling-banner.webp"
+            alt="Editorial illustration of a backpack and phone on teal"
             fill
             sizes="(max-width: 767px) 100vw, 650px"
           />

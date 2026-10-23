@@ -852,12 +852,12 @@ test('hero rotates without controls, supports swipe and keeps search state', asy
   // Exercise React handlers before advancing time; SSR text alone does not prove hydration.
   await hero.focus();
   await hero.press('ArrowRight');
-  await expect(heading).toContainText('Your next great find');
+  await expect(heading).toContainText('Find it on campus.');
   await hero.press('ArrowLeft');
   await expect(heading).toContainText('Everything you need');
   await page.mouse.click(5, 5);
   await page.keyboard.press('ArrowRight');
-  await expect(heading).toContainText('Your next great find');
+  await expect(heading).toContainText('Find it on campus.');
   await page.keyboard.press('ArrowLeft');
   await expect(heading).toContainText('Everything you need');
   await page.mouse.move(0, 0);
@@ -865,12 +865,12 @@ test('hero rotates without controls, supports swipe and keeps search state', asy
   await page.clock.fastForward(179000);
   await expect(heading).toContainText('Everything you need');
   await page.clock.fastForward(1100);
-  await expect(heading).toContainText('Your next great find');
+  await expect(heading).toContainText('Find it on campus.');
   await hero.getByRole('searchbox').fill('textbooks');
   await hero.getByRole('searchbox').press('ArrowLeft');
-  await expect(heading).toContainText('Your next great find');
+  await expect(heading).toContainText('Find it on campus.');
   await page.clock.fastForward(180100);
-  await expect(heading).toContainText('Your next great find');
+  await expect(heading).toContainText('Find it on campus.');
   await hero.dispatchEvent('pointerdown', {
     pointerType: 'touch',
     isPrimary: true,
@@ -895,7 +895,7 @@ test('hero rotates without controls, supports swipe and keeps search state', asy
   await page.mouse.down();
   await page.mouse.move(box.x + box.width - 200, box.y + 40, { steps: 8 });
   await page.mouse.up();
-  await expect(heading).toContainText('Your next great find');
+  await expect(heading).toContainText('Find it on campus.');
   await page.mouse.move(box.x + box.width - 200, box.y + 40);
   await page.mouse.down();
   await page.mouse.move(box.x + box.width - 40, box.y + 40, { steps: 8 });
@@ -903,7 +903,7 @@ test('hero rotates without controls, supports swipe and keeps search state', asy
   await expect(heading).toContainText('Everything you need');
   await hero.focus();
   await hero.press('ArrowRight');
-  await expect(heading).toContainText('Your next great find');
+  await expect(heading).toContainText('Find it on campus.');
   await expect(page.getByRole('link', { name: 'Shop deals' })).toHaveAttribute(
     'href',
     '/explore?max=29999',
@@ -919,7 +919,7 @@ test('hero respects reduced motion and theme photographs at responsive sizes', a
   await expect(page.locator('#home-heading')).toContainText('Everything you need');
   await hero.focus();
   await hero.press('ArrowRight');
-  await expect(page.locator('#home-heading')).toContainText('Your next great find');
+  await expect(page.locator('#home-heading')).toContainText('Find it on campus.');
   await expect(page.locator('.hero-photographs')).toHaveCSS('transition-duration', '0s');
   for (const width of [320, 390, 768, 1024, 1440]) {
     await page.setViewportSize({ width, height: 900 });
@@ -936,7 +936,15 @@ test('hero respects reduced motion and theme photographs at responsive sizes', a
         overflow: document.documentElement.scrollWidth > innerWidth,
       }));
       expect(sizes.overflow).toBe(false);
-      expect(sizes.height / sizes.line).toBeCloseTo(2, 0);
+      expect(sizes.height / sizes.line).toBeLessThan(2.1);
+      const gap = await page
+        .locator('.campus-hero-copy')
+        .evaluate(
+          (el) =>
+            el.querySelector('p')!.getBoundingClientRect().top -
+            el.querySelector('h1')!.getBoundingClientRect().bottom,
+        );
+      expect(gap).toBeLessThanOrEqual(20);
       await expect(page.locator('.home-promo').first()).toHaveCSS('background-image', 'none');
     }
   }

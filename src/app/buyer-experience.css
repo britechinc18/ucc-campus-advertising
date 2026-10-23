@@ -657,7 +657,8 @@
 
 /* Two photographs move as one rail; text and search remain stationary. */
 .hero-carousel {
-  background: var(--soft);
+  --hero-surface: var(--soft);
+  background: var(--hero-surface);
   touch-action: pan-y;
   user-select: none;
   cursor: grab;
@@ -720,47 +721,50 @@
 .hero-carousel::after {
   background: linear-gradient(
     90deg,
-    var(--soft) 0%,
-    var(--soft) 36%,
-    color-mix(in srgb, var(--soft) 85%, transparent) 45%,
+    var(--hero-surface) 0%,
+    var(--hero-surface) 36%,
+    color-mix(in srgb, var(--hero-surface) 85%, transparent) 45%,
     transparent 65%
   );
 }
 .home-promotions {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 22px;
   margin-top: 30px;
 }
+.workspace-hero {
+  --hero-surface: var(--canvas);
+}
+:root[data-theme='dark'] .hero-carousel {
+  --hero-surface: var(--canvas);
+}
+.campus-hero-slide .campus-hero-copy > p {
+  margin-top: 14px;
+}
 .home-promo {
+  width: 100%;
+  aspect-ratio: 2.6;
   position: relative;
   isolation: isolate;
   min-width: 0;
-  min-height: 225px;
+  min-height: 200px;
   overflow: hidden;
   border-radius: 12px;
   background: var(--soft);
 }
 .promo-photo {
   position: absolute;
-  inset: 0 0 0 auto;
-  width: 64%;
+  inset: 0;
   z-index: -1;
-  mask-image: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgb(0 0 0 / 12%) 14%,
-    rgb(0 0 0 / 55%) 32%,
-    #000 56%
-  );
 }
 .promo-photo img {
   object-fit: cover;
-  object-position: 55% center;
+  object-position: right center;
 }
 .promo-copy {
   position: relative;
-  width: 64%;
+  width: 53%;
   min-width: 0;
   padding: 28px;
 }
@@ -786,8 +790,28 @@
   padding: 8px 14px;
   font-size: 11px;
 }
-.sell-promo .promo-photo img {
-  object-position: 42% center;
+.deals-promo {
+  background: #d7ece5;
+  color: #172f28;
+  --muted: #34584b;
+}
+.deals-promo h2 strong {
+  color: #17634f;
+}
+.deals-promo .btn {
+  background: #155b48;
+  color: #fff;
+  border-color: #155b48;
+}
+.sell-promo {
+  background: #17675e;
+  color: #fff;
+  --muted: #e9f5ef;
+}
+.sell-promo .btn {
+  background: #fff;
+  color: #155b48;
+  border-color: #fff;
 }
 .saved-device-note {
   font-size: 11px;
@@ -833,25 +857,35 @@
   .hero-carousel::after {
     background: linear-gradient(
       90deg,
-      var(--soft) 0%,
-      color-mix(in srgb, var(--soft) 94%, transparent) 32%,
-      color-mix(in srgb, var(--soft) 55%, transparent) 55%,
+      var(--hero-surface) 0%,
+      color-mix(in srgb, var(--hero-surface) 94%, transparent) 32%,
+      color-mix(in srgb, var(--hero-surface) 55%, transparent) 55%,
       transparent 88%
     );
   }
   .home-promotions {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
     gap: 14px;
     margin-top: 24px;
   }
   .home-promo {
-    min-height: 190px;
+    min-height: 160px;
   }
   .promo-copy {
-    padding: 24px 20px;
+    width: 53%;
+    padding: 18px 16px;
   }
   .promo-copy h2 {
-    font-size: 21px;
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+  .promo-copy p {
+    font-size: 11px;
+    margin: -4px 0 12px;
+  }
+  .promo-copy .btn {
+    min-height: 30px;
+    padding: 6px 10px;
   }
   .promo-copy h2 strong {
     font-size: 30px;
@@ -860,5 +894,23 @@
 @media (prefers-reduced-motion: reduce) {
   .hero-photographs {
     transition: none;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .home-promotions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .home-promo {
+    min-height: 0;
+  }
+  .promo-copy {
+    width: 53%;
+    padding: 28px;
+  }
+}
+@media (max-width: 360px) {
+  .promo-copy h2 {
+    font-size: 17px;
   }
 }

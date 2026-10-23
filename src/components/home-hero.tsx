@@ -10,7 +10,7 @@ const slides = [
   {
     image: '/editorial/campus.webp',
     alt: 'The real clock tower and red-roofed buildings at the University of Ghana, photographed by Maxx Sas',
-    heading: 'Your next great find, right on campus.',
+    heading: 'Find it on campus.',
   },
 ];
 export function HomeHero({ search }: { search: ReactNode }) {
@@ -70,7 +70,7 @@ export function HomeHero({ search }: { search: ReactNode }) {
   return (
     <section
       ref={hero}
-      className="campus-hero hero-carousel"
+      className={`campus-hero hero-carousel ${index === 0 ? 'workspace-hero' : 'campus-hero-slide'}`}
       aria-labelledby="home-heading"
       aria-roledescription="carousel"
       aria-describedby="hero-instructions"
@@ -163,14 +163,14 @@ export function HomeHero({ search }: { search: ReactNode }) {
               on campus.
             </>
           ) : (
-            <>
-              Your next great find,
-              <br />
-              right on campus.
-            </>
+            'Find it on campus.'
           )}
         </h1>
-        <p>Buy, sell, discover and connect within the community.</p>
+        <p>
+          {index === 0
+            ? 'Buy, sell, discover and connect within the community.'
+            : 'Buy, sell and discover what students have to offer.'}
+        </p>
         {search}
       </div>
     </section>
