@@ -8,6 +8,8 @@ import { db } from '@/server/db';
 import type { Category, Listing } from '@/lib/market';
 import { ListingGrid, Search, CategoryChips } from '@/components/listings';
 import Image from 'next/image';
+import { HomeHero } from '@/components/home-hero';
+import { HomePromotions } from '@/components/home-promotions';
 import { Icon } from '@/components/icon';
 import { EmptyState, ErrorMessage } from '@/components/ui';
 export default async function HomePage() {
@@ -40,13 +42,6 @@ export default async function HomePage() {
           url: '/explore',
           featured: true,
         },
-        {
-          title: 'Deals under GH₵100',
-          sub: 'Small prices. Useful finds.',
-          items: feeds.deals.items,
-          url: '/explore?max=9999',
-          featured: false,
-        },
         ...(feeds.trending.basis === 'recent_engagement'
           ? [
               {
@@ -62,24 +57,9 @@ export default async function HomePage() {
     : [];
   return (
     <main id="main" className="container live-home-cleanup">
-      <section className="campus-hero" aria-labelledby="home-heading">
-        <Image
-          src="/editorial/workspace.webp"
-          alt="A sunlit desk with laptops, books, a chair and plants"
-          fill
-          priority
-          sizes="(max-width: 767px) 100vw, 1360px"
-        />
-        <div className="campus-hero-copy">
-          <h1 id="home-heading">
-            Everything you need
-            <br />
-            on campus.
-          </h1>
-          <p>Buy, sell, discover and connect within the community.</p>
-          <Search id="home-search" placeholder="Search for books, gadgets, rooms…" />
-        </div>
-      </section>
+      <HomeHero
+        search={<Search id="home-search" placeholder="Search for books, gadgets, rooms…" />}
+      />
       <section className="category-section" aria-label="Browse categories">
         <div className="section-head">
           <div>
@@ -109,15 +89,7 @@ export default async function HomePage() {
               action={false}
             />
           </section>
-          <div className="feature-band seller-invitation">
-            <div>
-              <h2>Something to offer campus?</h2>
-              <p>Give it a new home. Or help someone find what they need.</p>
-            </div>
-            <Link href="/sell" className="btn">
-              Post an advert <Icon name="arrow" />
-            </Link>
-          </div>
+          <HomePromotions />
         </>
       ) : (
         sections
@@ -134,17 +106,7 @@ export default async function HomePage() {
                 </Link>
               </div>
               <ListingGrid items={s.items as unknown as Listing[]} featured={s.featured} />
-              {i === 0 ? (
-                <div className="feature-band seller-invitation">
-                  <div>
-                    <h2>Something to offer campus?</h2>
-                    <p>Give it a new home. Or help someone find what they need.</p>
-                  </div>
-                  <Link className="btn secondary" href="/post">
-                    Post an advert <Icon name="arrow" />
-                  </Link>
-                </div>
-              ) : null}
+              {i === 0 ? <HomePromotions /> : null}
             </section>
           ))
       )}

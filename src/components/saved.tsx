@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { savedIds, useSavedSnapshot, writeSaved } from './bookmark-button';
 import { ListingGrid } from './listings';
 import { FlyerGrid } from './campus';
-import { EmptyState, ErrorMessage, Loading } from './ui';
+import { ErrorMessage, Loading } from './ui';
 import { isFlyer } from '@/lib/campus';
 import type { Listing } from '@/lib/market';
 export function SavedPage() {
@@ -40,23 +40,15 @@ export function SavedPage() {
   const items = ready ? result.items : [];
   return (
     <>
-      <div className="page-head">
-        <div>
-          <p className="eyebrow">YOUR OWN LITTLE COLLECTION</p>
-          <h1>Saved for later.</h1>
-          <p>Bookmarks stay on this browser and device. They don’t automatically sync.</p>
-        </div>
-      </div>
+      <h1 className="sr-only">Saved bookmarks</h1>
+      <p className="saved-device-note">
+        Bookmarks show on this browser and device. They do not automatically sync.
+      </p>
       {!ready ? (
         <Loading label="Checking your saved adverts…" />
       ) : result.error ? (
         <ErrorMessage message={result.error} />
-      ) : !ids.length ? (
-        <EmptyState
-          title="Keep a good find close."
-          message="Tap the heart on any advert or flyer to save it here. No account needed."
-        />
-      ) : (
+      ) : !ids.length ? null : (
         <>
           {result.unavailable.length ? (
             <div className="inline-notice">

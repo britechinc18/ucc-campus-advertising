@@ -131,7 +131,8 @@ export function Shell({
               ['/', 'Home'],
               ['/explore', 'Market'],
               ['/campus-360', 'Campus 360'],
-              [seller ? '/my-adverts' : '/saved', seller ? 'My Ads' : 'Saved'],
+              ['/saved', 'Saved'],
+              ...(seller ? [['/my-adverts', 'My Ads']] : []),
             ].map(([href, label]) => (
               <Link
                 key={href}
