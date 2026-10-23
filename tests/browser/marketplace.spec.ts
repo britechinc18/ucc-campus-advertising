@@ -535,10 +535,12 @@ test('brand icons, buyer menu, seller avatar and real notification panels work',
   await page.goto('/');
   await expect(page.locator('.site-header .wordmark')).toHaveText('medstash.');
   await expect(page.locator('.site-header .mark')).toHaveCount(0);
+  await expect(page.locator('.site-header .brand-logo')).toHaveCount(0);
+  await expect(page.locator('.footer .brand-logo')).toBeAttached();
   await expect(page.getByLabel('Menu', { exact: true })).toBeVisible();
   await expect(page.locator('.seller-avatar')).toHaveCount(0);
   await page.getByRole('link', { name: 'Search MedStash', exact: true }).click();
-  await expect(page.locator('#market-search')).toBeFocused();
+  await expect(page.locator('#home-search')).toBeFocused();
   const bell = page.locator('.notification-menu > summary');
   await bell.click();
   await expect(page.locator('.notification-content')).toHaveAttribute('aria-busy', 'false');
@@ -791,6 +793,16 @@ test('shared cards and galleries preserve responsive geometry in both themes', a
         });
         expect(geometry.ratio).toBeCloseTo(geometry.naturalRatio, 2);
         expect(Math.abs(geometry.band)).toBeLessThan(2);
+        if (width < 768) {
+          await expect(page.locator('.public-detail .detail-content')).toHaveCSS(
+            'border-top-left-radius',
+            '24px',
+          );
+          await expect(page.locator('.public-detail .detail-content .description')).toBeAttached();
+          const panel = await page.locator('.public-detail .detail-content').boundingBox();
+          const photo = await image.boundingBox();
+          expect(panel!.y).toBeGreaterThanOrEqual(photo!.y + photo!.height - 1);
+        }
         await page.getByRole('button', { name: 'Enlarge advert photograph' }).click();
         await expect(page.locator('.enlarged-image img')).toHaveCSS('object-fit', 'contain');
         await page.keyboard.press('Escape');

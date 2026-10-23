@@ -112,9 +112,11 @@ export function Shell({
       <a className="skip-link" href="#main">
         Skip to content
       </a>
-      <header className="site-header">
+      <header
+        className={`site-header ${path === '/' ? 'home-header' : ''} ${path === '/explore' ? 'market-header' : ''} ${detail ? 'advert-header' : ''}`}
+      >
         <div className="container header-inner">
-          <Wordmark showLogo />
+          <Wordmark />
           <nav className="desktop-nav" aria-label="Main navigation">
             {[
               ['/', 'Home'],
@@ -151,15 +153,21 @@ export function Shell({
             <Link
               className="icon-btn header-search-trigger"
               href={
-                path.startsWith('/campus-360')
-                  ? '/campus-360#campus-search'
-                  : '/explore#market-search'
+                path === '/'
+                  ? '/#home-search'
+                  : path.startsWith('/campus-360')
+                    ? '/campus-360#campus-search'
+                    : '/explore#market-search'
               }
               aria-label="Search MedStash"
               onClick={() =>
                 document
                   .getElementById(
-                    path.startsWith('/campus-360') ? 'campus-search' : 'market-search',
+                    path === '/'
+                      ? 'home-search'
+                      : path.startsWith('/campus-360')
+                        ? 'campus-search'
+                        : 'market-search',
                   )
                   ?.focus()
               }
@@ -248,7 +256,7 @@ export function Shell({
       </header>
       {children}
       <footer className="container footer">
-        <Wordmark />
+        <Wordmark showLogo />
         <p>
           For the UCC medical-student community.
           <br />

@@ -3,11 +3,11 @@ import { sql } from 'drizzle-orm';
 import { listAdverts } from '@/server/discovery';
 import { query } from '@/server/store';
 import { db } from '@/server/db';
-import { ListingGrid, Search } from '@/components/listings';
+import { ListingGrid, Search, CategoryChips } from '@/components/listings';
 import { Filters } from '@/components/filters';
 import { EmptyState, ErrorMessage } from '@/components/ui';
 import type { Category, Listing } from '@/lib/market';
-export const metadata = { title: 'Explore adverts' };
+export const metadata = { title: 'Market' };
 export default async function Explore({
   searchParams,
 }: {
@@ -52,12 +52,16 @@ export default async function Explore({
     <main id="main" className="container explore-page">
       <div className="page-head">
         <div>
-          <p className="eyebrow">DISCOVER ON CAMPUS</p>
           <h1>{selectedCategory?.name ?? 'Market'}</h1>
-          <p>Good finds, useful services and wanted items.</p>
         </div>
       </div>
-      <Search value={params.q} params={params} />
+      <Filters
+        key={JSON.stringify(params)}
+        categories={categories}
+        params={params}
+        search={<Search value={params.q} params={params} />}
+      />
+      <CategoryChips categories={categories} selected={params.category} params={params} />
       {activeFilters.length ? (
         <nav className="filter-active" aria-label="Active filters">
           {activeFilters.map(([key, value]) => {
@@ -88,7 +92,6 @@ export default async function Explore({
         </nav>
       ) : null}
       <div className="explore-layout">
-        <Filters key={JSON.stringify(params)} categories={categories} params={params} />
         <section className="explore-results" aria-label="Search results">
           <div className="results-head">
             <span>

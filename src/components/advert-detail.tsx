@@ -90,6 +90,7 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
     <>
       <div className={`detail-grid public-detail ${flyer ? 'flyer-detail' : ''}`}>
         <div className="gallery">
+          <SaveButton id={advert.id} title={d.title} />
           <button
             className="gallery-main gallery-trigger"
             onClick={() => d.mediaIds.length && setModal('gallery')}
@@ -117,11 +118,6 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
               ))}
             </div>
           ) : null}
-          <p className="gallery-caption">
-            {d.mediaIds.length
-              ? `${index + 1} of ${d.mediaIds.length} · Photos supplied by advertiser`
-              : 'No photograph supplied'}
-          </p>
         </div>
         <section className="detail-content">
           <p className="eyebrow">
@@ -191,8 +187,20 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
               {d.location}
             </span>
           </div>
+          <section className="description public-detail">
+            <h2>
+              About this{' '}
+              {flyer
+                ? 'campus update'
+                : d.kind === 'service'
+                  ? 'service'
+                  : d.kind === 'wanted'
+                    ? 'request'
+                    : 'item'}
+            </h2>
+            <p>{d.description}</p>
+          </section>
           <div className="detail-actions">
-            <SaveButton id={advert.id} title={d.title} />
             <button className="btn quiet" onClick={share}>
               <Icon name="share" />
               Share
@@ -219,6 +227,11 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
             {contact('whatsapp')}
             {contact('phone')}
           </div>
+          <p className="gallery-caption">
+            {d.mediaIds.length
+              ? `${index + 1} of ${d.mediaIds.length} · Photos supplied by advertiser`
+              : 'No photograph supplied'}
+          </p>
           <p className="contact-note">Contact the advertiser directly. No checkout required.</p>
           <SafeNote />
           <p className="meta" style={{ marginTop: 16 }}>
@@ -226,19 +239,6 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
           </p>
         </section>
       </div>
-      <section className="description public-detail">
-        <h2>
-          About this{' '}
-          {flyer
-            ? 'campus update'
-            : d.kind === 'service'
-              ? 'service'
-              : d.kind === 'wanted'
-                ? 'request'
-                : 'item'}
-        </h2>
-        <p>{d.description}</p>
-      </section>
       {notice ? (
         <p className="inline-notice" role="status">
           {notice}

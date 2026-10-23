@@ -1,14 +1,15 @@
 'use client';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { Dialog } from './ui';
 import { Icon } from './icon';
 import { parseMoney, type Category } from '@/lib/market';
 export function Filters({
   categories,
   params,
+  search,
 }: {
+  search: ReactNode;
   categories: Category[];
   params: Record<string, string>;
 }) {
@@ -149,35 +150,17 @@ export function Filters({
   );
   return (
     <>
-      <div id="filters" className="mobile-filters">
-        <button className="chip" onClick={() => setOpen(true)}>
+      <div id="filters" className="market-toolbar">
+        {search}
+        <button
+          className="market-filter-button"
+          aria-label="Filters & sort"
+          onClick={() => setOpen(true)}
+        >
           <Icon name="filter" />
-          Filters & sort
+          <span>Filters</span>
         </button>
-        <span className="chip">
-          {params.sort === 'price_asc'
-            ? 'Lowest price'
-            : params.sort === 'price_desc'
-              ? 'Highest price'
-              : params.sort === 'trending'
-                ? 'Trending'
-                : 'Newest first'}
-        </span>
-        {Object.keys(params).some((k) => !['q', 'cursor', 'sort', 'limit'].includes(k)) ? (
-          <Link className="text-link" href="/explore">
-            Clear filters
-          </Link>
-        ) : null}
       </div>
-      <aside className="filter-sidebar">
-        <div className="filter-title">
-          <h3>Filters</h3>
-          <Link href="/explore" className="text-link">
-            Reset
-          </Link>
-        </div>
-        <form onSubmit={submit}>{fields}</form>
-      </aside>
       {open ? (
         <Dialog title="Filters & sort" onClose={() => setOpen(false)}>
           <form onSubmit={submit}>{fields}</form>
