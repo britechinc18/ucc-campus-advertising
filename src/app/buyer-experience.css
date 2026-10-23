@@ -654,3 +654,226 @@
     border-radius: 7px;
   }
 }
+
+/* Two real-photo hero slides share one persistent search form. */
+.hero-carousel {
+  touch-action: pan-y;
+}
+.hero-photographs {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+}
+.hero-photographs img {
+  opacity: 0;
+  object-fit: cover;
+  object-position: 68% 70%;
+  transition: opacity 280ms ease;
+}
+.hero-photographs img.is-active {
+  opacity: 1;
+}
+.hero-photographs img.campus-photograph {
+  object-position: 65% 28%;
+}
+:root[data-theme='dark'] .hero-photographs img {
+  filter: brightness(0.62);
+}
+.hero-carousel .campus-hero-copy {
+  padding-bottom: 60px;
+}
+.mobile-hero-break {
+  display: none;
+}
+.hero-carousel-controls {
+  position: absolute;
+  left: 48px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink);
+}
+.hero-carousel-controls button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  color: inherit;
+}
+.hero-carousel-controls button svg {
+  width: 16px;
+  height: 16px;
+}
+.hero-carousel-controls .hero-dot {
+  width: 26px;
+  background: transparent;
+}
+.hero-dot span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+.hero-dot[aria-pressed='true'] span {
+  width: 16px;
+  border-radius: 6px;
+  background: var(--brand);
+}
+.hero-carousel-controls .hero-rotation {
+  width: auto;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 10px;
+  margin-left: 5px;
+}
+.home-promotions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 22px;
+  margin-top: 30px;
+}
+.home-promo {
+  position: relative;
+  isolation: isolate;
+  min-height: 225px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--soft);
+}
+.home-promo > img {
+  object-fit: cover;
+  object-position: right center;
+  width: 56% !important;
+  left: auto !important;
+  z-index: -2;
+}
+.home-promo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(
+    90deg,
+    var(--soft) 0%,
+    var(--soft) 42%,
+    color-mix(in srgb, var(--soft) 70%, transparent) 58%,
+    transparent 90%
+  );
+}
+.promo-copy {
+  padding: 30px;
+  max-width: 65%;
+}
+.promo-copy h2 {
+  font-size: 23px;
+  letter-spacing: -0.7px;
+  line-height: 1.15;
+  margin: 0 0 18px;
+  font-weight: 600;
+}
+.promo-copy h2 strong {
+  display: block;
+  font-size: 34px;
+  color: var(--brand);
+  margin-top: 6px;
+}
+.promo-copy p {
+  font-size: 12px;
+  margin: -6px 0 20px;
+}
+.promo-copy .btn {
+  min-height: 36px;
+  padding: 8px 14px;
+  font-size: 11px;
+}
+.sell-promo {
+  background: var(--surface);
+}
+.sell-promo::after {
+  background: linear-gradient(
+    90deg,
+    var(--surface) 0%,
+    var(--surface) 38%,
+    color-mix(in srgb, var(--surface) 80%, transparent) 57%,
+    transparent 90%
+  );
+}
+:root[data-theme='dark'] .home-promo > img {
+  filter: brightness(0.65);
+}
+.saved-device-note {
+  font-size: 11px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 26px 0;
+}
+@media (min-width: 900px) and (max-width: 1100px) {
+  .site-header .desktop-nav {
+    gap: 12px;
+  }
+  .site-header .header-inner {
+    gap: 14px;
+  }
+}
+@media (max-width: 1023px) {
+  .promo-copy {
+    padding: 24px;
+    max-width: 70%;
+  }
+  .promo-copy h2 {
+    font-size: 21px;
+  }
+  .hero-carousel-controls {
+    left: 32px;
+  }
+}
+@media (max-width: 767px) {
+  .hero-carousel .campus-hero-copy {
+    padding-bottom: 60px;
+  }
+  .hero-carousel-controls {
+    left: 20px;
+    bottom: 14px;
+  }
+  .hero-photographs img {
+    object-position: 60% 50%;
+  }
+  .hero-photographs img.campus-photograph {
+    object-position: 60% 28%;
+  }
+  .mobile-hero-break {
+    display: block;
+  }
+  .home-promotions {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 24px;
+  }
+  .home-promo {
+    min-height: 190px;
+  }
+  .promo-copy {
+    padding: 25px;
+    max-width: 64%;
+  }
+  .promo-copy h2 {
+    font-size: 22px;
+  }
+  .promo-copy h2 strong {
+    font-size: 30px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-photographs img {
+    transition: none;
+  }
+}
+
+.hero-carousel h1 {
+  min-height: 2.08em;
+}

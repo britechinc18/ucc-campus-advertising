@@ -394,7 +394,10 @@ test('anonymous buyer discovers all Campus 360 categories and saves without an a
   await page.reload();
   await expect(page.locator('.flyer-card')).toHaveCount(1);
   await page.getByRole('button', { name: /^Unsave advert:/ }).click();
-  await expect(page.getByRole('heading', { name: 'Keep a good find close.' })).toBeVisible();
+  await expect(page.locator('.saved-device-note')).toHaveText(
+    'Bookmarks show on this browser and device. They do not automatically sync.',
+  );
+  await expect(page.locator('.empty-state')).toHaveCount(0);
   await page.goto('/explore');
   await expect(page.locator('.flyer-card')).toHaveCount(0);
   await page
@@ -418,6 +421,11 @@ test('existing seller gets flat navigation and can draft every supported advert 
   await page.goto('/');
   await expect(page.locator('.seller-nav')).toContainText('My Ads');
   await expect(page.locator('.buyer-nav')).toHaveCount(0);
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await expect(
+    page.locator('.desktop-nav').getByRole('link', { name: 'Saved', exact: true }),
+  ).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/my-adverts');
   await expect(
     page.getByRole('region', { name: 'Create an advert' }).getByRole('link'),
@@ -832,4 +840,40 @@ test('shared cards and galleries preserve responsive geometry in both themes', a
       }
     }
   }
+});
+
+test('hero rotates after three minutes, supports swipe and preserves search', async ({ page }) => {
+  await page.clock.install();
+  await page.goto('/');
+  const hero = page.locator('.hero-carousel');
+  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Everything you need');
+  await page.clock.fastForward(179000);
+  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Everything you need');
+  await page.clock.fastForward(1100);
+  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Find it');
+  const input = hero.getByRole('searchbox');
+  await input.fill('textbooks');
+  await hero.getByRole('button', { name: 'Next hero image', exact: true }).click();
+  await expect(input).toHaveValue('textbooks');
+  await hero.dispatchEvent('pointerdown', { pointerType: 'touch', clientX: 300, clientY: 150 });
+  await hero.dispatchEvent('pointerup', { pointerType: 'touch', clientX: 100, clientY: 150 });
+  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Find it');
+  await hero.getByRole('button', { name: 'Pause automatic hero rotation' }).click();
+  await page.getByRole('heading', { name: 'Fresh Finds', exact: true }).click();
+  await page.clock.fastForward(180100);
+  await expect(hero.getByRole('heading', { level: 1 })).toContainText('Find it');
+  await expect(page.getByRole('link', { name: 'Shop deals' })).toHaveAttribute(
+    'href',
+    '/explore?max=29999',
+  );
+});
+
+test('hero respects reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.clock.install();
+  await page.goto('/');
+  await page.clock.fastForward(360100);
+  await expect(page.locator('#home-heading')).toContainText('Everything you need');
+  await page.getByRole('button', { name: 'Show hero image 2', exact: true }).click();
+  await expect(page.locator('#home-heading')).toContainText('Find it');
 });
