@@ -540,9 +540,7 @@ test('new buyer screens are responsive, accessible and honor reduced motion in b
   ).toBe('0s');
 });
 
-test('brand icons, buyer menu, seller avatar and real notification panels work', async ({
-  page,
-}) => {
+test('brand icons, buyer and seller menus and real notification panels work', async ({ page }) => {
   await page.goto('/');
   await expect(page.locator('.site-header .wordmark')).toHaveText('medstash.');
   await expect(page.locator('.site-header .mark')).toHaveCount(0);
@@ -591,7 +589,8 @@ test('brand icons, buyer menu, seller avatar and real notification panels work',
   await session(page.context(), 'owner');
   await page.goto('/my-adverts');
   await expect(page.getByLabel('Menu')).toBeVisible();
-  await expect(page.locator('.seller-avatar')).toBeVisible();
+  await expect(page.locator('.account-menu > summary svg')).toBeVisible();
+  await expect(page.locator('.seller-avatar')).toHaveCount(0);
   await page.locator('.notification-menu > summary').click();
   await expect(page.locator('.notification-content')).toHaveAttribute('aria-busy', 'false');
   await expect(page.locator('.notification-content')).toContainText('Advert approved');
@@ -1165,6 +1164,7 @@ test('admin creates an assisted business and hands management to a verified owne
   await expect(page.getByText('Claimed', { exact: false }).first()).toBeVisible();
   await session(pub.context(), 'stranger');
   await pub.goto('/my-business');
+  await pub.getByRole('button', { name: 'Edit profile' }).click();
   await expect(pub.getByLabel('Business URL')).toHaveValue('assisted-campus-clothing');
   const protectedSearch = await pub.request.get(
     `/api/v1/admin/advertisers/${identity}/claimants?q=browser`,

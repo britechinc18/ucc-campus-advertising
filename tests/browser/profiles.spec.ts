@@ -24,24 +24,17 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   await session(page.context(), 'profilesOwner');
   await page.goto('/my-medstash');
   await page.getByRole('link', { name: /Manage Personal Profile/ }).click();
+  await page.getByRole('button', { name: 'Edit profile' }).click();
   await page.getByLabel('Display name', { exact: true }).fill('Profile Test Seller');
   await page.getByLabel('Default location', { exact: true }).fill('UCC North campus');
   await page.getByLabel('WhatsApp number', { exact: true }).fill('0543982307');
   await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
   await page.getByLabel('I consent to publish the visible').check();
-  await page.getByRole('button', { name: 'Save changes for review' }).click();
-  await expect(page.getByRole('status')).toContainText('Profile submitted');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('status')).toContainText('Profile saved');
   const admin = await browser.newContext();
   await session(admin, 'admin');
   const review = await admin.newPage();
-  await review.goto('/admin/profiles');
-  const submitted = review
-    .locator('article')
-    .filter({ has: review.getByRole('heading', { name: 'Profile Test Seller', exact: true }) });
-  await submitted.getByRole('button', { name: 'Approve profile' }).click();
-  await review.getByLabel('Reason for decision').fill('Checked complete seller profile');
-  await review.getByRole('button', { name: 'Confirm decision' }).click();
-  await expect(submitted).toHaveCount(0);
   await page.goto('/my-medstash');
   await page.getByRole('link', { name: /Create Business Profile/ }).click();
   await page.getByLabel('Advertiser name').fill('Profile Test Business');
@@ -56,8 +49,8 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   await page.getByLabel('Business WhatsApp', { exact: true }).fill('0201234567');
   await page.getByLabel('Business phone', { exact: true }).fill('0201234567');
   await page.getByLabel('I consent to publish the visible').check();
-  await page.getByRole('button', { name: 'Submit for approval' }).click();
-  await expect(page.getByRole('status')).toContainText('submitted');
+  await page.getByRole('button', { name: 'Save changes' }).click();
+  await expect(page.getByRole('status')).toContainText('Profile saved');
   const personal = await page.request.get('/api/v1/me/personal');
   const identity = await personal.json();
   await page.goto(`/post?advertiserId=${identity.id}`);
@@ -160,12 +153,12 @@ test('profile management pages remain accessible at mobile and desktop widths in
       for (const width of [320, 390, 768, 1440]) {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(route);
-        await expect(
-          page.getByRole('heading', {
-            name: route === '/my-personal-profile' ? 'My Personal Profile' : 'My MedStash',
-            exact: true,
-          }),
-        ).toBeVisible();
+        if (route === '/my-personal-profile')
+          await expect(page.locator('.profile-overview')).toBeVisible();
+        else
+          await expect(
+            page.getByRole('heading', { name: 'My MedStash', exact: true }),
+          ).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
         );
@@ -203,7 +196,7 @@ test('business lifecycle confirms deactivation, reviewed reopening and closure w
     kind: 'business',
     consent: true,
   });
-  const business = await write('me/business', {
+  await write('me/business', {
     name: 'Lifecycle Test Business',
     slug: 'lifecycle-test-business',
     description: 'A student business for testing availability and safe closure.',
@@ -216,11 +209,6 @@ test('business lifecycle confirms deactivation, reviewed reopening and closure w
   });
   const admin = await browser.newContext();
   await session(admin, 'admin');
-  const approved = await admin.request.post(`/api/v1/admin/businesses/${business.id}`, {
-    headers: { Origin: 'http://localhost:3000' },
-    data: { decision: 'approve', reason: 'Checked complete business profile', version: 1 },
-  });
-  expect(approved.ok(), await approved.text()).toBe(true);
   await page.goto('/my-business');
   await page.getByRole('button', { name: 'Deactivate business', exact: true }).click();
   await page.getByRole('dialog').getByRole('checkbox').check();

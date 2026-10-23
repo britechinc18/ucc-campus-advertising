@@ -35,7 +35,12 @@ export function PersonalProfileForm({
           data={data}
           image={data.photoMediaId}
           href={`/sellers/${profile.id}`}
-          onEdit={() => setEditing(true)}
+          onEdit={() => {
+            setPhoto(data.photoMediaId ? [data.photoMediaId] : []);
+            setNotice('');
+            setError('');
+            setEditing(true);
+          }}
         />
       </div>
     );

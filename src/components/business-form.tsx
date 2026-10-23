@@ -52,7 +52,12 @@ export function BusinessForm({
           data={{ ...data, name: data?.name ?? account.profile?.name }}
           image={data?.logoMediaId}
           href={`/businesses/${business?.slug}`}
-          onEdit={() => setEditing(true)}
+          onEdit={() => {
+            setLogo(data?.logoMediaId ? [data.logoMediaId] : []);
+            setSaved(false);
+            setError('');
+            setEditing(true);
+          }}
         />
         {!assisted ? (
           <BusinessLifecycle
