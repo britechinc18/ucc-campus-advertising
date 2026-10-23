@@ -1,7 +1,6 @@
 'use client';
 import Image from 'next/image';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Icon } from './icon';
 const slides = [
   {
     image: '/editorial/workspace.webp',
@@ -11,12 +10,11 @@ const slides = [
   {
     image: '/editorial/campus.webp',
     alt: 'The real clock tower and red-roofed buildings at the University of Ghana, photographed by Maxx Sas',
-    heading: 'Find it on campus.',
+    heading: 'Your next great find, right on campus.',
   },
 ];
 export function HomeHero({ search }: { search: ReactNode }) {
   const [index, setIndex] = useState(0);
-  const [paused, setPaused] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const pointer = useRef<{ x: number; y: number } | null>(null);
@@ -25,7 +23,7 @@ export function HomeHero({ search }: { search: ReactNode }) {
     let timer: ReturnType<typeof setInterval> | undefined;
     const restart = () => {
       clearInterval(timer);
-      if (paused || hovered || focused || reduced.matches || document.hidden) return;
+      if (hovered || focused || reduced.matches || document.hidden) return;
       timer = setInterval(() => setIndex((i) => (i + 1) % slides.length), 180_000);
     };
     restart();
@@ -36,7 +34,7 @@ export function HomeHero({ search }: { search: ReactNode }) {
       reduced.removeEventListener('change', restart);
       document.removeEventListener('visibilitychange', restart);
     };
-  }, [index, paused, hovered, focused]);
+  }, [index, hovered, focused]);
   const move = (direction: number) =>
     setIndex((i) => (i + direction + slides.length) % slides.length);
   return (
@@ -44,6 +42,15 @@ export function HomeHero({ search }: { search: ReactNode }) {
       className="campus-hero hero-carousel"
       aria-labelledby="home-heading"
       aria-roledescription="carousel"
+      aria-describedby="hero-instructions"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+          e.preventDefault();
+          move(e.key === 'ArrowLeft' ? -1 : 1);
+        }
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocusCapture={() => setFocused(true)}
@@ -67,20 +74,51 @@ export function HomeHero({ search }: { search: ReactNode }) {
         if (Math.abs(dx) >= 50 && Math.abs(dx) > Math.abs(dy) * 1.5) move(dx < 0 ? 1 : -1);
       }}
     >
-      <div className="hero-photographs" aria-hidden="true">
-        {slides.map((slide, i) => (
+      <div
+        className="hero-photographs"
+        aria-hidden="true"
+        style={{ transform: `translateX(-${index * 50}%)` }}
+      >
+        <div className="hero-photo-frame">
           <Image
-            key={slide.image}
-            src={slide.image}
+            src={slides[0].image}
             alt=""
             fill
-            priority={i === 0}
+            priority
             sizes="(max-width: 767px) 100vw, 1360px"
-            className={`${i === index ? 'is-active' : ''} ${i === 1 ? 'campus-photograph' : ''}`}
           />
-        ))}
+        </div>
+        <div className="hero-photo-frame campus-frame">
+          <div className="campus-scene">
+            <Image
+              src={slides[1].image}
+              alt=""
+              fill
+              sizes="(max-width: 767px) 70vw, 800px"
+              className="campus-day"
+            />
+            <Image
+              src="/editorial/campus-dusk.webp"
+              alt=""
+              fill
+              sizes="(max-width: 767px) 70vw, 800px"
+              className="campus-night"
+            />
+          </div>
+        </div>
       </div>
-      <span className="sr-only">{slides[index].alt}</span>
+      <span id="hero-instructions" className="sr-only">
+        Swipe or use the left and right arrow keys to change the photograph. Automatic rotation
+        pauses while this area is focused.
+      </span>
+      <span className={`sr-only ${index === 1 ? 'campus-day-description' : ''}`}>
+        {slides[index].alt}
+      </span>
+      {index === 1 ? (
+        <span className="sr-only campus-night-description">
+          Real campus buildings illuminated at dusk, photographed by Afrank4436.
+        </span>
+      ) : null}
       <div className="campus-hero-copy">
         <h1 id="home-heading">
           {index === 0 ? (
@@ -91,41 +129,14 @@ export function HomeHero({ search }: { search: ReactNode }) {
             </>
           ) : (
             <>
-              Find it
-              <br className="mobile-hero-break" /> on campus.
+              Your next great find,
+              <br />
+              right on campus.
             </>
           )}
         </h1>
         <p>Buy, sell, discover and connect within the community.</p>
         {search}
-      </div>
-      <div className="hero-carousel-controls" aria-label="Hero image controls">
-        <button type="button" aria-label="Previous hero image" onClick={() => move(-1)}>
-          <Icon name="back" />
-        </button>
-        {slides.map((slide, i) => (
-          <button
-            type="button"
-            className="hero-dot"
-            key={slide.image}
-            aria-label={`Show hero image ${i + 1}`}
-            aria-pressed={index === i}
-            onClick={() => setIndex(i)}
-          >
-            <span />
-          </button>
-        ))}
-        <button type="button" aria-label="Next hero image" onClick={() => move(1)}>
-          <Icon name="arrow" />
-        </button>
-        <button
-          type="button"
-          className="hero-rotation"
-          aria-label={paused ? 'Resume automatic hero rotation' : 'Pause automatic hero rotation'}
-          onClick={() => setPaused(!paused)}
-        >
-          {paused ? 'Play' : 'Pause'}
-        </button>
       </div>
     </section>
   );

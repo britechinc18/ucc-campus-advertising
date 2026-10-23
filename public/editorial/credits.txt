@@ -1,0 +1,16 @@
+MedStash editorial photography
+
+Dusk campus photograph: Afrank4436, Academic City University campus building illuminated at dusk (25 March 2021), via Wikimedia Commons.
+Source: https://commons.wikimedia.org/wiki/File:Academic_City_University_campus_building_illuminated_at_dusk.jpg
+License: Creative Commons Attribution-ShareAlike 4.0 International https://creativecommons.org/licenses/by-sa/4.0/
+Changes: cropped to remove excess sky and foreground, resized to 1400px and compressed as WebP. This adapted image remains licensed CC BY-SA 4.0. The photograph is editorial campus imagery, not an endorsement of MedStash.
+
+Daytime clock tower: Maxx Sas, University of Ghana. Unsplash License.
+https://unsplash.com/photos/white-building-with-a-clock-tower-and-red-roof-GlWlvffqs0I
+
+Phone beside backpack: TheRegisti. Unsplash License.
+https://unsplash.com/photos/a-person-holding-a-smart-phone-next-to-a-backpack-EYqbHrKRH6Y
+
+Workspace: Olivier Amyot. Unsplash License, image photo-1770003354577-82b2a2d09d19.
+
+Headphones: existing licensed Unsplash photograph. Source records retained in the repository's LISTING_VISUAL_UPDATE and BUYER_EXPERIENCE documentation.

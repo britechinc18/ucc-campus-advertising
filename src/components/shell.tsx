@@ -268,6 +268,9 @@ export function Shell({
       <footer className="container footer">
         <Wordmark showLogo />
         <p>Contact advertisers directly.</p>
+        <a className="photo-credit" href="/editorial/credits.txt">
+          Photo credits
+        </a>
         <Link className="text-link" href="/help">
           Safe trading & help <Icon name="arrow" />
         </Link>
