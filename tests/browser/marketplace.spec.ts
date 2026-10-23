@@ -93,6 +93,9 @@ test('advertiser submits, admin approves, public search finds it, advertiser mar
     .locator('.data-row')
     .filter({ hasText: 'Browser review tutoring appointment' });
   await row.getByRole('link', { name: 'Review', exact: true }).click();
+  await expect(
+    adminPage.getByRole('link', { name: 'TikTok: @campus_seller', exact: true }),
+  ).toBeVisible();
   await adminPage.getByRole('button', { name: 'Approve advert', exact: true }).click();
   await adminPage
     .getByRole('dialog')
