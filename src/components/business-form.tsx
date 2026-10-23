@@ -1,4 +1,7 @@
 'use client';
+import Link from 'next/link';
+import { ProfileContacts, readProfileContacts } from './profile-contacts';
+import { BusinessLifecycle } from './business-lifecycle';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
@@ -12,17 +15,20 @@ export interface OwnBusiness {
   pending: BusinessProfile | null;
   state: string;
   reason: string | null;
+  version?: number;
 }
 export function BusinessForm({
   business,
   account,
   advertiserId,
   assisted = false,
+  categories = [],
 }: {
   business: OwnBusiness | null;
   account: Account;
   advertiserId?: string;
   assisted?: boolean;
+  categories?: { id: string; name: string }[];
 }) {
   const data = business?.pending ?? business?.approved;
   const [logo, setLogo] = useState<string[]>(data?.logoMediaId ? [data.logoMediaId] : []);
@@ -68,11 +74,15 @@ export function BusinessForm({
               description: f.get('description'),
               location: f.get('location'),
               ...(logo[0] ? { logoMediaId: logo[0] } : {}),
-              ...(String(f.get('phone')).trim() ? { phone: String(f.get('phone')).trim() } : {}),
-              ...(String(f.get('whatsapp')).trim()
-                ? { whatsapp: String(f.get('whatsapp')).trim() }
+              defaultsEnabled: true,
+              version:
+                business?.version ??
+                account.profiles.find((p) => p.kind === 'business')?.version ??
+                0,
+              ...(String(f.get('categoryId') ?? '')
+                ? { categoryId: String(f.get('categoryId')) }
                 : {}),
-              ...(f.get('consent') ? { contactConsent: true } : {}),
+              ...readProfileContacts(f),
             };
             await api(
               assisted ? 'admin/businesses' : 'me/business',
@@ -150,22 +160,17 @@ export function BusinessForm({
           <p className="helper">Your business initials appear when no logo is supplied.</p>
         </div>
         <label className="form-group">
-          <span className="form-label">Phone (optional)</span>
-          <input className="field-input" name="phone" type="tel" defaultValue={data?.phone ?? ''} />
+          <span className="form-label">Business category</span>
+          <select className="field-input" name="categoryId" defaultValue={data?.categoryId ?? ''}>
+            <option value="">Choose a category (optional)</option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
         </label>
-        <label className="form-group">
-          <span className="form-label">WhatsApp (optional)</span>
-          <input
-            className="field-input"
-            name="whatsapp"
-            type="tel"
-            defaultValue={data?.whatsapp ?? ''}
-          />
-        </label>
-        <label className="check" style={{ marginTop: 22, alignItems: 'flex-start' }}>
-          <input type="checkbox" name="consent" defaultChecked={!!data?.contactConsent} />
-          <span>I consent to publish the contact details above on my business profile.</span>
-        </label>
+        <ProfileContacts data={data ?? {}} business />
         {error ? <ErrorMessage message={error} /> : null}
         {saved ? (
           <p className="form-success" role="status">
@@ -179,6 +184,28 @@ export function BusinessForm({
           </button>
         </div>
       </form>
+      {business?.approved ? (
+        <div className="form-actions">
+          <Link className="btn secondary" href={`/businesses/${business.slug}`}>
+            View Storefront
+          </Link>
+          <Link
+            className="text-link"
+            href={`/my-adverts?identity=${advertiserId ?? account.profiles.find((p) => p.kind === 'business')?.id}`}
+          >
+            Manage Catalog →
+          </Link>
+        </div>
+      ) : null}
+      {!assisted ? (
+        <BusinessLifecycle
+          name={data?.name ?? account.profile?.name ?? ''}
+          deactivated={!!account.profiles.find((p) => p.kind === 'business')?.deactivated}
+          reactivationPending={
+            !!account.profiles.find((p) => p.kind === 'business')?.reactivationPending
+          }
+        />
+      ) : null}
     </div>
   );
 }

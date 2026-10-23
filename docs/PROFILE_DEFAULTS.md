@@ -23,3 +23,11 @@ Business deactivation hides storefront and adverts without resetting expiry/usag
 ## Release
 
 Use an isolated Neon child for migration validation. Compare existing advert/profile/media IDs and URLs, allowing only the intended automatic personal backfill and additive snapshot metadata. Existing approved advert content is otherwise preserved. Deploy the tested build after migration. Do not remove closed history or restore the old user-only uniqueness rule when rolling back; use a forward fix if profiles or bindings have already been created.
+
+## Seller interface and ownership handover
+
+`/my-medstash` links the personal editor, optional business editor and existing My Adverts. The existing three posting steps remain unchanged. Photos & Contact fills available saved defaults, tracks field-level overrides (including explicit blank values), and offers confirmed restoration. Existing advert identity is fixed. Switching an unsaved advert to another identity preserves details and customized contacts but requires confirmation to clear photos for re-upload under the new owner identity. Profile edits made while posting never overwrite saved defaults.
+
+An admin can assign an assisted personal identity to an account with an unused automatic personal placeholder only with explicit replacement confirmation and the existing verified-contact, consent and evidence checks. An unused placeholder has no saved defaults, adverts, media, daily usage or storefront. It is closed rather than deleted. Substantive personal profiles and second business identities remain conflicts. Claiming a business ensures a personal profile exists, without exposing it publicly or changing assisted advert IDs, URLs or history.
+
+Private profile saves and personal review decisions retain submitted snapshots in the admin audit trail. Public APIs never return private defaults, contact source metadata or private handover evidence.

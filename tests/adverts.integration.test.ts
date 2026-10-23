@@ -998,6 +998,11 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     ).toBe(1);
   });
   it('rejects handover to a conflicting identity and keeps evidence out of public data', async () => {
+    await savePersonalProfile(owner, {
+      version: 0,
+      submit: false,
+      profile: { bio: 'A deliberately customized personal profile.' },
+    });
     await pool.query('update users set email_verified=now() where id=$1', [owner]);
     const source = await createAssistedProfile(admin, {
       name: 'Another Student',
@@ -1024,6 +1029,70 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     await submitAdvert(admin, ad.advertId, ad.revisionId, randomUUID());
     await moderate(admin, ad.revisionId, 'approve', 'Reviewed for publication');
     expect(JSON.stringify(await advertDetail(ad.advertId))).not.toContain('verification');
+  });
+  it('requires explicit verified replacement of an unused automatic personal profile', async () => {
+    await pool.query('update users set email_verified=now() where id=$1', [stranger]);
+    const placeholder = (await createProfile(stranger, {
+      name: 'Automatic Student',
+      kind: 'student',
+      consent: true,
+    })) as { id: string };
+    const source = await createAssistedProfile(admin, {
+      name: 'Assisted Student',
+      kind: 'student',
+      consent: true,
+    });
+    const ad = await createAdvert(admin, content('Assisted handover service'), source.id);
+    const options = (await findClaimants(admin, source.id, 'other@test')) as {
+      conflict: boolean;
+      replaceable: boolean;
+    }[];
+    expect(options[0]).toMatchObject({ conflict: false, replaceable: true });
+    const claim = {
+      userId: stranger,
+      contactVerified: true,
+      consent: true,
+      evidenceReference: 'Checked contact and consent',
+    };
+    await expect(claimAdvertiser(admin, source.id, claim)).rejects.toMatchObject({
+      code: 'PROFILE_EXISTS',
+    });
+    await claimAdvertiser(admin, source.id, { ...claim, replaceUnusedPersonal: true });
+    expect((await accountContext(stranger)).profiles.map((p) => p.id)).toEqual([source.id]);
+    expect(
+      (await pool.query('select closed_at from advertisers where id=$1', [placeholder.id])).rows[0]
+        .closed_at,
+    ).not.toBeNull();
+    expect(
+      (await pool.query('select advertiser_id from adverts where id=$1', [ad.advertId])).rows[0]
+        .advertiser_id,
+    ).toBe(source.id);
+    await expect(claimAdvertiser(admin, placeholder.id, claim)).rejects.toMatchObject({
+      status: 404,
+    });
+  });
+  it('never replaces an automatic personal profile that has advert activity', async () => {
+    await pool.query('update users set email_verified=now() where id=$1', [stranger]);
+    const placeholder = (await createProfile(stranger, {
+      name: 'Active Student',
+      kind: 'student',
+      consent: true,
+    })) as { id: string };
+    await createAdvert(stranger, content('Student private draft service'), placeholder.id);
+    const source = await createAssistedProfile(admin, {
+      name: 'Assisted Student',
+      kind: 'student',
+      consent: true,
+    });
+    await expect(
+      claimAdvertiser(admin, source.id, {
+        userId: stranger,
+        contactVerified: true,
+        consent: true,
+        evidenceReference: 'Checked contact and consent',
+        replaceUnusedPersonal: true,
+      }),
+    ).rejects.toMatchObject({ code: 'PROFILE_EXISTS' });
   });
   const defaults = (name = 'Campus Seller') => ({
     name,

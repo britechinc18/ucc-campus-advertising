@@ -82,7 +82,10 @@ export async function saveBusiness(userId: string, input: unknown, sellerId?: st
     await tx.execute(
       sql`update advertisers set defaults_version=defaults_version+1 where id=${p.id}`,
     );
-    await audit(tx, userId, 'business_submitted', b.id);
+    await audit(tx, userId, 'business_submitted', b.id, {
+      version: version.defaults_version + 1,
+      profile: data,
+    });
     return b;
   });
 }
@@ -98,6 +101,15 @@ export async function moderateBusiness(userId: string, businessId: string, input
     .parse(input);
   return db().transaction(async (tx) => {
     await actor(tx, userId, true);
+    const lookup = await one<{ advertiser_id: string }>(
+      tx,
+      sql`select advertiser_id from business_profiles where id=${businessId}`,
+    );
+    // Match profile saving and lifecycle operations: lock the identity before the storefront.
+    const owner = await one<{ defaults_version: number }>(
+      tx,
+      sql`select defaults_version from advertisers where id=${lookup.advertiser_id} and closed_at is null for update`,
+    );
     const b = await one<{
       pending: { defaultsEnabled?: boolean; visibility?: Record<string, boolean> };
       advertiser_id: string;
@@ -107,10 +119,6 @@ export async function moderateBusiness(userId: string, businessId: string, input
       409,
       'STATE_CONFLICT',
       'No business revision pending',
-    );
-    const owner = await one<{ defaults_version: number }>(
-      tx,
-      sql`select defaults_version from advertisers where id=${b.advertiser_id} for update`,
     );
     ensure(
       !b.pending?.defaultsEnabled || data.version === owner.defaults_version,
@@ -136,14 +144,18 @@ export async function moderateBusiness(userId: string, businessId: string, input
       await tx.execute(
         sql`update advertisers set approved_defaults_version=defaults_version,privacy=${JSON.stringify(b.pending?.visibility ?? {})}::jsonb where id=${b.advertiser_id}`,
       );
-    await audit(tx, userId, 'business_moderated', businessId, data);
+    await audit(tx, userId, 'business_moderated', businessId, {
+      ...data,
+      version: owner.defaults_version,
+      profile: b.pending,
+    });
     return { id: businessId, decision: data.decision };
   });
 }
 export async function listBusinesses(slug?: string, search = '', offset = 0) {
   const rows = await query(
     db(),
-    sql`select b.id,b.advertiser_id,b.slug,medstash_effective_content(b.approved || jsonb_build_object('contactSources',jsonb_build_array('phone','whatsapp','tiktok','snapchat','instagram','x'),'profileVersion',p.approved_defaults_version),b.approved,p.approved_defaults_version,p.privacy) - 'contactSources' - 'profileVersion' as approved,coalesce(b.approved->>'name',p.name) as name from business_profiles b join advertisers p on p.id=b.advertiser_id left join users u on u.id=p.user_id where b.approved is not null and b.state<>'suspended' and not p.suspended and p.closed_at is null and p.deactivated_at is null and (u.id is null or not u.suspended) ${slug ? sql`and b.slug=${slug}` : sql``} ${search ? sql`and (coalesce(b.approved->>'name',p.name) || ' ' || coalesce(b.approved->>'description','') || ' ' || coalesce(b.approved->>'location','')) ilike ${'%' + search.slice(0, 100).replace(/[\\%_]/g, '\\$&') + '%'}` : sql``} order by coalesce(b.approved->>'name',p.name),b.id limit 50 offset ${Math.max(0, Math.min(10000, offset))}`,
+    sql`select b.id,b.advertiser_id,b.slug,medstash_effective_content(b.approved || jsonb_build_object('contactSources',jsonb_build_array('phone','whatsapp','tiktok','snapchat','instagram','x'),'profileVersion',p.approved_defaults_version),b.approved,p.approved_defaults_version,p.privacy) - 'contactSources' - 'profileVersion' - (case when p.privacy->>'photo'='false' then 'logoMediaId' else '__no_field__' end) as approved,coalesce(b.approved->>'name',p.name) as name from business_profiles b join advertisers p on p.id=b.advertiser_id left join users u on u.id=p.user_id where b.approved is not null and b.state<>'suspended' and not p.suspended and p.closed_at is null and p.deactivated_at is null and (u.id is null or not u.suspended) ${slug ? sql`and b.slug=${slug}` : sql``} ${search ? sql`and (coalesce(b.approved->>'name',p.name) || ' ' || coalesce(b.approved->>'description','') || ' ' || coalesce(b.approved->>'location','')) ilike ${'%' + search.slice(0, 100).replace(/[\\%_]/g, '\\$&') + '%'}` : sql``} order by coalesce(b.approved->>'name',p.name),b.id limit 50 offset ${Math.max(0, Math.min(10000, offset))}`,
   );
   if (slug) ensure(rows[0], 404, 'NOT_FOUND', 'Business not found');
   return slug ? rows[0] : rows;

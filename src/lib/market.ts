@@ -45,6 +45,8 @@ export interface OwnAdvert {
   state: string;
   approved_revision_id: string | null;
   privacy_hidden?: boolean;
+  profile_closed?: boolean;
+  profile_deactivated?: boolean;
   expires_at: string | null;
   revisions: Revision[];
   advertiser_name?: string;

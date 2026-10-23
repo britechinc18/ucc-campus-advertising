@@ -192,9 +192,15 @@ export async function recordEvent(advertId: string, input: unknown) {
 export async function publicSeller(sellerId: string, cursor?: string) {
   id.parse(sellerId);
   // An account is public only through its currently approved, visible adverts.
-  const seller = await one<{ id: string; name: string; kind: string }>(
+  const seller = await one<{
+    id: string;
+    name: string;
+    kind: string;
+    profile: import('../lib/seller-profile').ProfileDefaults | null;
+    privacy: Record<string, boolean>;
+  }>(
     db(),
-    sql`select p.id,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.approved_defaults->>'name',p.name) as name,p.kind ${base} where a.advertiser_id=${sellerId} and ${visible} limit 1`,
+    sql`select p.id,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.approved_defaults->>'name',p.name) as name,p.kind,p.approved_defaults as profile,p.privacy ${base} where a.advertiser_id=${sellerId} and ${visible} limit 1`,
   );
   const listings = await listAdverts({
     seller: sellerId,
@@ -202,5 +208,28 @@ export async function publicSeller(sellerId: string, cursor?: string) {
     limit: 20,
     ...(cursor ? { cursor } : {}),
   });
-  return { seller, ...listings };
+  const profile = seller.profile;
+  const socials = profile?.socials
+    ? Object.fromEntries(
+        Object.entries(profile.socials).filter(
+          ([key]) =>
+            seller.privacy[key] !== false &&
+            profile.visibility?.[key as keyof typeof profile.visibility] !== false,
+        ),
+      )
+    : undefined;
+  return {
+    seller: {
+      id: seller.id,
+      name: seller.name,
+      kind: seller.kind,
+      bio: profile?.bio,
+      photoMediaId:
+        seller.privacy.photo !== false && profile?.visibility?.photo !== false
+          ? profile?.photoMediaId
+          : undefined,
+      socials,
+    },
+    ...listings,
+  };
 }

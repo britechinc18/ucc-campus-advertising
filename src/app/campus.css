@@ -1176,3 +1176,62 @@
   padding: clamp(16px, 3vw, 28px);
   max-width: 860px;
 }
+
+.management-links {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 32px;
+  margin-block: 32px;
+}
+.management-links section {
+  border-top: 1px solid var(--border);
+  padding-top: 24px;
+}
+.management-links h2 {
+  font-size: 1.35rem;
+}
+.management-links p {
+  margin-block: 12px 24px;
+  color: var(--muted);
+}
+.profile-fields {
+  border: 0;
+  padding: 0;
+  margin-block: 24px;
+  min-width: 0;
+}
+.profile-fields legend {
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+.profile-review {
+  padding: clamp(16px, 3vw, 28px);
+  margin-block: 24px;
+  max-width: 960px;
+}
+.profile-review-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-block: 20px;
+}
+.profile-review p {
+  overflow-wrap: anywhere;
+}
+.profile-defaults {
+  border: 1px solid var(--border);
+  padding: 18px;
+  border-radius: 16px;
+  margin-block: 18px;
+}
+.profile-defaults p {
+  color: var(--muted);
+  font-size: 0.875rem;
+  margin-block: 8px;
+}
+@media (max-width: 767px) {
+  .management-links,
+  .profile-review-columns {
+    grid-template-columns: 1fr;
+  }
+}

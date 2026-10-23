@@ -1,3 +1,4 @@
+import { SocialProfiles } from '@/components/social-profiles';
 import Link from 'next/link';
 import { cache } from 'react';
 import { sharingMetadata } from '@/server/sharing';
@@ -102,6 +103,7 @@ export default async function BusinessPage({
           </div>
         ) : null}
       </section>
+      <SocialProfiles socials={b.approved.socials} />
       <section className="description">
         <h2>A little about us</h2>
         <p style={{ whiteSpace: 'pre-wrap' }}>{b.approved.description}</p>

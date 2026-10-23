@@ -2,6 +2,12 @@
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import {
+  autofillContacts,
+  contactFields,
+  type ContactDraft,
+  type ContactField,
+} from '@/lib/seller-profile';
 import { isFlyer, kindName } from '@/lib/campus';
 import { api, ApiError } from '@/lib/api';
 import {
@@ -11,6 +17,7 @@ import {
   type AdvertContent,
   type Category,
   type OwnAdvert,
+  type SellerIdentity,
 } from '@/lib/market';
 import {
   socialPlatforms,
@@ -21,8 +28,8 @@ import {
 } from '@/lib/socials';
 import { Uploads } from './uploads';
 import { Icon } from './icon';
-import { ErrorMessage, MediaImage } from './ui';
-interface DraftForm {
+import { ErrorMessage, MediaImage, Dialog } from './ui';
+interface DraftForm extends ContactDraft {
   startsAt: string;
   endsAt: string;
   externalUrl: string;
@@ -44,6 +51,10 @@ interface DraftForm {
 function initialForm(advert?: OwnAdvert): DraftForm {
   const d = advert?.revisions[0]?.data;
   return {
+    displayName: d?.displayName ?? advert?.advertiser_name ?? '',
+    contactSources: d?.contactSources,
+    profileVersion: d?.profileVersion,
+    contactOverrides: advert ? contactFields.filter((f) => !d?.contactSources?.includes(f)) : [],
     startsAt: d?.details?.startsAt?.slice(0, 16) ?? '',
     endsAt: d?.details?.endsAt?.slice(0, 16) ?? '',
     externalUrl: d?.details?.externalUrl ?? '',
@@ -69,7 +80,8 @@ export function PostForm({
   advert,
   userId,
   renew = false,
-  advertiserId,
+  advertiserId: initialAdvertiserId,
+  postingProfiles,
   initialKind = 'product',
 }: {
   account: Account;
@@ -78,14 +90,22 @@ export function PostForm({
   userId: string;
   renew?: boolean;
   advertiserId?: string;
+  postingProfiles?: SellerIdentity[];
   initialKind?: AdvertContent['kind'];
 }) {
+  const profiles = postingProfiles ?? account.profiles;
+  const [advertiserId, setAdvertiserId] = useState(initialAdvertiserId);
+  const identity = profiles.find((p) => p.id === advertiserId);
+  const [confirmChange, setConfirmChange] = useState<{
+    type: 'identity' | 'restore';
+    id: string;
+  } | null>(null);
   const assisted =
     !!advertiserId &&
     account.role === 'admin' &&
     !account.profiles.some((p) => p.id === advertiserId);
-  const [form, setForm] = useState<DraftForm>(() =>
-    advert
+  const [form, setForm] = useState<DraftForm>(() => {
+    const initial: DraftForm = advert
       ? initialForm(advert)
       : {
           ...initialForm(),
@@ -98,8 +118,9 @@ export function PostForm({
           categoryId: isFlyer(initialKind)
             ? (categories.find((c) => c.slug === 'services')?.id ?? categories[0]?.id ?? '')
             : '',
-        },
-  );
+        };
+    return identity ? { ...initial, ...autofillContacts(initial, identity) } : initial;
+  });
   const flyer = isFlyer(form.kind);
   const [step, setStep] = useState(1);
   const stepPanel = useRef<HTMLElement>(null);
@@ -111,6 +132,7 @@ export function PostForm({
     heading?.setAttribute('tabindex', '-1');
     heading?.focus();
   }, [step]);
+  const [identityLocked, setIdentityLocked] = useState(!!advert);
   const [busy, setBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
@@ -132,19 +154,62 @@ export function PostForm({
         if (value) {
           const draft = JSON.parse(value);
           if (draft && typeof draft.title === 'string' && Array.isArray(draft.mediaIds))
-            setStored({ ...initialForm(advert), ...draft });
+            setStored({
+              ...initialForm(advert),
+              ...draft,
+              contactOverrides: draft.contactOverrides ?? [...contactFields],
+            });
         }
       } catch {}
     });
   }, [storageKey, advert]);
   function update<K extends keyof DraftForm>(key: K, value: DraftForm[K]) {
     setForm((old) => {
-      const next = { ...old, [key]: value };
+      const field = contactFields.includes(key as ContactField) ? (key as ContactField) : undefined;
+      const next = {
+        ...old,
+        [key]: value,
+        ...(field
+          ? {
+              contactOverrides: [...new Set([...old.contactOverrides, field])],
+              contactSources: old.contactSources?.filter((f) => f !== field),
+            }
+          : {}),
+      };
       try {
         sessionStorage.setItem(storageKey, JSON.stringify(next));
       } catch {}
       return next;
     });
+    setSavedMessage('');
+  }
+  function updateSocial(field: (typeof socialPlatforms)[number], value: string) {
+    setForm((old) => {
+      const next = {
+        ...old,
+        socials: { ...old.socials, [field]: value },
+        contactOverrides: [...new Set([...old.contactOverrides, field])],
+        contactSources: old.contactSources?.filter((f) => f !== field),
+      };
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+  }
+  function chooseIdentity(id: string) {
+    const selected = profiles.find((p) => p.id === id);
+    if (!selected) return;
+    setForm((old) => {
+      const next = { ...old, ...autofillContacts(old, selected), mediaIds: [] };
+      try {
+        sessionStorage.setItem(`ucc-draft-v1:${userId}:${id}`, JSON.stringify(next));
+      } catch {}
+      return next;
+    });
+    setAdvertiserId(id);
+    saved.current = null;
+    setStored(null);
     setSavedMessage('');
   }
   const fieldError = (name: string) =>
@@ -157,6 +222,10 @@ export function PostForm({
       ));
   function content(): AdvertContent {
     return {
+      ...(form.displayName.trim() ? { displayName: form.displayName.trim() } : {}),
+      ...(form.contactSources
+        ? { contactSources: form.contactSources, profileVersion: form.profileVersion }
+        : {}),
       title: form.title.trim(),
       description: form.description.trim(),
       categoryId: form.categoryId,
@@ -261,6 +330,7 @@ export function PostForm({
               assisted ? { advertiserId, content: data } : data,
             );
         saved.current = { ...result, key: crypto.randomUUID(), content: encoded };
+        setIdentityLocked(true);
       }
       if (submit) {
         const ref = saved.current;
@@ -289,6 +359,7 @@ export function PostForm({
   }
   const common = (
     key:
+      | 'displayName'
       | 'title'
       | 'description'
       | 'location'
@@ -306,6 +377,45 @@ export function PostForm({
   });
   return (
     <div className="post-layout">
+      {confirmChange ? (
+        <Dialog
+          title={
+            confirmChange.type === 'identity'
+              ? 'Change seller identity?'
+              : 'Restore Profile Defaults?'
+          }
+          onClose={() => setConfirmChange(null)}
+        >
+          <p>
+            {confirmChange.type === 'identity'
+              ? 'Photos belong to the current identity and will be cleared. Re-upload them for the selected profile. Your product details and customized contacts will remain.'
+              : 'This replaces customized contact and location values with your selected profile’s current defaults. Product details and photos stay as they are.'}
+          </p>
+          <div className="form-actions">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => {
+                if (confirmChange.type === 'identity') chooseIdentity(confirmChange.id);
+                else if (identity)
+                  setForm((old) => {
+                    const next = { ...old, ...autofillContacts(old, identity, true) };
+                    try {
+                      sessionStorage.setItem(storageKey, JSON.stringify(next));
+                    } catch {}
+                    return next;
+                  });
+                setConfirmChange(null);
+              }}
+            >
+              Confirm
+            </button>
+            <button type="button" className="btn secondary" onClick={() => setConfirmChange(null)}>
+              Cancel
+            </button>
+          </div>
+        </Dialog>
+      ) : null}
       <div className="post-heading">
         <div>
           <h1>
@@ -327,6 +437,12 @@ export function PostForm({
           Manage adverts <Icon name="arrow" />
         </Link>
       </div>
+      <p className="inline-notice">
+        Posting as{' '}
+        <strong>{identity?.name ?? account.profile?.name ?? 'Selected advertiser'}</strong> ·{' '}
+        {identity?.kind === 'business' ? 'Business' : 'Personal'}
+        {identityLocked ? ' · Identity fixed for this advert.' : ''}
+      </p>
       {stored ? (
         <div className="inline-notice">
           <div>
@@ -593,6 +709,76 @@ export function PostForm({
             <form onSubmit={advance}>
               <h2>Photos & contact</h2>
               <p>Use your own photos and contacts you have permission to share.</p>
+              <div className="profile-defaults">
+                {!advert && profiles.length > 1 ? (
+                  <label className="form-group">
+                    <span className="form-label">Use contact details from</span>
+                    <select
+                      className="field-input"
+                      value={advertiserId}
+                      disabled={busy || uploading || identityLocked}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        if (form.mediaIds.length) setConfirmChange({ type: 'identity', id });
+                        else chooseIdentity(id);
+                      }}
+                    >
+                      {profiles.map((p) => (
+                        <option key={p.id} value={p.id} disabled={p.suspended || p.deactivated}>
+                          {p.kind === 'business' ? 'Business Profile' : 'Personal Profile'} —{' '}
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : (
+                  <p>
+                    <strong>
+                      {identity?.kind === 'business' ? 'Business Profile' : 'Personal Profile'} —{' '}
+                      {identity?.name ?? account.profile?.name ?? 'Selected advertiser'}
+                    </strong>
+                  </p>
+                )}
+                <p>
+                  {form.contactSources
+                    ? 'Auto-filled from your saved profile. Changes here apply only to this advert.'
+                    : 'Save your reusable contacts in your profile, or complete this advert’s contact fields below.'}
+                </p>
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    className="btn secondary small"
+                    disabled={!identity || busy || uploading}
+                    onClick={() =>
+                      identity && setConfirmChange({ type: 'restore', id: identity.id })
+                    }
+                  >
+                    Restore Profile Defaults
+                  </button>
+                  <Link
+                    href={
+                      assisted
+                        ? `/admin/${identity?.kind === 'business' ? `businesses/${advertiserId}/profile` : `personal/${advertiserId}`}`
+                        : identity?.kind === 'business'
+                          ? '/my-business'
+                          : '/my-personal-profile'
+                    }
+                    className="text-link"
+                    target="_blank"
+                  >
+                    Manage saved profile →
+                  </Link>
+                </div>
+              </div>
+              <label className="form-group">
+                <span className="form-label">Seller / Business Name</span>
+                <input
+                  className="field-input"
+                  minLength={2}
+                  maxLength={100}
+                  {...common('displayName')}
+                />
+              </label>
               <Uploads
                 ids={form.mediaIds}
                 onChange={(ids) => update('mediaIds', ids)}
@@ -636,9 +822,7 @@ export function PostForm({
                       maxLength={300}
                       placeholder={socialExamples[platform]}
                       value={form.socials[platform] ?? ''}
-                      onChange={(e) =>
-                        update('socials', { ...form.socials, [platform]: e.target.value })
-                      }
+                      onChange={(e) => updateSocial(platform, e.target.value)}
                     />
                   </label>
                 ))}
@@ -693,6 +877,7 @@ export function PostForm({
                       ['External link', form.externalUrl || 'None'],
                     ]
                   : []),
+                ['Advertiser', form.displayName || identity?.name || 'Selected identity'],
                 ['Phone', form.phone || 'Not published'],
                 ['WhatsApp', form.whatsapp || 'Not published'],
                 ...socialPlatforms

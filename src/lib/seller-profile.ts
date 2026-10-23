@@ -55,3 +55,55 @@ export function profileField(profile: ProfileDefaults, field: ContactField): str
   if (field === 'phone' || field === 'whatsapp') return profile[field] ?? '';
   return profile.socials?.[field] ?? '';
 }
+
+export function profileComplete(
+  value: ProfileDefaults | null | undefined,
+): value is ProfileDefaults {
+  return !!(value?.name && value.phone && value.whatsapp && value.location && value.contactConsent);
+}
+export interface ContactDraft {
+  displayName: string;
+  phone: string;
+  whatsapp: string;
+  location: string;
+  socials: SocialLinks;
+  contactSources?: ContactField[];
+  profileVersion?: number;
+  contactOverrides: ContactField[];
+}
+export function autofillContacts(
+  current: ContactDraft,
+  identity: {
+    name: string;
+    version?: number;
+    defaults?: ProfileDefaults | null;
+    approvedDefaults?: ProfileDefaults | null;
+  },
+  restore = false,
+): ContactDraft {
+  const defaults = profileComplete(identity.defaults)
+    ? identity.defaults
+    : profileComplete(identity.approvedDefaults)
+      ? identity.approvedDefaults
+      : (identity.defaults ?? { name: identity.name });
+  const overrides = restore ? [] : current.contactOverrides;
+  const next = { ...current, socials: { ...current.socials }, contactOverrides: overrides };
+  for (const field of contactFields) {
+    if (overrides.includes(field)) continue;
+    const value = profileField(defaults, field);
+    if (
+      field === 'displayName' ||
+      field === 'phone' ||
+      field === 'whatsapp' ||
+      field === 'location'
+    )
+      next[field] = value;
+    else if (value) next.socials[field] = value;
+    else delete next.socials[field];
+  }
+  next.contactSources = profileComplete(defaults)
+    ? contactFields.filter((f) => !overrides.includes(f))
+    : undefined;
+  next.profileVersion = profileComplete(defaults) ? (identity.version ?? 0) : undefined;
+  return next;
+}

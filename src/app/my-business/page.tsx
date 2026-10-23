@@ -1,3 +1,6 @@
+import { query } from '@/server/store';
+import { db } from '@/server/db';
+import { sql } from 'drizzle-orm';
 import { redirect } from 'next/navigation';
 import { requireViewer } from '@/server/viewer';
 import { accountContext, ownBusiness } from '@/server/frontend';
@@ -10,9 +13,14 @@ export default async function MyBusiness() {
   const profile = context.profiles.find((p) => p.kind === 'business');
   if (!profile) redirect('/onboarding?kind=business&next=/my-business');
   const business = await ownBusiness(u.id);
+  const categories = await query<{ id: string; name: string }>(
+    db(),
+    sql`select id,name from categories where active order by name`,
+  );
   return (
     <main id="main" className="container">
       <BusinessForm
+        categories={categories}
         account={{ ...context, profile } as Account}
         business={JSON.parse(JSON.stringify(business)) as OwnBusiness | null}
       />
