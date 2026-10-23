@@ -658,6 +658,18 @@
 /* Two photographs move as one rail; text and search remain stationary. */
 .hero-carousel {
   touch-action: pan-y;
+  user-select: none;
+  cursor: grab;
+}
+.hero-carousel:active {
+  cursor: grabbing;
+}
+.hero-carousel input {
+  user-select: text;
+  cursor: text;
+}
+.hero-carousel button {
+  cursor: pointer;
 }
 .hero-carousel:focus-visible {
   outline: 2px solid var(--brand);
