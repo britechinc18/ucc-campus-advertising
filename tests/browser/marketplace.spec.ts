@@ -849,6 +849,15 @@ test('hero rotates without controls, supports swipe and keeps search state', asy
   const heading = hero.getByRole('heading', { level: 1 });
   await expect(heading).toContainText('Everything you need');
   await expect(hero.getByRole('button')).toHaveCount(1);
+  // Exercise React handlers before advancing time; SSR text alone does not prove hydration.
+  await hero.focus();
+  await hero.press('ArrowRight');
+  await expect(heading).toContainText('Your next great find');
+  await hero.press('ArrowLeft');
+  await expect(heading).toContainText('Everything you need');
+  await page.getByRole('link', { name: 'MedStash home', exact: true }).first().focus();
+  await page.mouse.move(0, 0);
+  await page.clock.runFor(100);
   await page.clock.fastForward(179000);
   await expect(heading).toContainText('Everything you need');
   await page.clock.fastForward(1100);
