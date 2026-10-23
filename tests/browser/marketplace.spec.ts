@@ -759,6 +759,40 @@ test('admin selects an assisted advertiser by name and sees real protected syste
   }
 });
 
+test('anonymous enquiries, sharing metadata and local recent history work', async ({ page }) => {
+  await page.goto('/explore?q=tutoring');
+  await page.locator('.listing').first().click();
+  await expect(page).toHaveURL(/\/adverts\//);
+  const detail = page.url();
+  const href = await page
+    .locator('.contact-bar a')
+    .filter({ hasText: 'WhatsApp' })
+    .getAttribute('href');
+  expect(new URL(href!).searchParams.get('text')).toContain('Are you taking bookings?');
+  expect(new URL(href!).searchParams.get('text')).toContain(detail);
+  await expect(page.locator('meta[property="og:title"]')).toHaveAttribute(
+    'content',
+    'Browser test tutoring service',
+  );
+  await page.goto('/recently-viewed');
+  await expect(page.getByRole('heading', { name: 'Recently viewed', exact: true })).toBeVisible();
+  await expect(page.locator('.listing')).toHaveCount(1);
+  await page.getByRole('button', { name: 'Clear history' }).click();
+  await expect(page.getByText('Your discoveries start here.')).toBeVisible();
+  expect(
+    await page.evaluate(() => JSON.parse(localStorage.getItem('medstash:recent:v1') ?? '[]')),
+  ).toEqual([]);
+});
+
+test('published flyer provides artwork metadata for WhatsApp previews', async ({ page }) => {
+  await page.goto('/campus-360/events');
+  await page.locator('.flyer-card').first().click();
+  await expect(page).toHaveURL(/\/adverts\//);
+  await expect(page.locator('meta[property="og:image"]')).toHaveAttribute(
+    'content',
+    /\/api\/v1\/media\/.+width=720/,
+  );
+});
 test('shared cards and galleries preserve responsive geometry in both themes', async ({ page }) => {
   test.setTimeout(240000);
   const sharp = (await import('sharp')).default;
