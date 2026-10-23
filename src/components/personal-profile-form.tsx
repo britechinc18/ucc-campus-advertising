@@ -1,4 +1,5 @@
 'use client';
+import { ProfileOverview } from './profile-overview';
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -21,27 +22,32 @@ export function PersonalProfileForm({
     [error, setError] = useState(''),
     [notice, setNotice] = useState('');
   const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  if (!editing)
+    return (
+      <div className="managed-profile">
+        {notice ? (
+          <p role="status" className="form-success">
+            {notice}
+          </p>
+        ) : null}
+        <ProfileOverview
+          data={data}
+          image={data.photoMediaId}
+          href={`/sellers/${profile.id}`}
+          onEdit={() => setEditing(true)}
+        />
+      </div>
+    );
   return (
-    <section className="narrow">
+    <section className="managed-profile profile-editor">
       <div className="page-head">
         <div>
           <p className="eyebrow">PERSONAL IDENTITY</p>
           <h1>My Personal Profile</h1>
-          <p>Save your details once. Your business identity stays separate.</p>
+          <p>Introduce yourself and choose what appears on your profile.</p>
         </div>
       </div>
-      <p className="helper">
-        {profile.state === 'incomplete'
-          ? 'Incomplete — private until you choose to use it.'
-          : `Profile status: ${profile.state}`}
-        {profile.reason ? ` · ${profile.reason}` : ''}
-      </p>
-      {profile.linkedCount || profile.overrideCount ? (
-        <p className="inline-notice">
-          {profile.linkedCount} live adverts use linked defaults. {profile.overrideCount} have
-          customized fields. <Link href="/my-adverts">Review your adverts →</Link>
-        </p>
-      ) : null}
       <form
         className="panel form-panel"
         onSubmit={async (e) => {
@@ -68,11 +74,10 @@ export function PersonalProfileForm({
               },
             });
             setNotice(
-              submit
-                ? 'Profile submitted for approval. Existing approved details remain public until review.'
-                : 'Private draft saved.',
+              submit ? 'Profile saved. Your changes are now live.' : 'Private draft saved.',
             );
             router.refresh();
+            if (submit) setEditing(false);
           } catch (e) {
             setError(e instanceof Error ? e.message : 'Could not save profile.');
           } finally {
@@ -129,8 +134,16 @@ export function PersonalProfileForm({
           </p>
         ) : null}
         <div className="form-actions">
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={busy}
+            onClick={() => setEditing(false)}
+          >
+            Cancel
+          </button>
           <button className="btn" disabled={busy || uploading}>
-            Save changes for review
+            Save changes
           </button>
           <button
             className="btn secondary"

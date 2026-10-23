@@ -2,9 +2,8 @@
 /* eslint-disable @next/next/no-img-element -- Google avatars use native loading and an initials fallback without caching identity images. */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Notifications } from './notifications';
-import { initials } from '@/lib/market';
 import { Icon } from './icon';
 import { AccountModeSwitch } from './account-mode-switch';
 export function Wordmark({ showLogo = false }: { showLogo?: boolean }) {
@@ -68,7 +67,6 @@ export function Shell({
   } | null;
 }) {
   const path = usePathname();
-  const [avatarFailed, setAvatarFailed] = useState(false);
   const accountMenu = useRef<HTMLDetailsElement>(null);
   useEffect(() => {
     const close = (e: PointerEvent) => {
@@ -157,20 +155,6 @@ export function Shell({
               </Link>
             ))}
           </nav>
-          <form
-            className="header-search"
-            action={path.startsWith('/campus-360') ? '/campus-360' : '/explore'}
-            role="search"
-          >
-            <Icon name="search" />
-            <input
-              type="search"
-              name="q"
-              placeholder="Find your next campus connection"
-              aria-label="Search MedStash"
-              maxLength={100}
-            />
-          </form>
           <div className="header-actions">
             <Link
               className="icon-btn header-search-trigger"
@@ -224,33 +208,16 @@ export function Shell({
                   document.querySelector('.notification-menu[open]')?.removeAttribute('open');
               }}
             >
-              <summary className="icon-btn" aria-label={seller ? 'Account menu' : 'Menu'}>
-                {seller ? (
-                  <span className="seller-avatar">
-                    {user?.image?.startsWith('https://') && !avatarFailed ? (
-                      <img
-                        src={user.image}
-                        alt=""
-                        width={32}
-                        height={32}
-                        referrerPolicy="no-referrer"
-                        onError={() => setAvatarFailed(true)}
-                      />
-                    ) : (
-                      initials(user?.name ?? 'Seller')
-                    )}
-                  </span>
-                ) : (
-                  <Icon name="menu" />
-                )}
+              <summary className="icon-btn" aria-label="Menu">
+                <Icon name="menu" />
               </summary>
               <div className="account-dropdown">
                 {seller ? <p>{user?.name ?? 'Your seller account'}</p> : null}
                 {seller ? (
                   <>
                     <Link href="/my-medstash">My MedStash</Link>
-                    <Link href="/my-personal-profile">My Personal Profile</Link>
                     <Link href="/my-adverts">My adverts</Link>
+                    <Link href="/my-personal-profile">Personal profile</Link>
                     <Link href="/my-business">Business profile</Link>
                   </>
                 ) : !user?.sellerActive ? (

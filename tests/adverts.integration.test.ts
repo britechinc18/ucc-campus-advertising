@@ -428,19 +428,18 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       ).rows[0].n,
     ).toBe(1);
   });
-  it('moderates business edits without leaking pending content', async () => {
+  it('publishes business edits immediately without an approval step', async () => {
     await pool.query("update advertisers set kind='business' where user_id=$1", [owner]);
     const input = {
       slug: 'campus-business',
       description: 'Approved campus business description.',
       location: 'UCC',
     };
-    const b = await saveBusiness(owner, input);
-    expect(await listBusinesses()).toEqual([]);
-    await moderateBusiness(admin, b.id, { decision: 'approve', reason: 'Reviewed business' });
+    await saveBusiness(owner, input);
+    expect(await listBusinesses()).toHaveLength(1);
     await saveBusiness(owner, { ...input, description: 'Unreviewed private business content.' });
     const visible = (await listBusinesses()) as { approved: { description: string } }[];
-    expect(visible[0].approved.description).toBe(input.description);
+    expect(visible[0].approved.description).toBe('Unreviewed private business content.');
   });
   it('finalizes private images, prevents cross-owner reads, and gates public media', async () => {
     const png = await sharp({ create: { width: 100, height: 100, channels: 3, background: 'red' } })
@@ -765,11 +764,6 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     ).rejects.toBeDefined();
     const b = await saveBusiness(admin, profile, p.id);
     expect((await maintenance(objects)).cleaned).toBe(0);
-    await expect(readMedia(undefined, mediaId, objects)).rejects.toMatchObject({ status: 404 });
-    await moderateBusiness(admin, b.id, {
-      decision: 'approve',
-      reason: 'Profile and contacts reviewed',
-    });
     expect((await readMedia(undefined, mediaId, objects)).toString()).toBe('logo-bytes');
     await expect(saveBusiness(owner, profile)).rejects.toBeDefined();
     await moderateBusiness(admin, b.id, {
@@ -926,22 +920,21 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     await expect(
       createAdvert(owner, { ...content(), mediaIds: [mid] }, business.id),
     ).rejects.toMatchObject({ code: 'INVALID_MEDIA' });
-    const b = await saveBusiness(owner, {
+    await saveBusiness(owner, {
       name: 'Approved Brand',
       slug: 'brand-profile',
       description: 'Campus wardrobe business with useful clothing.',
       location: 'UCC',
     });
-    await moderateBusiness(admin, b.id, { decision: 'approve', reason: 'Reviewed business name' });
     await saveBusiness(owner, {
       name: 'Pending secret brand',
       slug: 'brand-profile',
       description: 'Unapproved business description for review.',
       location: 'UCC',
     });
-    expect(((await listBusinesses()) as { name: string }[])[0].name).toBe('Approved Brand');
-    expect(await listBusinesses(undefined, 'Pending secret')).toEqual([]);
-    expect((await listBusinesses(undefined, 'Approved Brand')) as unknown[]).toHaveLength(1);
+    expect(((await listBusinesses()) as { name: string }[])[0].name).toBe('Pending secret brand');
+    expect(await listBusinesses(undefined, 'Pending secret')).toHaveLength(1);
+    expect((await listBusinesses(undefined, 'Approved Brand')) as unknown[]).toHaveLength(0);
   });
   it('hands an assisted business to a verified personal seller without changing its records', async () => {
     await pool.query('update users set email_verified=now() where id=$1', [owner]);
@@ -962,10 +955,6 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       },
       business.id,
     );
-    await moderateBusiness(admin, b.id, {
-      decision: 'approve',
-      reason: 'Owner consent and details reviewed',
-    });
     const ad = await createAdvert(admin, content('Assisted styling consultation'), business.id);
     await submitAdvert(admin, ad.advertId, ad.revisionId, randomUUID());
     await moderate(admin, ad.revisionId, 'approve', 'Reviewed assisted service');
@@ -1103,7 +1092,7 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     contactConsent: true,
     visibility: { phone: true, whatsapp: true },
   });
-  it('saves private personal defaults with optimistic versions and moderated public changes', async () => {
+  it('saves personal changes immediately with optimistic versions and ownership checks', async () => {
     const profile = await personalProfile(owner);
     await savePersonalProfile(owner, {
       version: 0,
@@ -1132,12 +1121,6 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
         reason: 'Stale review',
       }),
     ).rejects.toMatchObject({ code: 'PROFILE_CHANGED' });
-    expect((await personalProfile(owner)).approved).toBeNull();
-    await moderatePersonalProfile(admin, profile.id, {
-      version: 2,
-      decision: 'approve',
-      reason: 'Reviewed name and consent',
-    });
     expect((await personalProfile(owner)).approved?.name).toBe('Approved personal name');
     await expect(personalProfile(stranger, profile.id)).rejects.toMatchObject({
       code: 'FORBIDDEN',
@@ -1173,12 +1156,7 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       version: 1,
       profile: { ...defaults(), location: 'Cape Coast central' },
     });
-    expect((await advertDetail(a.advertId)).data.location).toBe('UCC campus');
-    await moderatePersonalProfile(admin, profile.id, {
-      version: 2,
-      decision: 'approve',
-      reason: 'Reviewed shared default change',
-    });
+    expect((await advertDetail(a.advertId)).data.location).toBe('Cape Coast central');
     expect((await advertDetail(a.advertId)).data.location).toBe('Cape Coast central');
     expect((await advertDetail(override.advertId)).data.phone).toBe('+233201234567');
     expect((await listAdverts({ location: 'Cape Coast central' })).items).toHaveLength(2);
@@ -1187,20 +1165,12 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       version: 2,
       profile: { ...defaults(), visibility: { phone: false, whatsapp: false } },
     });
-    await expect(advertDetail(a.advertId)).rejects.toMatchObject({ status: 404 });
-    expect((await advertDetail(override.advertId)).contacts.phone).toBe('tel:+233201234567');
-    await moderatePersonalProfile(admin, profile.id, {
-      version: 3,
-      decision: 'approve',
-      reason: 'Privacy change reviewed',
+    expect((await advertDetail(a.advertId)).contacts.phone).toBe('tel:+233241234567');
+    expect((await personalProfile(owner)).approved?.visibility).toMatchObject({
+      phone: true,
+      whatsapp: true,
     });
     await savePersonalProfile(owner, { version: 3, profile: defaults() });
-    await moderatePersonalProfile(admin, profile.id, {
-      version: 4,
-      decision: 'approve',
-      reason: 'Contact visibility restored',
-    });
-    await expect(advertDetail(a.advertId)).rejects.toMatchObject({ status: 404 });
     const edit = await saveAdvert(owner, a.advertId, { ...linked, profileVersion: 4 });
     await submitAdvert(owner, a.advertId, edit.revisionId, randomUUID());
     await expect(
@@ -1209,18 +1179,49 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     await moderate(admin, edit.revisionId, 'approve', 'Explicitly restored advert', 4);
     expect((await advertDetail(a.advertId)).expires_at).toEqual(expiry);
   });
+  it('saves optional social visibility immediately without hiding required contacts', async () => {
+    const profile = await personalProfile(owner);
+    await savePersonalProfile(owner, {
+      version: 0,
+      profile: {
+        ...defaults(),
+        socials: { instagram: 'https://www.instagram.com/campus_seller' },
+        visibility: { instagram: false, photo: false, phone: false, whatsapp: false },
+      },
+    });
+    const saved = await personalProfile(owner);
+    expect(saved.state).toBe('approved');
+    expect(saved.approvedVersion).toBe(saved.version);
+    expect(saved.approved?.visibility).toMatchObject({
+      instagram: false,
+      photo: false,
+      phone: true,
+      whatsapp: true,
+    });
+    await expect(
+      savePersonalProfile(
+        stranger,
+        { version: saved.version, profile: defaults('Intruder') },
+        profile.id,
+      ),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    expect((await personalProfile(owner)).approved?.name).toBe('Campus Seller');
+    await savePersonalProfile(owner, {
+      version: 1,
+      profile: {
+        ...defaults(),
+        socials: { instagram: 'https://www.instagram.com/campus_seller' },
+        visibility: { instagram: true, photo: true },
+      },
+    });
+    expect((await personalProfile(owner)).approved?.visibility?.instagram).toBe(true);
+  });
   it('keeps legacy snapshots independent from profile updates', async () => {
     const ad = await submit('Legacy contact stays unchanged');
     await moderate(admin, ad.revisionId, 'approve', 'Reviewed legacy advert');
-    const p = await personalProfile(owner);
     await savePersonalProfile(owner, {
       version: 0,
       profile: { ...defaults('New default name'), visibility: { phone: false, whatsapp: false } },
-    });
-    await moderatePersonalProfile(admin, p.id, {
-      version: 1,
-      decision: 'approve',
-      reason: 'Reviewed new personal profile',
     });
     const visible = await advertDetail(ad.advertId);
     expect(visible.data.phone).toBe('+233241234567');
@@ -1232,13 +1233,12 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       kind: 'business',
       consent: true,
     })) as { id: string };
-    const b = await saveBusiness(owner, {
+    await saveBusiness(owner, {
       name: 'Old Brand',
       slug: 'old-brand',
       description: 'A campus business with an approved storefront.',
       location: 'UCC',
     });
-    await moderateBusiness(admin, b.id, { decision: 'approve', reason: 'Reviewed old business' });
     const ad = await createAdvert(owner, content('Business-owned campus service'), p.id);
     await submitAdvert(owner, ad.advertId, ad.revisionId, randomUUID());
     await moderate(admin, ad.revisionId, 'approve', 'Reviewed business advert');

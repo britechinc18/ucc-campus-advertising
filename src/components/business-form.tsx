@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { ProfileOverview } from './profile-overview';
 import { ProfileContacts, readProfileContacts } from './profile-contacts';
 import { BusinessLifecycle } from './business-lifecycle';
 import { useState } from 'react';
@@ -37,28 +38,42 @@ export function BusinessForm({
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const router = useRouter();
+  const [editing, setEditing] = useState(!business);
+  if (!editing)
+    return (
+      <div className="managed-profile">
+        {saved ? (
+          <p role="status" className="form-success">
+            Profile saved. Your changes are now live.
+          </p>
+        ) : null}
+        <ProfileOverview
+          business
+          data={{ ...data, name: data?.name ?? account.profile?.name }}
+          image={data?.logoMediaId}
+          href={`/businesses/${business?.slug}`}
+          onEdit={() => setEditing(true)}
+        />
+        {!assisted ? (
+          <BusinessLifecycle
+            name={data?.name ?? account.profile?.name ?? ''}
+            deactivated={!!account.profiles.find((p) => p.kind === 'business')?.deactivated}
+            reactivationPending={
+              !!account.profiles.find((p) => p.kind === 'business')?.reactivationPending
+            }
+          />
+        ) : null}
+      </div>
+    );
   return (
-    <div className="post-layout">
+    <div className="managed-profile profile-editor">
       <div className="page-head">
         <div>
           <p className="eyebrow">CAMPUS BUSINESS</p>
           <h1>{assisted ? 'Manage business profile' : 'Your business profile'}</h1>
           <p>Help students find your business and current adverts.</p>
         </div>
-        {business ? (
-          <span className={`badge ${business.state === 'pending' ? 'pending' : ''}`}>
-            {business.state}
-          </span>
-        ) : null}
       </div>
-      {business?.reason ? (
-        <div className="inline-notice">Latest review: {business.reason}</div>
-      ) : null}
-      {business?.approved && business.pending ? (
-        <div className="inline-notice">
-          Your approved profile remains public while changes are reviewed.
-        </div>
-      ) : null}
       <form
         className="panel form-panel"
         onSubmit={async (e) => {
@@ -91,6 +106,7 @@ export function BusinessForm({
             );
             setSaved(true);
             router.refresh();
+            setEditing(false);
           } catch (e) {
             setError(e instanceof Error ? e.message : 'Could not save business profile.');
           } finally {
@@ -174,13 +190,20 @@ export function BusinessForm({
         {error ? <ErrorMessage message={error} /> : null}
         {saved ? (
           <p className="form-success" role="status">
-            Profile submitted for administrator review.
+            Profile saved. Your changes are now live.
           </p>
         ) : null}
         <div className="form-bottom">
-          <span className="helper">All profile changes require approval.</span>
+          <button
+            type="button"
+            className="btn secondary"
+            disabled={busy || uploading}
+            onClick={() => setEditing(false)}
+          >
+            Cancel
+          </button>
           <button className="btn" disabled={busy || uploading || business?.state === 'suspended'}>
-            {busy ? 'Submitting…' : 'Submit for approval'}
+            {busy ? 'Saving…' : 'Save changes'}
           </button>
         </div>
       </form>

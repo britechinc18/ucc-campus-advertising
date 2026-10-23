@@ -28,6 +28,7 @@ const profile = z
   });
 export async function saveBusiness(userId: string, input: unknown, sellerId?: string) {
   const data = profile.parse(input);
+  data.visibility = { ...data.visibility, phone: true, whatsapp: true };
   return db().transaction(async (tx) => {
     const user = await actor(tx, userId, !!sellerId);
     const own = sellerId
@@ -77,12 +78,12 @@ export async function saveBusiness(userId: string, input: unknown, sellerId?: st
     );
     const b = await one<{ id: string }>(
       tx,
-      sql`insert into business_profiles(advertiser_id,slug,pending) values(${p.id},${data.slug},${JSON.stringify(data)}::jsonb) on conflict(advertiser_id) do update set pending=excluded.pending,state='pending',reason=null returning id`,
+      sql`insert into business_profiles(advertiser_id,slug,approved,state) values(${p.id},${data.slug},${JSON.stringify(data)}::jsonb,'approved') on conflict(advertiser_id) do update set approved=excluded.approved,pending=null,state='approved',reason=null returning id`,
     );
     await tx.execute(
-      sql`update advertisers set defaults_version=defaults_version+1 where id=${p.id}`,
+      sql`update advertisers set defaults_version=defaults_version+1,approved_defaults_version=defaults_version+1,privacy=${JSON.stringify(data.visibility)}::jsonb,name=coalesce(${data.name ?? null},name) where id=${p.id}`,
     );
-    await audit(tx, userId, 'business_submitted', b.id, {
+    await audit(tx, userId, 'business_profile_saved', b.id, {
       version: version.defaults_version + 1,
       profile: data,
     });

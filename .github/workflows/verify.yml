@@ -88,3 +88,9 @@ jobs:
       - run: npm run test:browser:seed
       - run: npm run build
       - run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: profile-screenshots
+          path: /tmp/ucc-playwright-results/**/*.png
+          if-no-files-found: ignore
