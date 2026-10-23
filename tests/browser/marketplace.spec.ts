@@ -930,7 +930,18 @@ test('hero respects reduced motion and keeps copy aligned across responsive them
         (theme) => document.documentElement.setAttribute('data-theme', theme),
         theme,
       );
-      await expect(hero).toHaveCSS('background-image', 'none');
+      const layout = await hero.evaluate((el) => {
+        const search = el.querySelector('.search')!.getBoundingClientRect();
+        const art = el.querySelector('.hero-objects')!.getBoundingClientRect();
+        return { searchBottom: search.bottom, artTop: art.top };
+      });
+      if (width < 768) {
+        expect(layout.artTop).toBeGreaterThan(layout.searchBottom + 8);
+        await expect(hero.getByRole('button', { name: 'Search', exact: true })).toHaveCSS(
+          'font-size',
+          '12px',
+        );
+      }
       await expect(page.locator('.hero-objects img').first()).toHaveCSS('object-fit', 'contain');
       const position = () =>
         page.locator('.campus-hero-copy').evaluate((el) => ({
