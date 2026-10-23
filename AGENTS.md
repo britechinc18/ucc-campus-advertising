@@ -27,7 +27,7 @@ layout into a marketplace. Preserve useful repeated product-card geometry.
 ## Images: explicit user requirement
 
 - Do not generate or use AI-generated listing images, people, testimonials or evidence of activity.
-- Specific owner exception (23 October 2026): if matching reusable photos cannot be found, generated editorial backgrounds are authorized for the two homepage promotional cards (gadgets on mint; backpack and phone on teal). Keep this exception limited to those decorative banners; actual listings and campus photos remain authentic.
+- Specific owner exception (23 October 2026): if matching reusable photos cannot be found, generated editorial backgrounds are authorized for the two homepage promotional cards (gadgets on mint; backpack and phone on teal). The owner also authorized the same transparent-object treatment for both hero slides. Keep this exception limited to these decorative homepage assets; actual listings and campus photos remain authentic.
 - Use real photographs or other authentic images supplied by the user or sourced
   from the web. The user has authorized web image search.
 - Check provenance and usage permission; retain source and attribution information

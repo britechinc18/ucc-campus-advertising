@@ -33,3 +33,7 @@ Real photographs, downloaded from their Unsplash image URLs and compressed to We
 ## Current hero and promotional treatment
 
 The workspace slide retains its original canvas-coloured fade. The campus slide retains the sage fade in light mode and restores the earlier canvas fade in dark mode. Its title is now “Find it on campus.”, with “Buy, sell and discover what students have to offer.” directly below, without a reserved second heading line. The two promotional cards use full mint and teal editorial backgrounds, with no CSS fade over a separate photo panel. The owner authorized these generated decorative assets after reusable photo search; prompts and provenance are recorded in PROMOTION_ASSETS.md. The under-GH₵300 filter and existing selling link are preserved.
+
+## Flat object heroes — 23 October 2026
+
+Both hero slides use transparent editorial product arrangements on flat, theme-aware surfaces. No hero gradient, mask, photographic rectangle or image filter remains. Object-fit contain preserves proportions. Two-line heading slots align the short second title with the first title’s last line; subtitle and search stay at identical positions. Existing three-minute rotation, swipe, mouse drag, arrow keys, pause-on-focus and reduced-motion behavior remain. The approved promotional cards are unchanged.
