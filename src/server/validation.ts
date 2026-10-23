@@ -196,11 +196,11 @@ export function fingerprint(v: Content) {
 export function requestHash(value: unknown) {
   return createHash('sha256').update(JSON.stringify(value)).digest('hex');
 }
-export function contactLinks(v: Content, url: string) {
+export function contactLinks(v: Content, url: string, category?: string) {
   return {
     phone: v.phone ? `tel:${v.phone}` : null,
     whatsapp: v.whatsapp
-      ? `https://wa.me/${v.whatsapp.slice(1)}?text=${encodeURIComponent(enquiryMessage(v.kind, v.title, url))}`
+      ? `https://wa.me/${v.whatsapp.slice(1)}?text=${encodeURIComponent(enquiryMessage(v.kind, v.title, url, category))}`
       : null,
   };
 }

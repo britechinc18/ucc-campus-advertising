@@ -1,5 +1,10 @@
 import type { AdvertContent } from './market';
-export function enquiryMessage(kind: AdvertContent['kind'], title: string, url: string) {
+export function enquiryMessage(
+  kind: AdvertContent['kind'],
+  title: string,
+  url: string,
+  category?: string,
+) {
   const question: Record<AdvertContent['kind'], string> = {
     product:
       'Is it still available? Could you share more about its condition and where I can collect it?',
@@ -12,7 +17,7 @@ export function enquiryMessage(kind: AdvertContent['kind'], title: string, url: 
     announcement: 'Could you share a little more information about this?',
     business_ad: 'Could you tell me more about what you offer and how to order or book?',
   };
-  return `Hi! I saw “${title}” on MedStash${kind === 'product' ? ' and I’m interested' : ''}. ${question[kind]}\n\n${url}`;
+  return `Hi! I saw “${title}” on MedStash${kind === 'product' ? ' and I’m interested' : ''}. ${kind === 'product' && /accommodation|housing|rooms?|hostels?/i.test(category ?? '') ? 'Is it still available? Could you share the rental terms and arrange a viewing?' : question[kind]}\n\n${url}`;
 }
 export function businessEnquiry(name: string, url: string) {
   return `Hi! I found ${name} on MedStash. Could you tell me more about your products or services and how to order or book?\n\n${url}`;

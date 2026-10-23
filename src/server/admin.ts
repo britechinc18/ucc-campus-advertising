@@ -174,12 +174,21 @@ export async function claimAdvertiser(userId: string, sellerId: string, input: u
       'UNVERIFIED_CLAIMANT',
       'Claimant needs a verified active account',
     );
-    const existing = await query(tx, sql`select id from advertisers where user_id=${data.userId}`);
+    const source = await one<{ id: string; user_id: string | null; kind: string }>(
+      tx,
+      sql`select id,user_id,kind from advertisers where id=${sellerId} for update`,
+    );
+    if (source.user_id === data.userId) return { id: source.id };
+    ensure(!source.user_id, 409, 'ALREADY_CLAIMED', 'This advertiser already has an owner');
+    const existing = await query(
+      tx,
+      sql`select id from advertisers where user_id=${data.userId} and kind=${source.kind}`,
+    );
     ensure(
       !existing.length,
       409,
       'PROFILE_EXISTS',
-      'Claimant already has an advertiser profile; resolve manually',
+      'Claimant already has this identity type; profiles cannot be merged automatically',
     );
     const claimed = await one<{ id: string }>(
       tx,
@@ -192,5 +201,21 @@ export async function claimAdvertiser(userId: string, sellerId: string, input: u
       consent: true,
     });
     return claimed;
+  });
+}
+
+export async function findClaimants(userId: string, sellerId: string, input: unknown) {
+  id.parse(sellerId);
+  const search = z.string().trim().min(2).max(100).parse(input);
+  return db().transaction(async (tx) => {
+    await actor(tx, userId, true);
+    const source = await one<{ kind: string }>(
+      tx,
+      sql`select kind from advertisers where id=${sellerId}`,
+    );
+    return query(
+      tx,
+      sql`select u.id,u.name,u.email,exists(select 1 from advertisers p where p.user_id=u.id and p.kind=${source.kind}) as conflict from users u where not u.suspended and u.email_verified is not null and strpos(lower(coalesce(u.name,'')||' '||coalesce(u.email,'')),lower(${search}))>0 order by u.name,u.id limit 20`,
+    );
   });
 }

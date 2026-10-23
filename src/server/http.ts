@@ -27,6 +27,7 @@ import {
   categoryMutation,
   featureAdvert,
   claimAdvertiser,
+  findClaimants,
 } from './admin';
 import { listAdverts, advertDetail, home, reportAdvert, recordEvent } from './discovery';
 import { businessQueue, listBusinesses, moderateBusiness, saveBusiness } from './businesses';
@@ -235,6 +236,16 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
         },
       );
     }
+    if (
+      method === 'GET' &&
+      path[0] === 'admin' &&
+      path[1] === 'advertisers' &&
+      path.length === 4 &&
+      path[3] === 'claimants'
+    )
+      return Response.json(await findClaimants(userId, path[2], url.searchParams.get('q')), {
+        headers,
+      });
     if (method === 'GET' && route === 'admin/system')
       return Response.json(await systemCheck(userId), { headers });
     if (method === 'GET' && route === 'me/context')

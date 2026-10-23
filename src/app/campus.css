@@ -1146,3 +1146,33 @@
   opacity: 0.65;
   pointer-events: none;
 }
+
+.handover-panel > summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding-block: 10px;
+  font-weight: 600;
+}
+.handover-panel fieldset {
+  border: 0;
+  padding: 0;
+  margin-block: 20px;
+  min-width: 0;
+}
+.handover-panel .check span {
+  overflow-wrap: anywhere;
+}
+.handover-panel .admin-search {
+  align-items: end;
+}
+.handover-panel .admin-search .form-group {
+  flex: 1;
+  min-width: 0;
+}
+.handover-panel button {
+  margin-top: 12px;
+}
+.handover-panel {
+  padding: clamp(16px, 3vw, 28px);
+  max-width: 860px;
+}

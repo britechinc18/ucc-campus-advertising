@@ -20,6 +20,7 @@ import {
   setAdvertiserSuspension,
   createAssistedProfile,
   claimAdvertiser,
+  findClaimants,
 } from '../src/server/admin';
 import { saveBusiness, moderateBusiness, listBusinesses } from '../src/server/businesses';
 import { signUpload, completeUpload, readMedia, type ObjectStorage } from '../src/server/storage';
@@ -934,5 +935,87 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     expect(((await listBusinesses()) as { name: string }[])[0].name).toBe('Approved Brand');
     expect(await listBusinesses(undefined, 'Pending secret')).toEqual([]);
     expect((await listBusinesses(undefined, 'Approved Brand')) as unknown[]).toHaveLength(1);
+  });
+  it('hands an assisted business to a verified personal seller without changing its records', async () => {
+    await pool.query('update users set email_verified=now() where id=$1', [owner]);
+    const business = await createAssistedProfile(admin, {
+      name: 'Assisted Wardrobe',
+      kind: 'business',
+      consent: true,
+    });
+    const b = await saveBusiness(
+      admin,
+      {
+        name: 'Assisted Wardrobe',
+        slug: 'assisted-wardrobe',
+        description: 'Student wardrobe business managed with permission.',
+        location: 'UCC',
+        whatsapp: '0543982307',
+        contactConsent: true,
+      },
+      business.id,
+    );
+    await moderateBusiness(admin, b.id, {
+      decision: 'approve',
+      reason: 'Owner consent and details reviewed',
+    });
+    const ad = await createAdvert(admin, content('Assisted styling consultation'), business.id);
+    await submitAdvert(admin, ad.advertId, ad.revisionId, randomUUID());
+    await moderate(admin, ad.revisionId, 'approve', 'Reviewed assisted service');
+    const users = (await findClaimants(admin, business.id, 'owner@test')) as {
+      id: string;
+      conflict: boolean;
+    }[];
+    expect(users).toEqual([expect.objectContaining({ id: owner, conflict: false })]);
+    await expect(findClaimants(owner, business.id, 'owner@test')).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+    });
+    const claim = {
+      userId: owner,
+      contactVerified: true,
+      consent: true,
+      evidenceReference: 'Recorded permission reference',
+    };
+    expect(await claimAdvertiser(admin, business.id, claim)).toEqual({ id: business.id });
+    expect(await claimAdvertiser(admin, business.id, claim)).toEqual({ id: business.id });
+    expect((await accountContext(owner)).profiles).toHaveLength(2);
+    expect((await advertDetail(ad.advertId)).advertiser_id).toBe(business.id);
+    expect(((await listBusinesses('assisted-wardrobe')) as { id: string }).id).toBe(b.id);
+    await saveAdvert(owner, ad.advertId, content('Owner now manages this service'));
+    expect(
+      (
+        await pool.query(
+          "select count(*)::int n from audit_events where action='assisted_profile_claimed'",
+        )
+      ).rows[0].n,
+    ).toBe(1);
+  });
+  it('rejects handover to a conflicting identity and keeps evidence out of public data', async () => {
+    await pool.query('update users set email_verified=now() where id=$1', [owner]);
+    const source = await createAssistedProfile(admin, {
+      name: 'Another Student',
+      kind: 'student',
+      consent: true,
+    });
+    const options = (await findClaimants(admin, source.id, 'owner@test')) as {
+      conflict: boolean;
+    }[];
+    expect(options[0].conflict).toBe(true);
+    await expect(
+      claimAdvertiser(admin, source.id, {
+        userId: owner,
+        contactVerified: true,
+        consent: true,
+        evidenceReference: 'Private verification reference',
+      }),
+    ).rejects.toMatchObject({ code: 'PROFILE_EXISTS' });
+    expect(
+      (await pool.query('select user_id from advertisers where id=$1', [source.id])).rows[0]
+        .user_id,
+    ).toBeNull();
+    const ad = await createAdvert(admin, content('Admin managed student offer'), source.id);
+    await submitAdvert(admin, ad.advertId, ad.revisionId, randomUUID());
+    await moderate(admin, ad.revisionId, 'approve', 'Reviewed for publication');
+    expect(JSON.stringify(await advertDetail(ad.advertId))).not.toContain('verification');
   });
 });

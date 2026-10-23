@@ -16,6 +16,14 @@ describe('contextual WhatsApp enquiries', () => {
     expect(contact.searchParams.get('text')).toContain(url);
     expect(links.phone).toBeNull();
   });
+  it('asks about viewing accommodation instead of collecting a product', () => {
+    expect(enquiryMessage('product', 'Campus room', 'link', 'Accommodation')).toContain(
+      'arrange a viewing',
+    );
+    expect(enquiryMessage('product', 'Campus room', 'link', 'Accommodation')).not.toContain(
+      'collect',
+    );
+  });
   it('uses the right intent for wanted, service and campus adverts', () => {
     expect(enquiryMessage('wanted', 'Laptop', 'link')).toContain(
       'I may have what you’re looking for',
