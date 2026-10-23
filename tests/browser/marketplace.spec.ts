@@ -1252,6 +1252,16 @@ test('personal profile opens as a profile and saves directly on mobile and deskt
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
         true,
       );
+      await page.evaluate(async () => {
+        if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+        window.scrollTo({ top: 0, behavior: 'instant' });
+        await Promise.all(
+          document
+            .getAnimations()
+            .filter((a) => a instanceof CSSTransition)
+            .map((a) => a.finished.catch(() => undefined)),
+        );
+      });
       await page.screenshot({
         path: testInfo.outputPath(`personal-profile-${width}-${theme}.png`),
         fullPage: true,
