@@ -34,6 +34,7 @@ export function BrowseBack() {
   return (
     <Link
       className="text-link"
+      aria-label="Back to browsing"
       href="/explore"
       onClick={(e) => {
         try {
@@ -55,7 +56,7 @@ export function BrowseBack() {
       }}
     >
       <Icon name="back" />
-      Back to browsing
+      <span className="browse-back-label">Back to browsing</span>
     </Link>
   );
 }

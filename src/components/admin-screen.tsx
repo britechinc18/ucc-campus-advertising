@@ -12,6 +12,7 @@ import {
 } from '@/lib/market';
 import { Dialog, ErrorMessage, Loading, EmptyState, MediaImage } from './ui';
 import { Icon } from './icon';
+import { SocialProfiles } from './social-profiles';
 interface Row {
   id: string;
   [key: string]: unknown;
@@ -838,6 +839,7 @@ function Submission({
           <span>WhatsApp</span>
           <strong>{d.whatsapp ?? 'Not supplied'}</strong>
         </div>
+        <SocialProfiles socials={d.socials} />
         <div className="summary-line">
           <span>Contact consent</span>
           <strong>{d.contactConsent ? 'Given' : 'Missing'}</strong>
@@ -923,6 +925,7 @@ function AdminAdvert({
             ))}
           </div>
           <p className="admin-description">{d.description}</p>
+          <SocialProfiles socials={d.socials} />
           <p className="helper">
             {d.location} · {d.phone} {d.whatsapp}
           </p>

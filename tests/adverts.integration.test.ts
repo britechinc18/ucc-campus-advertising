@@ -14,7 +14,7 @@ vi.mock('server-only', () => ({}));
 vi.mock('../src/server/auth', () => ({ auth: vi.fn() }));
 import { auth } from '../src/server/auth';
 import { dispatch } from '../src/server/http';
-import { listAdverts, advertDetail, home } from '../src/server/discovery';
+import { listAdverts, advertDetail, home, publicSeller } from '../src/server/discovery';
 import {
   updateSettings,
   setAdvertiserSuspension,
@@ -308,6 +308,33 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     );
   });
 
+  it('publishes social profiles only through approved adverts and hides inactive sellers', async () => {
+    const pending = await createAdvert(owner, {
+      ...content(),
+      socials: { tiktok: 'https://www.tiktok.com/@campus_seller' },
+    });
+    await submitAdvert(owner, pending.advertId, pending.revisionId, randomUUID());
+    const sellerId = (await pool.query('select id from advertisers where user_id=$1', [owner]))
+      .rows[0].id;
+    await expect(publicSeller(sellerId)).rejects.toMatchObject({ status: 404 });
+    await moderate(admin, pending.revisionId, 'approve', 'Reviewed public social contact');
+    expect((await advertDetail(pending.advertId)).data.socials?.tiktok).toBe(
+      'https://www.tiktok.com/@campus_seller',
+    );
+    const profile = await publicSeller(sellerId);
+    expect(profile.items.map((item) => item.advertiser_id)).toEqual([sellerId]);
+    expect(profile.seller.name).toBe('Campus Seller');
+    const edit = await saveAdvert(owner, pending.advertId, {
+      ...content(),
+      socials: { tiktok: 'https://www.tiktok.com/@pending_change' },
+    });
+    expect(edit.revisionId).toBeTruthy();
+    expect((await advertDetail(pending.advertId)).data.socials?.tiktok).toBe(
+      'https://www.tiktok.com/@campus_seller',
+    );
+    await pool.query('update advertisers set suspended=true where id=$1', [sellerId]);
+    await expect(publicSeller(sellerId)).rejects.toMatchObject({ status: 404 });
+  });
   it('filters all public discovery views and direct links by approval and expiry', async () => {
     const pending = await submit();
     await expect(advertDetail(pending.advertId)).rejects.toMatchObject({ status: 404 });

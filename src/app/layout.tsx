@@ -18,7 +18,7 @@ export const metadata: Metadata = {
     apple: [{ url: '/icons/apple-touch-icon.png?v=2', sizes: '180x180' }],
   },
   description:
-    'Products, services and wanted adverts for the University of Cape Coast medical-student community. Browse freely and contact advertisers directly.',
+    'Products, services and wanted adverts from your community. Browse freely and contact advertisers directly.',
 };
 const themeScript =
   "try{document.documentElement.dataset.theme=localStorage.getItem('ucc-theme')||(matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light')}catch(e){}";

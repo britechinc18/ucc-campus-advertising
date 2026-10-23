@@ -413,3 +413,244 @@
     padding-top: 24px;
   }
 }
+
+/* Keep circular controls square: legacy mobile minimum widths must not stretch them. */
+.save-button {
+  box-sizing: border-box;
+  padding: 0;
+  aspect-ratio: 1;
+  flex-shrink: 0;
+}
+.listing .save-button {
+  width: 32px;
+  min-width: 32px;
+  max-width: 32px;
+  height: 32px;
+  min-height: 32px;
+  max-height: 32px;
+  border-radius: 50%;
+}
+.save-button svg {
+  display: block;
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+.public-detail .gallery > .save-control .save-button {
+  width: 36px;
+  min-width: 36px;
+  max-width: 36px;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+}
+.public-detail .detail-content .advert-dates {
+  margin-top: 14px;
+  font-size: 10px;
+  line-height: 1.55;
+  color: var(--muted);
+  font-weight: 400;
+}
+.seller-link {
+  color: var(--ink);
+}
+.seller-link:hover h3 {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.social-profiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  margin: 18px 0;
+}
+.social-profiles a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  max-width: 100%;
+  font-size: 12px;
+}
+.social-profiles a span {
+  overflow-wrap: anywhere;
+}
+.social-profiles svg {
+  fill: currentColor;
+  stroke: none;
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+.social-fields {
+  border: 0;
+  padding: 0;
+  margin: 26px 0 0;
+  min-width: 0;
+}
+.social-fields legend {
+  font-size: 15px;
+  font-weight: 600;
+}
+.social-fields > p {
+  margin: 8px 0 16px;
+}
+.seller-profile-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 28px;
+}
+.seller-profile-heading h1 {
+  font-size: 31px;
+  margin-bottom: 6px;
+}
+.seller-profile-heading p {
+  color: var(--muted);
+  font-size: 13px;
+}
+.mobile-header-title {
+  display: none;
+}
+.campus-page > .page-head .eyebrow {
+  display: none;
+}
+.campus-page > .page-head p {
+  max-width: 410px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+@media (min-width: 768px) {
+  .site-header .header-actions > .btn {
+    min-height: 34px;
+    padding: 7px 14px;
+    font-size: 11px;
+    line-height: 1.4;
+    gap: 6px;
+  }
+  .site-header .header-actions > .btn svg {
+    width: 15px;
+    height: 15px;
+  }
+}
+@media (max-width: 767px) {
+  .market-header .wordmark:not(.mobile-header-title),
+  .campus-header .wordmark:not(.mobile-header-title) {
+    display: none;
+  }
+  .market-header .mobile-header-title,
+  .campus-header .mobile-header-title {
+    display: inline-flex;
+    flex-shrink: 0;
+    font-size: 25px;
+    font-weight: 700;
+    letter-spacing: -1px;
+  }
+  .campus-header .header-search {
+    display: none;
+  }
+  .explore-page > .page-head {
+    display: none;
+  }
+  .explore-page > .market-toolbar {
+    margin-top: 20px;
+  }
+  .campus-overview > .page-head h1 {
+    display: none;
+  }
+  .campus-page > .page-head {
+    padding-top: 18px;
+    gap: 12px;
+    align-items: start;
+  }
+  .campus-page > .page-head p {
+    margin: 0;
+    font-size: 12px;
+    max-width: 240px;
+  }
+  .campus-page > .page-head > .text-link {
+    font-size: 10px;
+  }
+  .listing .save-button {
+    width: 28px;
+    min-width: 28px;
+    max-width: 28px;
+    height: 28px;
+    min-height: 28px;
+    max-height: 28px;
+  }
+  .listing > .save-control {
+    top: 7px;
+    right: 7px;
+  }
+  .listing .save-button svg {
+    width: 14px;
+    height: 14px;
+  }
+  .public-detail .gallery {
+    padding-bottom: 0;
+  }
+  .public-detail .detail-content {
+    margin-top: -20px;
+    z-index: 2;
+  }
+  .public-detail .gallery > .save-control {
+    top: 12px;
+    right: 14px;
+  }
+  .detail-bottom-space > .breadcrumbs {
+    position: absolute;
+    top: 12px;
+    left: 14px;
+    z-index: 5;
+  }
+  .detail-bottom-space > .breadcrumbs a {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+  }
+  .detail-bottom-space > .breadcrumbs svg {
+    width: 18px;
+    height: 18px;
+  }
+  .browse-back-label {
+    display: none;
+  }
+  .public-detail .gallery-main {
+    padding-bottom: 0;
+  }
+  .public-detail .gallery-main:has(+ .gallery-thumbnails) {
+    padding-bottom: 0;
+  }
+  .public-detail .gallery-thumbnails {
+    padding-bottom: 20px;
+  }
+}
+@media (max-width: 360px) {
+  .market-header .mobile-header-title,
+  .campus-header .mobile-header-title {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  .public-detail .gallery-thumbnails {
+    position: absolute;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: auto;
+    padding: 0;
+    margin: 0;
+    z-index: 1;
+  }
+  .public-detail .gallery-thumbnails button {
+    width: 34px;
+    height: 34px;
+    border-radius: 7px;
+  }
+}

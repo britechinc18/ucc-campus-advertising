@@ -1,3 +1,7 @@
+## Release preference
+
+The owner requests that completed MedStash changes be merged and deployed by default after appropriate checks. Do not stop at a draft or preview unless explicitly requested or a concrete release blocker remains.
+
 # User design and image requirements
 
 Apply these requirements to all UI work in this repository. They reflect the user's

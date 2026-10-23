@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { socialProfile, type SocialPlatform } from '../lib/socials';
 import { parsePhoneNumberFromString } from 'libphonenumber-js';
 import { isFlyer, safeExternalUrl } from '../lib/campus';
 import { createHash } from 'node:crypto';
@@ -14,6 +15,19 @@ export const phone = z
     }
     return p.number;
   });
+const socialUrl = (platform: SocialPlatform) =>
+  z
+    .string()
+    .trim()
+    .max(300)
+    .transform((value, ctx) => {
+      const profile = socialProfile(platform, value);
+      if (!profile) {
+        ctx.addIssue({ code: 'custom', message: `Use a complete HTTPS ${platform} profile URL` });
+        return z.NEVER;
+      }
+      return profile.url;
+    });
 export const contentSchema = z
   .object({
     title: z.string().trim().min(5).max(120),
@@ -34,6 +48,15 @@ export const contentSchema = z
     location: z.string().trim().min(2).max(120),
     phone: phone.optional(),
     whatsapp: phone.optional(),
+    socials: z
+      .object({
+        tiktok: socialUrl('tiktok').optional(),
+        snapchat: socialUrl('snapchat').optional(),
+        instagram: socialUrl('instagram').optional(),
+        x: socialUrl('x').optional(),
+      })
+      .strict()
+      .optional(),
     contactConsent: z.literal(true),
     mediaIds: z.array(id).max(5).default([]),
     details: z

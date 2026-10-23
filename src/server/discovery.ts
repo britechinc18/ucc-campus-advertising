@@ -14,6 +14,7 @@ const searchSchema = z
     condition: z.enum(['new', 'used', 'not_applicable']).optional(),
     location: z.string().max(120).optional(),
     business: id.optional(),
+    seller: id.optional(),
     min: z.coerce.number().int().min(0).max(100000000).optional(),
     max: z.coerce.number().int().min(0).max(100000000).optional(),
     sort: z.enum(['fresh', 'price_asc', 'price_desc', 'trending']).default('fresh'),
@@ -59,6 +60,7 @@ export async function listAdverts(input: unknown, extra?: SQL) {
   if (s.kind) filters.push(sql`r.data->>'kind'=${s.kind}`);
   if (s.condition) filters.push(sql`r.data->>'condition'=${s.condition}`);
   if (s.location) filters.push(sql`r.data->>'location' ilike ${`%${escapeLike(s.location)}%`}`);
+  if (s.seller) filters.push(sql`a.advertiser_id=${s.seller}`);
   if (s.business) filters.push(sql`a.advertiser_id=${s.business} and p.kind='business'`);
   if (s.min !== undefined) filters.push(sql`(r.data->>'pricePesewas')::int>=${s.min}`);
   if (s.max !== undefined) filters.push(sql`(r.data->>'pricePesewas')::int<=${s.max}`);
@@ -176,4 +178,20 @@ export async function recordEvent(advertId: string, input: unknown) {
     sql`insert into daily_advert_metrics(advert_id,day,views,contacts) values(${advertId},to_char(now() at time zone 'Africa/Accra','YYYY-MM-DD'),${data.type === 'view' ? 1 : 0},${data.type === 'contact' ? 1 : 0}) on conflict(advert_id,day) do update set views=daily_advert_metrics.views+excluded.views,contacts=daily_advert_metrics.contacts+excluded.contacts`,
   );
   return { accepted: true };
+}
+
+export async function publicSeller(sellerId: string, cursor?: string) {
+  id.parse(sellerId);
+  // An account is public only through its currently approved, visible adverts.
+  const seller = await one<{ id: string; name: string; kind: string }>(
+    db(),
+    sql`select p.id,p.name,p.kind ${base} where a.advertiser_id=${sellerId} and ${visible} limit 1`,
+  );
+  const listings = await listAdverts({
+    seller: sellerId,
+    surface: 'all',
+    limit: 20,
+    ...(cursor ? { cursor } : {}),
+  });
+  return { seller, ...listings };
 }

@@ -12,6 +12,13 @@ import {
   type Category,
   type OwnAdvert,
 } from '@/lib/market';
+import {
+  socialPlatforms,
+  socialLabels,
+  socialExamples,
+  socialProfile,
+  type SocialLinks,
+} from '@/lib/socials';
 import { Uploads } from './uploads';
 import { Icon } from './icon';
 import { ErrorMessage, MediaImage } from './ui';
@@ -30,6 +37,7 @@ interface DraftForm {
   location: string;
   phone: string;
   whatsapp: string;
+  socials: SocialLinks;
   consent: boolean;
   mediaIds: string[];
 }
@@ -50,6 +58,7 @@ function initialForm(advert?: OwnAdvert): DraftForm {
     location: d?.location ?? '',
     phone: d?.phone ?? '',
     whatsapp: d?.whatsapp ?? '',
+    socials: d?.socials ?? {},
     consent: !!d?.contactConsent,
     mediaIds: d?.mediaIds ?? [],
   };
@@ -160,6 +169,11 @@ export function PostForm({
       location: form.location.trim(),
       ...(form.phone.trim() ? { phone: form.phone.trim() } : {}),
       ...(form.whatsapp.trim() ? { whatsapp: form.whatsapp.trim() } : {}),
+      socials: Object.fromEntries(
+        socialPlatforms
+          .filter((platform) => form.socials[platform]?.trim())
+          .map((platform) => [platform, form.socials[platform]!.trim()]),
+      ),
       contactConsent: true,
       mediaIds: form.mediaIds,
       ...(flyer
@@ -205,6 +219,13 @@ export function PostForm({
       if (!form.phone.trim() && !form.whatsapp.trim()) {
         setError('Provide a phone or WhatsApp contact.');
         return;
+      }
+      for (const platform of socialPlatforms) {
+        const value = form.socials[platform]?.trim();
+        if (value && !socialProfile(platform, value)) {
+          setError(`Enter a valid ${socialLabels[platform]} profile URL.`);
+          return;
+        }
       }
       setStep(3);
     }
@@ -595,6 +616,27 @@ export function PostForm({
                   placeholder="024 123 4567"
                 />
               </label>
+              <fieldset className="social-fields">
+                <legend>
+                  Social profiles <span className="meta">(optional)</span>
+                </legend>
+                <p className="meta">Add the profiles you want buyers to see on this advert.</p>
+                {socialPlatforms.map((platform) => (
+                  <label className="form-group" key={platform}>
+                    <span className="form-label">{socialLabels[platform]} profile URL</span>
+                    <input
+                      className="field-input"
+                      type="url"
+                      maxLength={300}
+                      placeholder={socialExamples[platform]}
+                      value={form.socials[platform] ?? ''}
+                      onChange={(e) =>
+                        update('socials', { ...form.socials, [platform]: e.target.value })
+                      }
+                    />
+                  </label>
+                ))}
+              </fieldset>
               <label className="check" style={{ marginTop: 24, alignItems: 'flex-start' }}>
                 <input
                   type="checkbox"
@@ -647,6 +689,12 @@ export function PostForm({
                   : []),
                 ['Phone', form.phone || 'Not published'],
                 ['WhatsApp', form.whatsapp || 'Not published'],
+                ...socialPlatforms
+                  .filter((platform) => form.socials[platform]?.trim())
+                  .map((platform) => [
+                    socialLabels[platform],
+                    `@${socialProfile(platform, form.socials[platform]!)?.username ?? ''}`,
+                  ]),
               ].map(([k, v]) => (
                 <div className="summary-line" key={k}>
                   <span>{k}</span>

@@ -1,4 +1,6 @@
 'use client';
+import Link from 'next/link';
+import { SocialProfiles } from './social-profiles';
 import { useState, useEffect } from 'react';
 import { Dialog, MediaImage, SafeNote, ErrorMessage } from './ui';
 import { Icon } from './icon';
@@ -216,13 +218,18 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
               Report advert
             </button>
           </div>
-          <div className="seller">
+          <Link
+            className="seller seller-link"
+            href={`/sellers/${advert.advertiser_id}`}
+            aria-label={`View ${advert.seller}’s adverts`}
+          >
             <div className="avatar">{initials(advert.seller)}</div>
             <div>
               <h3>{advert.seller}</h3>
               <p>{advert.seller_kind === 'business' ? 'Business' : 'Student'} advertiser · UCC</p>
             </div>
-          </div>
+          </Link>
+          <SocialProfiles socials={d.socials} />
           <div className="contact-buttons">
             {contact('whatsapp')}
             {contact('phone')}
@@ -234,7 +241,7 @@ export function AdvertDetail({ advert }: { advert: Listing }) {
           </p>
           <p className="contact-note">Contact the advertiser directly. No checkout required.</p>
           <SafeNote />
-          <p className="meta" style={{ marginTop: 16 }}>
+          <p className="advert-dates">
             Posted {dateText(advert.published_at)} · Expires {dateText(advert.expires_at)}
           </p>
         </section>

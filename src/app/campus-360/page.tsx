@@ -16,12 +16,11 @@ export default async function Campus({ searchParams }: { searchParams: Promise<{
     failed = true;
   }
   return (
-    <main id="main" className="container campus-page">
+    <main id="main" className="container campus-page campus-overview">
       <div className="page-head">
         <div>
-          <p className="eyebrow">THE CAMPUS, IN FULL COLOUR</p>
           <h1>Campus 360.</h1>
-          <p>What’s happening. What’s new. Who’s making it happen.</p>
+          <p>Events, offers and updates from your community.</p>
         </div>
         <Link className="text-link" href="/businesses">
           Business directory →
