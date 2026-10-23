@@ -910,7 +910,9 @@ test('hero rotates without controls, supports swipe and keeps search state', asy
   );
 });
 
-test('hero respects reduced motion and theme photographs at responsive sizes', async ({ page }) => {
+test('hero respects reduced motion and keeps copy aligned across responsive themes', async ({
+  page,
+}) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.clock.install();
   await page.goto('/');
@@ -928,8 +930,21 @@ test('hero respects reduced motion and theme photographs at responsive sizes', a
         (theme) => document.documentElement.setAttribute('data-theme', theme),
         theme,
       );
-      await expect(page.locator('.campus-day')).toBeVisible({ visible: theme === 'light' });
-      await expect(page.locator('.campus-night')).toBeVisible({ visible: theme === 'dark' });
+      await expect(hero).toHaveCSS('background-image', 'none');
+      await expect(page.locator('.hero-objects img').first()).toHaveCSS('object-fit', 'contain');
+      const position = () =>
+        page.locator('.campus-hero-copy').evaluate((el) => ({
+          subtitle: el.querySelector('p')!.getBoundingClientRect().top,
+          search: el.querySelector('.search')!.getBoundingClientRect().top,
+        }));
+      const second = await position();
+      await hero.press('ArrowLeft');
+      await expect(page.locator('#home-heading')).toContainText('Everything you need');
+      const first = await position();
+      expect(Math.abs(first.subtitle - second.subtitle)).toBeLessThan(1);
+      expect(Math.abs(first.search - second.search)).toBeLessThan(1);
+      await hero.press('ArrowRight');
+      await expect(page.locator('#home-heading')).toContainText('Find it on campus.');
       const sizes = await page.locator('#home-heading').evaluate((el) => ({
         height: el.getBoundingClientRect().height,
         line: parseFloat(getComputedStyle(el).lineHeight),
