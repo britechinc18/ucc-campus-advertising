@@ -41,14 +41,18 @@ export function BusinessForm({
         assisted={assisted}
         categories={categories}
         href={business?.approved ? `/businesses/${business.slug}` : undefined}
+        lifecycle={
+          !assisted
+            ? (name) => (
+                <BusinessLifecycle
+                  name={name}
+                  deactivated={!!identity?.deactivated}
+                  reactivationPending={!!identity?.reactivationPending}
+                />
+              )
+            : undefined
+        }
       />
-      {!assisted ? (
-        <BusinessLifecycle
-          name={data.name ?? ''}
-          deactivated={!!identity?.deactivated}
-          reactivationPending={!!identity?.reactivationPending}
-        />
-      ) : null}
     </>
   );
 }

@@ -20,21 +20,20 @@ export async function ProfileWorkspace({ business = false }: { business?: boolea
     <main id="main" className="container profile-workspace">
       <header className="profile-page-heading">
         <h1>My Profile</h1>
-        <p>Your seller details, in one place.</p>
+        {identity ? (
+          <nav className="profile-switch" aria-label="Profile identity">
+            <Link href="/my-profile" aria-current={!showBusiness ? 'page' : undefined}>
+              Personal
+            </Link>
+            <Link
+              href="/my-profile?identity=business"
+              aria-current={showBusiness ? 'page' : undefined}
+            >
+              Business
+            </Link>
+          </nav>
+        ) : null}
       </header>
-      {identity ? (
-        <nav className="profile-switch" aria-label="Profile identity">
-          <Link href="/my-profile" aria-current={!showBusiness ? 'page' : undefined}>
-            Personal
-          </Link>
-          <Link
-            href="/my-profile?identity=business"
-            aria-current={showBusiness ? 'page' : undefined}
-          >
-            Business
-          </Link>
-        </nav>
-      ) : null}
       {showBusiness ? (
         <BusinessForm
           key={identity.id}

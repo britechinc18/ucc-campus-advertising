@@ -370,3 +370,87 @@ test('focused editors guide input, cancel cleanly and keep visibility beside eac
     await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   }
 });
+
+test('profile cards align, dialogs stay compact and only the saved control reacts', async ({
+  page,
+}, testInfo) => {
+  await session(page.context(), 'profilesOwner');
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto('/my-profile');
+  await expect(page.getByText('Your seller details, in one place.', { exact: true })).toHaveCount(
+    0,
+  );
+  const heading = await page.locator('.profile-page-heading h1').boundingBox();
+  const tabs = await page.getByRole('navigation', { name: 'Profile identity' }).boundingBox();
+  expect(tabs!.x).toBeGreaterThan(heading!.x + heading!.width);
+  const bottom = await page.locator('.profile-dashboard').evaluate((el) => {
+    const left = el
+      .querySelector('.profile-left-column')!
+      .lastElementChild!.getBoundingClientRect();
+    const right = el
+      .querySelector('.profile-right-column > .profile-section:last-of-type')!
+      .getBoundingClientRect();
+    return Math.abs(left.bottom - right.bottom);
+  });
+  expect(bottom).toBeLessThan(2);
+  await expect(page.getByRole('link', { name: /Manage adverts/ })).toHaveCount(0);
+  const toggle = page.getByRole('switch', { name: 'Show Instagram', exact: true });
+  let finish!: () => void;
+  const gate = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  await page.route(
+    '**/api/v1/me/profile-details',
+    async (route) => {
+      await gate;
+      await route.continue();
+    },
+    { times: 1 },
+  );
+  await toggle.click();
+  await expect(toggle).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Edit name', exact: true })).toBeEnabled();
+  await expect(page.getByRole('switch', { name: 'Show TikTok', exact: true })).toBeEnabled();
+  finish();
+  await expect(toggle).toBeEnabled();
+  await page.getByRole('button', { name: /^(Add|Edit) Phone number$/ }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  expect((await dialog.boundingBox())!.height).toBeLessThan(330);
+  await expect(dialog.getByRole('heading', { name: 'Phone number', exact: true })).toBeVisible();
+  await expect(dialog.locator('.form-label')).toHaveCount(0);
+  await page.screenshot({
+    path: testInfo.outputPath('profile-compact-desktop.png'),
+    animations: 'disabled',
+  });
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await page
+    .getByRole('navigation', { name: 'Profile identity' })
+    .getByRole('link', { name: 'Business', exact: true })
+    .click();
+  await expect(
+    page
+      .locator('.profile-left-column')
+      .getByRole('heading', { name: 'Business details', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator('.profile-identity-card')
+      .getByRole('button', { name: 'Deactivate business', exact: true }),
+  ).toBeVisible();
+  await expect(
+    page
+      .locator('.profile-right-column')
+      .getByRole('heading', { name: 'Business details', exact: true }),
+  ).toHaveCount(0);
+  for (const width of [320, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.getByRole('button', { name: /^(Add|Edit) Phone number$/ }).click();
+    await expect(dialog).toBeVisible();
+    expect((await dialog.boundingBox())!.height).toBeLessThan(380);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  }
+});
