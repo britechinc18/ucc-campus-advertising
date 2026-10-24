@@ -227,7 +227,7 @@ test('theme override, dialog focus and onboarding work', async ({ page }, testIn
   }
   await page.getByRole('button', { name: 'Continue →', exact: true }).click();
   await expect(page.getByRole('navigation', { name: 'Seller setup progress' })).toContainText(
-    'Step 3 of 4',
+    'Step 2 of 3',
   );
   await expect(page.getByLabel('Phone number', { exact: true })).toHaveAttribute(
     'placeholder',
@@ -1267,6 +1267,11 @@ test('simplified discovery and seller welcome keep essential navigation and cons
   expect(await consent.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(true);
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
   await expect(page.locator('.google-g-icon')).toHaveText('G');
+  await expect(page.getByRole('navigation', { name: 'Seller setup progress' })).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Keep browsing', exact: true })).toHaveAttribute(
+    'href',
+    '/explore',
+  );
   for (const width of [320, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(

@@ -2017,3 +2017,92 @@
     display: none;
   }
 }
+
+/* A cutout character rises above the image panel, following the role-card motif. */
+.seller-signin-layout {
+  max-width: 940px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 410px);
+}
+.seller-signin-intro {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  padding: 24px;
+  justify-content: space-between;
+  gap: 16px;
+}
+.seller-promo-visual {
+  position: relative;
+  height: 190px;
+  flex: 0 0 190px;
+  isolation: isolate;
+}
+.seller-promo-backdrop {
+  position: absolute;
+  inset: 36px 0 0;
+  border-radius: 56px 22px 22px 22px;
+  background: var(--soft);
+  z-index: -1;
+}
+.seller-signin-layout .seller-promo-visual .seller-signin-photo {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-height: none;
+  aspect-ratio: auto;
+  margin: 0;
+  border-radius: 0;
+  object-fit: contain;
+  object-position: center bottom;
+}
+.seller-signin-copy h2 {
+  font-size: clamp(25px, 2.7vw, 32px);
+}
+.seller-signin-benefits {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+  font-size: 0.8rem;
+}
+.seller-signin-benefits span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.seller-signin-benefits svg {
+  width: 17px;
+  height: 17px;
+  color: var(--brand);
+}
+.seller-signin-layout .seller-welcome {
+  padding: 26px;
+}
+.seller-signin-layout .welcome-logo {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 18px;
+}
+.seller-signin-layout .seller-welcome h1 {
+  font-size: 28px;
+}
+.seller-welcome > .welcome-browse.btn {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 18px;
+  min-height: 42px;
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+.welcome-browse.btn svg {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 720px) {
+  .seller-signin-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
