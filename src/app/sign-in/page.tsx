@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { SellerSetupProgress } from '@/components/seller-setup-progress';
+import { Icon } from '@/components/icon';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { viewer } from '@/server/viewer';
@@ -19,20 +19,32 @@ export default async function SignInPage({
   return (
     <main id="main" className="container seller-welcome-layout seller-signin-layout">
       <aside className="seller-signin-intro" aria-label="About MedStash">
+        <div className="seller-promo-visual">
+          <div className="seller-promo-backdrop" />
+          <Image
+            src="/editorial/seller-entry-cutout.webp"
+            width={660}
+            height={440}
+            alt=""
+            className="seller-signin-photo"
+          />
+        </div>
         <div className="seller-signin-copy">
           <h2>Sell on MedStash.</h2>
           <p>Connect with buyers on your campus.</p>
         </div>
-        <Image
-          src="/editorial/onboarding-business.webp"
-          width={660}
-          height={400}
-          alt=""
-          className="seller-signin-photo"
-        />
+        <div className="seller-signin-benefits">
+          <span>
+            <Icon name="bag" />
+            List products or services
+          </span>
+          <span>
+            <Icon name="chat" />
+            Chat directly with buyers
+          </span>
+        </div>
       </aside>
       <section className="seller-welcome">
-        {next.startsWith('/onboarding') ? <SellerSetupProgress step={1} /> : null}
         <Image
           src="/icons/icon-192.png?v=2"
           alt=""
@@ -108,8 +120,8 @@ export default async function SignInPage({
             )}
           </p>
         ) : null}
-        <Link className="welcome-browse" href="/explore">
-          Keep browsing
+        <Link className="welcome-browse btn secondary" href="/explore">
+          Keep browsing <Icon name="arrow" />
         </Link>
       </section>
     </main>
