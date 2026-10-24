@@ -413,6 +413,33 @@ test('profile cards align, dialogs stay compact and only the saved control react
   await expect(page.getByRole('switch', { name: 'Show TikTok', exact: true })).toBeEnabled();
   finish();
   await expect(toggle).toBeEnabled();
+  let finishBio!: () => void;
+  const bioGate = new Promise<void>((resolve) => {
+    finishBio = resolve;
+  });
+  await page.route(
+    '**/api/v1/me/profile-details',
+    async (route) => {
+      await bioGate;
+      await route.continue();
+    },
+    { times: 1 },
+  );
+  await page.getByRole('button', { name: /^(Add|Edit) introduction/ }).click();
+  await page
+    .locator('.profile-inline-editor textarea')
+    .fill('A short introduction saved without disturbing another editor.');
+  const bioSave = page
+    .locator('.profile-inline-editor')
+    .getByRole('button', { name: 'Save', exact: true });
+  await bioSave.click();
+  await expect(bioSave).toBeDisabled();
+  await page.getByRole('button', { name: /^(Add|Edit) Phone number$/ }).click();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  finishBio();
+  await expect(page.getByRole('status')).toHaveText('Saved.');
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Cancel', exact: true }).click();
   await page.getByRole('button', { name: /^(Add|Edit) Phone number$/ }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog).toBeVisible();

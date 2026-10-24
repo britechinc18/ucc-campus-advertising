@@ -83,7 +83,8 @@ export function ProfileOverview({
     if (social && next && !String(next).startsWith('https://'))
       next = socialExamples[social].replace('username', String(next).replace(/^@/, ''));
     if (editing === imageField) next = photo[0] ?? null;
-    if (await onSave(editing, next, consent)) setEditing(null);
+    if (await onSave(editing, next, consent))
+      setEditing((current) => (current === editing ? null : current));
   }
   function visibility(field: 'photo' | SocialPlatform, label: string) {
     return (
@@ -232,14 +233,17 @@ export function ProfileOverview({
         ) : (
           <section className="profile-section profile-public-card">
             <h2>View public profile</h2>
-            <p>See the profile buyers see when they browse your adverts.</p>
+            <p>
+              {href
+                ? 'See the profile buyers see when they browse your adverts.'
+                : 'Your public profile appears once an advert is live.'}
+            </p>
             {href ? (
               <Link className="profile-intro-action" href={href}>
                 View profile <Icon name="arrow" />
               </Link>
             ) : (
               <>
-                <p className="helper">Your public profile appears once an advert is live.</p>
                 <button className="profile-intro-action" disabled>
                   View profile <Icon name="arrow" />
                 </button>
