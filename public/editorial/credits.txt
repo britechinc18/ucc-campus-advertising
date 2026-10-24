@@ -24,3 +24,5 @@ medical-books.webp: Bermix Studio. Medical student textbooks and stethoscope. Un
 electronics-desk.webp: Christopher Gower. Technology on a desk. Unsplash License. https://unsplash.com/photos/black-cordless-headphones-beside-closed-black-laptop-computer-and-smartphone-_aXa21cf7rY
 local-business.webp: Skyler Smith. Coffee shop counter. Unsplash License. https://unsplash.com/photos/coffee-shop-counter-with-colorful-cups-and-bags-hqh-85z1CFE
 All resized to a maximum width of 1000px and compressed as WebP. https://unsplash.com/license
+
+Seller onboarding illustrations (onboarding-student.webp and onboarding-business.webp): generated decorative 3D editorial characters, explicitly requested by the owner on 24 October 2026 to match the role-card reference. These fictional characters are not actual users or endorsements. Created with the built-in image generation tool. Prompts: Ghanaian university student holding books and tablet, and Ghanaian campus business owner holding tablet beside parcels; forest green, mint and warm cream palette; wide composition, subject on right, no text, logos or watermark. Resized to 1000px wide and encoded as WebP.
