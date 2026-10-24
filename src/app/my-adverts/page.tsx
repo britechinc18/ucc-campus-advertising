@@ -7,7 +7,13 @@ export const metadata = { title: 'My adverts' };
 export default async function MyAdverts({
   searchParams,
 }: {
-  searchParams: Promise<{ offset?: string; state?: string; submitted?: string; identity?: string }>;
+  searchParams: Promise<{
+    offset?: string;
+    state?: string;
+    submitted?: string;
+    identity?: string;
+    published?: string;
+  }>;
 }) {
   const p = await searchParams;
   const u = await requireViewer('/my-adverts');
@@ -15,6 +21,7 @@ export default async function MyAdverts({
   if (!context.profile) redirect('/onboarding?next=/my-adverts');
   const offset = Math.min(10000, Math.max(0, Number(p.offset) || 0));
   const allowed = [
+    'closed',
     'published',
     'pending',
     'draft',
@@ -36,12 +43,13 @@ export default async function MyAdverts({
   return (
     <main id="main" className="container">
       <OwnerDashboard
+        userId={u.id}
         identity={identity}
         account={context as Account}
         page={JSON.parse(JSON.stringify(page)) as OwnerPage}
         offset={offset}
         state={state}
-        submitted={p.submitted === '1'}
+        submitted={p.submitted === '1' || p.published === '1'}
       />
     </main>
   );

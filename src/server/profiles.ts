@@ -1,7 +1,7 @@
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, type Executor } from './db';
-import { actor, advertiser, audit, one, query } from './store';
+import { actor, advertiser, audit, one, query, limits } from './store';
 import { id, phone, socialUrl } from './validation';
 import { ensure } from './errors';
 import { effectiveContent } from './profile-visibility';
@@ -258,7 +258,12 @@ export async function businessLifecycle(userId: string, input: unknown, sellerId
       );
     if (data.action === 'reactivate') {
       ensure(p.deactivated_at, 409, 'ALREADY_ACTIVE', 'Business is already active');
-      await tx.execute(sql`update advertisers set reactivation_pending=true where id=${own}`);
+      const settings = await limits(tx);
+      await tx.execute(
+        settings.auto_publish
+          ? sql`update advertisers set deactivated_at=null,reactivation_pending=false where id=${own}`
+          : sql`update advertisers set reactivation_pending=true where id=${own}`,
+      );
     }
     if (data.action === 'close') {
       const n = await one<{ name: string }>(

@@ -22,7 +22,7 @@ export async function notificationFeed(userId?: string): Promise<NotificationFee
         sql`
         select * from (
           select r.id::text as id,
-            case when r.status='approved' then 'Advert approved' else 'Changes requested' end as title,
+            case when r.status='approved' then case when exists(select 1 from audit_events e where e.target_id=a.id and e.action='advert_published' and e.detail->>'revisionId'=r.id::text) then 'Advert published' else 'Advert approved' end else 'Changes requested' end as title,
             r.data->>'title' as message,
             '/my-adverts/'||a.id::text as href,
             r.reviewed_at as date

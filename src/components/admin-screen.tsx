@@ -1059,7 +1059,8 @@ function Settings({ data, onSaved }: { data: Row; onSaved: () => void }) {
             durationDays: Number(f.get('duration_days')),
             maxImages: Number(f.get('max_images')),
             maxImageBytes: Number(f.get('max_image_bytes')),
-            autoPublish: false,
+            autoPublish: f.get('auto_publish') === 'on',
+            postingLimitsEnabled: f.get('posting_limits_enabled') === 'on',
             reason: f.get('reason'),
           });
           setSuccess(true);
@@ -1071,13 +1072,21 @@ function Settings({ data, onSaved }: { data: Row; onSaved: () => void }) {
         }
       }}
     >
-      <h2>Standard advertiser limits</h2>
+      <h2>Publishing controls</h2>
+      <label className="check">
+        <input type="checkbox" name="auto_publish" defaultChecked={!!data.auto_publish} />
+        <span>Publish adverts immediately without approval</span>
+      </label>
+      <label className="check">
+        <input
+          type="checkbox"
+          name="posting_limits_enabled"
+          defaultChecked={!!data.posting_limits_enabled}
+        />
+        <span>Enforce posting quotas, duplicate checks and posting rate limits</span>
+      </label>
       <p className="helper">
-        These daily and active-advert limits apply to standard advertisers. Administrator
-        submissions are exempt, including adverts posted for others.
-      </p>
-      <p className="helper">
-        All adverts require review. Automatic publishing is currently disabled.
+        Limits below are retained for when enforcement is enabled. Moderation remains available.
       </p>
       {fields.map(([key, label, min, max]) => (
         <label className="form-group" key={key}>

@@ -58,6 +58,8 @@ export async function advertiser(tx: Executor, user: Actor, advertiserId?: strin
   return value;
 }
 export interface Settings {
+  auto_publish: boolean;
+  posting_limits_enabled: boolean;
   max_active: number;
   daily_limit: number;
   duration_days: number;

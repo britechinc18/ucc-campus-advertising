@@ -45,6 +45,7 @@ export function BusinessForm({
           !assisted
             ? (name) => (
                 <BusinessLifecycle
+                  requiresReview={!account.settings.auto_publish}
                   name={name}
                   deactivated={!!identity?.deactivated}
                   reactivationPending={!!identity?.reactivationPending}

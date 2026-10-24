@@ -42,7 +42,7 @@ import { listAdverts, advertDetail, home, reportAdvert, recordEvent } from './di
 import { businessQueue, listBusinesses, moderateBusiness, saveBusiness } from './businesses';
 import { signUpload, completeUpload, readMedia } from './storage';
 import { maintenance } from './maintenance';
-import { actor, query, rateLimit } from './store';
+import { actor, query, rateLimit, limits } from './store';
 import { accountContext, ownedAdverts, ownBusiness, adminView } from './frontend';
 import { db } from './db';
 import { id } from './validation';
@@ -221,7 +221,8 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
     ensure(userId, 401, 'UNAUTHORIZED', 'Sign in to continue');
     // Fast rejection plus a second check under transaction in each domain service.
     const currentActor = await db().transaction((tx) => actor(tx, userId, path[0] === 'admin'));
-    if (method !== 'GET' && currentActor.role !== 'admin')
+    const postingLimits = (await limits(db())).posting_limits_enabled;
+    if (method !== 'GET' && currentActor.role !== 'admin' && postingLimits)
       await rateLimit(`write:${userId}`, 60, 3600);
     if (method === 'POST' && route === 'me/mode') {
       const data = z
@@ -390,7 +391,8 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
         return Response.json(await saveAdvert(userId, path[2], await body(request)), { headers });
       if (method === 'POST' && path.length === 4) {
         if (path[3] === 'submit') {
-          if (currentActor.role !== 'admin') await rateLimit(`submit:${userId}`, 20, 3600);
+          if (currentActor.role !== 'admin' && postingLimits)
+            await rateLimit(`submit:${userId}`, 20, 3600);
           const data = z
             .object({ revisionId: id })
             .strict()
@@ -417,7 +419,8 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
       }
     }
     if (method === 'POST' && route === 'uploads/sign') {
-      if (currentActor.role !== 'admin') await rateLimit(`upload:${userId}`, 30, 86400);
+      if (currentActor.role !== 'admin' && postingLimits)
+        await rateLimit(`upload:${userId}`, 30, 86400);
       return Response.json(await signUpload(userId, await body(request)), { headers });
     }
     if (method === 'POST' && route === 'uploads/complete') {

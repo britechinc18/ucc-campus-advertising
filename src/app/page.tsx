@@ -85,7 +85,7 @@ export default async function HomePage() {
             <h2>Fresh Finds</h2>
             <EmptyState
               title="Be among the first on campus."
-              message="Approved adverts will appear here. Have something to offer? Post an item, service or wanted advert."
+              message="Published adverts will appear here. Have something to offer? Post an item, service or wanted advert."
               action={false}
             />
           </section>

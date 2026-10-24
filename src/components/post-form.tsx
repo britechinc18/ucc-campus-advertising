@@ -8,11 +8,10 @@ import {
   type ContactDraft,
   type ContactField,
 } from '@/lib/seller-profile';
-import { isFlyer, kindName } from '@/lib/campus';
+import { isFlyer } from '@/lib/campus';
 import { api, ApiError } from '@/lib/api';
 import {
   parseMoney,
-  priceText,
   type Account,
   type AdvertContent,
   type Category,
@@ -28,7 +27,8 @@ import {
 } from '@/lib/socials';
 import { Uploads } from './uploads';
 import { Icon } from './icon';
-import { ErrorMessage, MediaImage, Dialog } from './ui';
+import { AdvertPreview } from './advert-preview';
+import { ErrorMessage, Dialog } from './ui';
 interface DraftForm extends ContactDraft {
   startsAt: string;
   endsAt: string;
@@ -124,6 +124,9 @@ export function PostForm({
   });
   const flyer = isFlyer(form.kind);
   const [step, setStep] = useState(1);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [localSaved, setLocalSaved] = useState('');
+  const requiresReview = !account.settings.auto_publish;
   const stepPanel = useRef<HTMLElement>(null);
   const previousStep = useRef(1);
   useEffect(() => {
@@ -151,7 +154,7 @@ export function PostForm({
   useEffect(() => {
     Promise.resolve().then(() => {
       try {
-        const value = sessionStorage.getItem(storageKey);
+        const value = localStorage.getItem(storageKey);
         if (value) {
           const draft = JSON.parse(value);
           if (draft && typeof draft.title === 'string' && Array.isArray(draft.mediaIds))
@@ -178,7 +181,7 @@ export function PostForm({
           : {}),
       };
       try {
-        sessionStorage.setItem(storageKey, JSON.stringify(next));
+        localStorage.setItem(storageKey, JSON.stringify(next));
       } catch {}
       return next;
     });
@@ -193,7 +196,7 @@ export function PostForm({
         contactSources: old.contactSources?.filter((f) => f !== field),
       };
       try {
-        sessionStorage.setItem(storageKey, JSON.stringify(next));
+        localStorage.setItem(storageKey, JSON.stringify(next));
       } catch {}
       return next;
     });
@@ -204,7 +207,7 @@ export function PostForm({
     setForm((old) => {
       const next = { ...old, ...autofillContacts(old, selected), mediaIds: [] };
       try {
-        sessionStorage.setItem(`ucc-draft-v1:${userId}:${id}`, JSON.stringify(next));
+        localStorage.setItem(`ucc-draft-v1:${userId}:${id}`, JSON.stringify(next));
       } catch {}
       return next;
     });
@@ -342,14 +345,16 @@ export function PostForm({
           ref.key,
         );
         try {
-          sessionStorage.removeItem(storageKey);
+          localStorage.removeItem(storageKey);
         } catch {}
-        router.push(assisted ? '/admin/submissions' : '/my-adverts?submitted=1');
+        router.push(
+          assisted && requiresReview
+            ? '/admin/submissions'
+            : `/my-adverts?${requiresReview ? 'submitted' : 'published'}=1`,
+        );
         router.refresh();
       } else {
-        setSavedMessage(
-          'Draft saved. It is not public until you submit it and an administrator approves it.',
-        );
+        setSavedMessage('Draft saved. It is not public until you publish it.');
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save advert.');
@@ -376,8 +381,19 @@ export function PostForm({
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       update(key, e.target.value),
   });
+  const preview = (
+    <AdvertPreview data={form} seller={identity?.name ?? account.profile?.name ?? ''} />
+  );
+  function saveLocalDraft() {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(form));
+      setLocalSaved('Draft saved on this device.');
+    } catch {
+      setLocalSaved('This browser could not save the draft.');
+    }
+  }
   return (
-    <div className="post-layout">
+    <div className="post-layout advert-composer">
       {confirmChange ? (
         <Dialog
           title={
@@ -402,7 +418,7 @@ export function PostForm({
                   setForm((old) => {
                     const next = { ...old, ...autofillContacts(old, identity, true) };
                     try {
-                      sessionStorage.setItem(storageKey, JSON.stringify(next));
+                      localStorage.setItem(storageKey, JSON.stringify(next));
                     } catch {}
                     return next;
                   });
@@ -431,37 +447,57 @@ export function PostForm({
           <p>
             {assisted
               ? 'Posting for the selected advertiser. Review and contact consent still apply.'
-              : 'Make your next campus connection.'}
+              : 'Share something with your campus.'}
           </p>
         </div>
-        <Link className="text-link" href={assisted ? '/admin/adverts' : '/my-adverts'}>
-          Manage adverts <Icon name="arrow" />
-        </Link>
+        <div className="composer-header-actions">
+          <button
+            className="btn secondary"
+            type="button"
+            disabled={busy || uploading}
+            onClick={saveLocalDraft}
+          >
+            Save draft
+          </button>
+          <button
+            className="btn secondary mobile-preview-trigger"
+            type="button"
+            onClick={() => setPreviewOpen(true)}
+          >
+            <Icon name="eye" />
+            Preview
+          </button>
+        </div>
       </div>
       {canChooseIdentity ? (
-        <label className="form-group posting-identity">
-          <span className="form-label">Public identity</span>
-          <select
-            className="field-input"
-            value={advertiserId}
-            disabled={busy || uploading || identityLocked}
-            onChange={(e) => {
-              const id = e.target.value;
-              if (form.mediaIds.length) setConfirmChange({ type: 'identity', id });
-              else chooseIdentity(id);
-            }}
-          >
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id} disabled={p.suspended || p.deactivated}>
-                {p.kind === 'business' ? 'Business' : 'Personal'} — {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="composer-identity" role="group" aria-label="Public identity">
+          {profiles.map((p) => (
+            <button
+              type="button"
+              key={p.id}
+              data-identity={p.id}
+              aria-pressed={advertiserId === p.id}
+              disabled={busy || uploading || identityLocked || p.suspended || p.deactivated}
+              onClick={() => {
+                if (p.id === advertiserId) return;
+                if (form.mediaIds.length) setConfirmChange({ type: 'identity', id: p.id });
+                else chooseIdentity(p.id);
+              }}
+            >
+              {p.kind === 'business' ? 'Business' : 'Personal'}
+            </button>
+          ))}
+          <span>{identity?.name}</span>
+        </div>
       ) : advert || assisted ? (
         <p className="inline-notice">
           Posting as <strong>{identity?.name ?? account.profile?.name}</strong>
           {identityLocked ? ' · Identity fixed for this advert.' : ''}
+        </p>
+      ) : null}
+      {localSaved ? (
+        <p className="local-draft-status" role="status">
+          {localSaved}
         </p>
       ) : null}
       {stored ? (
@@ -469,8 +505,8 @@ export function PostForm({
           <div>
             <strong>Continue your unfinished advert?</strong>
             <p>
-              Text and completed photos were kept in this browser session. Unfinished uploads must
-              be selected again.
+              Text and completed photos were saved on this device. Unfinished uploads must be
+              selected again.
             </p>
             <div className="form-actions">
               <button
@@ -487,7 +523,7 @@ export function PostForm({
                 className="btn secondary small"
                 type="button"
                 onClick={() => {
-                  sessionStorage.removeItem(storageKey);
+                  localStorage.removeItem(storageKey);
                   setStored(null);
                 }}
               >
@@ -498,7 +534,7 @@ export function PostForm({
         </div>
       ) : null}
       <div className="steps">
-        {['Details', flyer ? 'Artwork & contact' : 'Photos & contact', 'Review & submit'].map(
+        {['Details', flyer ? 'Artwork & contact' : 'Photos & contact', 'Review & publish'].map(
           (label, i) => (
             <div
               className={`step ${step === i + 1 ? 'current' : ''} ${step > i + 1 ? 'complete' : ''}`}
@@ -511,6 +547,15 @@ export function PostForm({
           ),
         )}
       </div>
+      {previewOpen ? (
+        <Dialog
+          title="Live preview"
+          className="mobile-advert-preview"
+          onClose={() => setPreviewOpen(false)}
+        >
+          {preview}
+        </Dialog>
+      ) : null}
       <div className="post-columns">
         <section className="panel form-panel" ref={stepPanel}>
           {error ? <ErrorMessage message={error} /> : null}
@@ -525,7 +570,7 @@ export function PostForm({
           ) : null}
           {step === 1 ? (
             <form onSubmit={advance}>
-              <h2>Tell us about your advert</h2>
+              <h2>Advert details</h2>
               <p>Clear details help the right person find it.</p>
               <label className="form-group">
                 <span className="form-label">What are you posting?</span>
@@ -642,7 +687,7 @@ export function PostForm({
               ) : (
                 <div className="flyer-fields">
                   <p className="inline-notice">
-                    This advert appears in Campus 360 after approval. No product price is required.
+                    This advert appears in Campus 360 when published. No product price is required.
                   </p>
                   {form.kind === 'event' ? (
                     <label className="form-group">
@@ -800,25 +845,28 @@ export function PostForm({
                   placeholder="024 123 4567"
                 />
               </label>
-              <fieldset className="social-fields">
-                <legend>
+              <details className="optional-socials">
+                <summary>
                   Social profiles <span className="meta">(optional)</span>
-                </legend>
-                <p className="meta">Add the profiles you want buyers to see on this advert.</p>
-                {socialPlatforms.map((platform) => (
-                  <label className="form-group" key={platform}>
-                    <span className="form-label">{socialLabels[platform]} profile URL</span>
-                    <input
-                      className="field-input"
-                      type="url"
-                      maxLength={300}
-                      placeholder={socialExamples[platform]}
-                      value={form.socials[platform] ?? ''}
-                      onChange={(e) => updateSocial(platform, e.target.value)}
-                    />
-                  </label>
-                ))}
-              </fieldset>
+                </summary>
+                <fieldset className="social-fields">
+                  <legend className="sr-only">Social profiles</legend>
+                  <p className="meta">Add the profiles you want buyers to see on this advert.</p>
+                  {socialPlatforms.map((platform) => (
+                    <label className="form-group" key={platform}>
+                      <span className="form-label">{socialLabels[platform]} profile URL</span>
+                      <input
+                        className="field-input"
+                        type="url"
+                        maxLength={300}
+                        placeholder={socialExamples[platform]}
+                        value={form.socials[platform] ?? ''}
+                        onChange={(e) => updateSocial(platform, e.target.value)}
+                      />
+                    </label>
+                  ))}
+                </fieldset>
+              </details>
               <label className="check" style={{ marginTop: 24, alignItems: 'flex-start' }}>
                 <input
                   type="checkbox"
@@ -841,55 +889,20 @@ export function PostForm({
             </form>
           ) : (
             <>
-              <h2>Looking good?</h2>
-              <p>Check your advert before sending it for review.</p>
-              <div className="review-preview">
-                <div className="review-preview-photo">
-                  <MediaImage id={form.mediaIds[0]} alt={form.title} />
-                </div>
-                <h3>{form.title}</h3>
-                <p className="price">{priceText(content())}</p>
-                <p className="muted">{form.location}</p>
-                <p className="review-description">{form.description}</p>
-              </div>
-              {[
-                [
-                  'Category',
-                  flyer
-                    ? `Campus 360 · ${kindName(form.kind)}`
-                    : categories.find((c) => c.id === form.categoryId)?.name,
-                ],
-                ['Type', form.kind],
-                ['Photos', String(form.mediaIds.length)],
-                ...(flyer
-                  ? [
-                      ['Starts (Ghana time)', form.startsAt || 'Not applicable'],
-                      ['Ends / valid until (Ghana time)', form.endsAt || 'Normal advert expiry'],
-                      ['Offer', form.offer || 'Not applicable'],
-                      ['External link', form.externalUrl || 'None'],
-                    ]
-                  : []),
-                ['Advertiser', form.displayName || identity?.name || 'Selected identity'],
-                ['Phone', form.phone || 'Not published'],
-                ['WhatsApp', form.whatsapp || 'Not published'],
-                ...socialPlatforms
-                  .filter((platform) => form.socials[platform]?.trim())
-                  .map((platform) => [
-                    socialLabels[platform],
-                    `@${socialProfile(platform, form.socials[platform]!)?.username ?? ''}`,
-                  ]),
-              ].map(([k, v]) => (
-                <div className="summary-line" key={k}>
-                  <span>{k}</span>
-                  <strong>{v}</strong>
-                </div>
-              ))}
-              <div className="inline-notice">
-                <Icon name="clock" />
-                <div>
-                  <strong>Reviewed before it goes live</strong>Approved adverts run for{' '}
-                  {account.settings.duration_days} days. Edits keep the original expiry.
-                </div>
+              <h2>Review your advert</h2>
+              <p>
+                {requiresReview
+                  ? 'Check your advert before submitting for approval.'
+                  : 'Check the details below. Your advert will go live when you publish.'}
+              </p>
+              <div className="review-live-preview">{preview}</div>
+              <div className="review-edit-actions">
+                <button type="button" className="text-link" onClick={() => setStep(1)}>
+                  Edit details
+                </button>
+                <button type="button" className="text-link" onClick={() => setStep(2)}>
+                  Edit photos & contact
+                </button>
               </div>
               {savedMessage ? (
                 <p className="form-success" role="status">
@@ -905,7 +918,7 @@ export function PostForm({
                   disabled={busy || uploading}
                   onClick={() => void save(true)}
                 >
-                  {busy ? 'Saving…' : 'Submit for approval'}
+                  {busy ? 'Saving…' : requiresReview ? 'Submit for approval' : 'Publish advert'}
                 </button>
               </div>
               <button
@@ -918,44 +931,13 @@ export function PostForm({
             </>
           )}
         </section>
-        <aside className="posting-guide">
-          <h3>A good advert goes further.</h3>
-          <p>Use a clear title, honest description and bright photos of your actual item.</p>
-          <p>
-            Keep contact details in the contact fields. Never include sensitive personal
-            information.
-          </p>
-          <div className="allowance">
-            <p className="eyebrow">POSTING ALLOWANCE</p>
-            {account.role === 'admin' ? (
-              <p>
-                Administrator posting: no daily or active-advert limit, including assisted adverts.
-                Content review and photo checks still apply.
-              </p>
-            ) : (
-              <>
-                <p>
-                  <strong>
-                    {account.activeCount} of {account.settings.max_active}
-                  </strong>
-                  <small>active slots reserved</small>
-                </p>
-                <div className="progress">
-                  <span
-                    style={{
-                      width: `${Math.min(100, (account.activeCount / account.settings.max_active) * 100)}%`,
-                    }}
-                  />
-                </div>
-                <p>
-                  {Math.max(0, account.settings.daily_limit - account.dailyUsed)} new submissions
-                  left today.
-                  <br />
-                  Edits and corrections do not use another daily slot.
-                </p>
-              </>
-            )}
+        <aside className="posting-guide live-preview-panel">
+          <div className="live-preview-heading">
+            <Icon name="eye" />
+            <h2>Live preview</h2>
+            <span>Updates as you type</span>
           </div>
+          {preview}
         </aside>
       </div>
     </div>

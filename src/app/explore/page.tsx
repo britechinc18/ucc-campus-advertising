@@ -127,7 +127,7 @@ export default async function Explore({
           ) : (
             <EmptyState
               title="No matches just yet."
-              message="Try a different search or clear a filter. New adverts appear after approval."
+              message="Try a different search or clear a filter. New adverts appear when sellers publish them."
             />
           )}
         </section>

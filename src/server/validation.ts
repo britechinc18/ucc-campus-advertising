@@ -192,7 +192,8 @@ export const settingsSchema = z
     durationDays: z.number().int().min(1).max(365),
     maxImages: z.number().int().min(1).max(5),
     maxImageBytes: z.number().int().min(1).max(5242880),
-    autoPublish: z.literal(false),
+    autoPublish: z.boolean(),
+    postingLimitsEnabled: z.boolean().default(true),
   })
   .strict();
 export function fingerprint(v: Content) {

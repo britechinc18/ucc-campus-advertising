@@ -7,10 +7,12 @@ export function BusinessLifecycle({
   name,
   deactivated,
   reactivationPending,
+  requiresReview = true,
 }: {
   name: string;
   deactivated: boolean;
   reactivationPending: boolean;
+  requiresReview?: boolean;
 }) {
   const [action, setAction] = useState<'deactivate' | 'reactivate' | 'close' | null>(null),
     [busy, setBusy] = useState(false),
@@ -28,7 +30,11 @@ export function BusinessLifecycle({
             setAction(deactivated ? 'reactivate' : 'deactivate');
           }}
         >
-          {deactivated ? 'Request reactivation' : 'Deactivate business'}
+          {deactivated
+            ? requiresReview
+              ? 'Request reactivation'
+              : 'Reactivate business'
+            : 'Deactivate business'}
         </button>
         <button
           className="btn quiet"
@@ -47,7 +53,9 @@ export function BusinessLifecycle({
               ? 'Close this business'
               : action === 'deactivate'
                 ? 'Deactivate business'
-                : 'Request reactivation'
+                : requiresReview
+                  ? 'Request reactivation'
+                  : 'Reactivate business'
           }
           onClose={() => !busy && setAction(null)}
         >
@@ -81,7 +89,9 @@ export function BusinessLifecycle({
                 ? 'Closing withdraws active adverts and cancels unfinished submissions. Your personal profile and account remain. Historic records and the old URL are retained; you may create one replacement business.'
                 : action === 'deactivate'
                   ? 'Hide your storefront and associated adverts. Expiry dates and shared posting usage do not reset.'
-                  : 'An administrator will review reactivation. Only approved, unexpired content can return; privacy-held adverts need their own review.'}
+                  : requiresReview
+                    ? 'An administrator will review reactivation. Only approved, unexpired content can return; privacy-held adverts need their own review.'
+                    : 'Your business and its unexpired adverts will become available again.'}
             </p>
             {action === 'close' ? (
               <label className="form-group">

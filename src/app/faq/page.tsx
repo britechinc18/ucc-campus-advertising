@@ -11,7 +11,7 @@ const questions = [
   ],
   [
     'How do I post an advert?',
-    'Choose Post an advert, sign in and complete your advertiser details. Add an accurate description, your own photographs and contact details you consent to publish. Adverts are reviewed before publication.',
+    'Choose Post an advert, sign in and complete your advertiser details. Add an accurate description, your own photographs and contact details you consent to publish. Review your advert, then publish it from the final step.',
   ],
   [
     'What does “under GH₵100” mean?',

@@ -21,7 +21,7 @@ export default function Help() {
         <p>
           Describe the item or service honestly, use your own photographs and obtain permission for
           any contact details you publish. Do not advertise illegal, unsafe, stolen or prohibited
-          goods. All adverts are reviewed before publication.
+          goods. Adverts must follow the platform rules and may be moderated after publication.
         </p>
         <h2 id="report">Contact & reports</h2>
         <p>

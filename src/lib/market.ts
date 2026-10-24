@@ -97,6 +97,8 @@ export interface Account {
   role: string;
   profile: { id: string; name: string; kind: string; suspended: boolean } | null;
   settings: {
+    auto_publish: boolean;
+    posting_limits_enabled: boolean;
     max_active: number;
     daily_limit: number;
     duration_days: number;

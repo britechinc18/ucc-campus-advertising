@@ -60,6 +60,7 @@ export async function ownedAdverts(
   if (identity) id.parse(identity);
   if (status)
     z.enum([
+      'closed',
       'published',
       'pending',
       'draft',
@@ -77,7 +78,7 @@ export async function ownedAdverts(
         : sql`p.user_id=${userId} ${identity ? sql`and p.id=${identity}` : sql``}`;
     const rows = await query(
       tx,
-      sql`select a.*,p.closed_at is not null as profile_closed,p.deactivated_at is not null as profile_deactivated,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc,r.id desc) from advert_revisions r where r.advert_id=a.id),'[]'::jsonb) as revisions from adverts a join advertisers p on p.id=a.advertiser_id where ${ownership} ${status === 'pending' ? sql`and exists(select 1 from advert_revisions pr where pr.advert_id=a.id and pr.status='pending')` : status ? sql`and (case when a.state='published' and a.expires_at<=now() then 'expired' else a.state end)=${status}` : sql``} ${advertId ? sql`and a.id=${advertId}` : sql``} order by a.created_at desc,a.id desc limit 21 offset ${offset}`,
+      sql`select a.*,p.closed_at is not null as profile_closed,p.deactivated_at is not null as profile_deactivated,coalesce((select b.approved->>'name' from business_profiles b where b.advertiser_id=p.id and b.approved is not null and b.state<>'suspended'),p.name) as advertiser_name,coalesce((select jsonb_agg(to_jsonb(r) order by r.created_at desc,r.id desc) from advert_revisions r where r.advert_id=a.id),'[]'::jsonb) as revisions from adverts a join advertisers p on p.id=a.advertiser_id where ${ownership} ${status === 'closed' ? sql`and (a.state in ('fulfilled','withdrawn','expired','suspended','rejected') or (a.state='published' and a.expires_at<=now()))` : status === 'pending' ? sql`and exists(select 1 from advert_revisions pr where pr.advert_id=a.id and pr.status='pending')` : status ? sql`and (case when a.state='published' and a.expires_at<=now() then 'expired' else a.state end)=${status}` : sql``} ${advertId ? sql`and a.id=${advertId}` : sql``} order by a.created_at desc,a.id desc limit 21 offset ${offset}`,
     );
     if (advertId)
       return one(

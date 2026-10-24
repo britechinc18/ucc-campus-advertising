@@ -91,6 +91,7 @@ test('advertiser submits, admin approves, public search finds it, advertiser mar
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
   await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
   await page.getByLabel('WhatsApp number', { exact: true }).fill('0241234567');
+  await page.locator('.optional-socials summary').click();
   await page
     .getByLabel('TikTok profile URL', { exact: true })
     .fill('https://www.tiktok.com/@campus_seller');
@@ -145,6 +146,7 @@ test('advertiser submits, admin approves, public search finds it, advertiser mar
     .filter({ hasText: 'Browser review tutoring appointment' })
     .getByRole('link', { name: 'Manage' })
     .click();
+  await expect(page).toHaveURL(/\/my-adverts\/[0-9a-f-]+$/);
   await page.getByRole('button', { name: 'Mark as completed' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Mark as completed' })).toHaveCount(0);
@@ -467,7 +469,7 @@ test('existing seller gets flat navigation and can draft every supported advert 
   await page.goto('/');
   await expect(page.locator('.seller-nav')).toContainText('My Ads');
   await page.goto('/post');
-  await expect(page.getByLabel('Public identity')).toHaveCount(0);
+  await expect(page.getByRole('group', { name: 'Public identity' })).toHaveCount(0);
   await expect(page.locator('.buyer-nav')).toHaveCount(0);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(
@@ -475,10 +477,8 @@ test('existing seller gets flat navigation and can draft every supported advert 
   ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/my-adverts');
-  await expect(
-    page.getByRole('region', { name: 'Create an advert' }).getByRole('link'),
-  ).toHaveCount(7);
-  await page.getByRole('link', { name: 'Share an event' }).click();
+  await page.locator('#main').getByRole('link', { name: 'Post an advert', exact: true }).click();
+  await page.getByLabel('What are you posting?').selectOption('event');
   await expect(page.getByLabel('What are you posting?')).toHaveValue('event');
   await expect(page.getByLabel('Event start (Ghana time)')).toBeVisible();
   await page.goto('/post?kind=invalid');
@@ -711,7 +711,7 @@ test('seller switches buyer and seller views without signing out or losing listi
     .click();
   await expect(page).toHaveURL(/my-adverts/);
   await expect(page.locator('.seller-nav')).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'My adverts', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'My Ads', exact: true })).toBeVisible();
 });
 
 test('admin selects an assisted advertiser by name and sees real protected system checks', async ({
@@ -727,7 +727,7 @@ test('admin selects an assisted advertiser by name and sees real protected syste
   await page.getByRole('button', { name: 'Continue to advert', exact: true }).click();
   await expect(page).toHaveURL(/post\?advertiserId=/);
   await expect(page.locator('.inline-notice')).toContainText('Browser Test Student');
-  await expect(page.locator('.allowance')).toContainText('no daily or active-advert limit');
+  await expect(page.locator('.live-preview-panel')).toHaveCount(1);
   await page.goto('/admin/post');
   await page.getByLabel('Public advertiser name').fill('Assisted Campus Designer');
   await page.getByRole('checkbox').check();
@@ -1069,7 +1069,7 @@ test('homepage collections, budget deals and footer links remain usable', async 
   await expect(page.locator('.market-promise')).toHaveCount(0);
   await expect(page.locator('.home-campus .flyer-copy')).toHaveCount(0);
   const footer = page.getByRole('contentinfo');
-  await expect(footer).toContainText('Reviewed before publishing.');
+  await expect(footer).toContainText('Buy and sell on campus.');
   await footer.getByRole('link', { name: 'FAQ', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Frequently asked questions');
   await page.getByText('What does “under GH₵100” mean?', { exact: true }).click();
@@ -1108,14 +1108,12 @@ test('one owner can add a business, select posting identity and filter My Ads', 
   await field(page, /^(Add|Edit) WhatsApp$/, '0543982307');
   await page.goto('/post?kind=service');
   await expect(page.getByRole('heading', { name: 'Who are you posting as?' })).toHaveCount(0);
-  await expect(page.getByLabel('Public identity')).toHaveValue(
-    (await page
-      .getByLabel('Public identity')
-      .locator('option', { hasText: 'Business — Campus Wardrobe' })
-      .getAttribute('value')) ?? '',
-  );
+  const businessToggle = page
+    .getByRole('group', { name: 'Public identity' })
+    .getByRole('button', { name: 'Business', exact: true });
+  await expect(businessToggle).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Post an advert');
-  const selected = await page.getByLabel('Public identity').inputValue();
+  const selected = await businessToggle.getAttribute('data-identity');
   const context = await (await page.request.get('/api/v1/me/context')).json();
   expect(context.profiles).toHaveLength(2);
   const content = {
