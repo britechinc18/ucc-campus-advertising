@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext } from '@playwright/test';
+import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
 const fixture = JSON.parse(readFileSync('/tmp/ucc-browser-fixtures.json', 'utf8')) as Record<
@@ -17,6 +17,26 @@ async function session(context: BrowserContext, role: string) {
     },
   ]);
 }
+async function field(page: Page, action: RegExp | string, value: string) {
+  await page.getByRole('button', { name: action, exact: typeof action === 'string' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('textbox')).toHaveCount(1);
+  await dialog.getByRole('textbox').fill(value);
+  const consent = dialog.getByRole('checkbox');
+  if (await consent.count()) await consent.check();
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+}
+async function introduction(page: Page, value: string) {
+  await page.getByRole('button', { name: /^(Add|Edit) introduction/ }).click();
+  await page.locator('.profile-inline-editor textarea').fill(value);
+  await page
+    .locator('.profile-inline-editor')
+    .getByRole('button', { name: 'Save', exact: true })
+    .click();
+  await expect(page.locator('.profile-inline-editor')).toHaveCount(0);
+}
+
 test('seller manages separate profiles and posting autofill preserves explicit overrides', async ({
   page,
   browser,
@@ -25,15 +45,11 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   await page.goto('/my-profile');
   await expect(page.getByRole('navigation', { name: 'Profile identity' })).toHaveCount(0);
   await expect(page.getByText('Business seller', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Edit profile' }).click();
+  await field(page, 'Edit name', 'Profile Test Seller');
+  await field(page, /^(Add|Edit) Location$/, 'UCC North campus');
+  await field(page, /^(Add|Edit) WhatsApp$/, '0543982307');
+  await field(page, /^(Add|Edit) Phone number$/, '0241234567');
   await expect(page.getByRole('button', { name: 'Save private draft' })).toHaveCount(0);
-  await page.getByLabel('Display name', { exact: true }).fill('Profile Test Seller');
-  await page.getByLabel('Default location', { exact: true }).fill('UCC North campus');
-  await page.getByLabel('WhatsApp number', { exact: true }).fill('0543982307');
-  await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
-  await page.getByLabel('I consent to publish the visible').check();
-  await page.getByRole('button', { name: 'Save changes' }).click();
-  await expect(page.getByRole('status')).toContainText('Profile saved');
   const admin = await browser.newContext();
   await session(admin, 'admin');
   const review = await admin.newPage();
@@ -42,16 +58,11 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Activate seller tools' }).click();
   await expect(page).toHaveURL(/my-business/);
-  await page.getByLabel('Business URL').fill('profile-test-business');
-  await page
-    .getByLabel('About your business', { exact: true })
-    .fill('Student-run services and supplies at UCC campus.');
-  await page.getByLabel('Campus location', { exact: true }).fill('UCC Business Centre');
-  await page.getByLabel('Business WhatsApp', { exact: true }).fill('0201234567');
-  await page.getByLabel('Business phone', { exact: true }).fill('0201234567');
-  await page.getByLabel('I consent to publish the visible').check();
-  await page.getByRole('button', { name: 'Save changes' }).click();
-  await expect(page.getByRole('status')).toContainText('Profile saved');
+  await field(page, 'Edit Business URL', 'profile-test-business');
+  await introduction(page, 'Student-run services and supplies at UCC campus.');
+  await field(page, /^(Add|Edit) Location$/, 'UCC Business Centre');
+  await field(page, /^(Add|Edit) WhatsApp$/, '0201234567');
+  await field(page, /^(Add|Edit) Phone number$/, '0201234567');
   await page.goto('/my-profile');
   await expect(page.locator('.profile-identity-card h2')).toHaveText('Profile Test Seller');
   await page
@@ -59,9 +70,7 @@ test('seller manages separate profiles and posting autofill preserves explicit o
     .getByRole('link', { name: 'Business', exact: true })
     .click();
   await expect(page.locator('.profile-identity-card h2')).toHaveText('Profile Test Business');
-  await page.getByRole('button', { name: 'Edit profile', exact: true }).click();
-  await page.getByLabel('Facebook profile URL').fill('https://www.facebook.com/campusbusiness');
-  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await field(page, /^(Add|Edit) Facebook$/, '@campusbusiness');
   await expect(page.getByRole('link', { name: '@campusbusiness' })).toBeVisible();
   await page
     .getByRole('navigation', { name: 'Profile identity' })
@@ -303,4 +312,61 @@ test('admin handover explicitly confirms replacement of an unused automatic pers
   const context = await (await page.request.get('/api/v1/me/context')).json();
   expect(context.profiles).toHaveLength(1);
   expect(context.profiles[0].id).toBe(identity);
+});
+
+test('focused editors guide input, cancel cleanly and keep visibility beside each optional item', async ({
+  page,
+}, testInfo) => {
+  await session(page.context(), 'profilesOwner');
+  await page.goto('/my-profile');
+  await expect(page.getByRole('heading', { name: 'Public visibility', exact: true })).toHaveCount(
+    0,
+  );
+  await page.getByRole('button', { name: /^(Add|Edit) WhatsApp$/ }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('textbox')).toHaveCount(1);
+  await expect(dialog.getByText(/country code/)).toBeVisible();
+  await dialog.getByRole('textbox').fill('invalid');
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog.getByRole('alert')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+  await field(page, /^(Add|Edit) WhatsApp$/, '0241234567');
+  await page.reload();
+  await expect(page.locator('.profile-detail-row').filter({ hasText: 'WhatsApp' })).toContainText(
+    '+233241234567',
+  );
+  await page.getByRole('button', { name: /^(Add|Edit) Snapchat$/ }).click();
+  await expect(dialog.getByRole('textbox')).toHaveCount(1);
+  await expect(dialog.getByText(/snapchat.com\/add\/username/)).toBeVisible();
+  await dialog.getByRole('textbox').fill('@campus_snap');
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByRole('link', { name: '@campus_snap' })).toHaveAttribute(
+    'href',
+    'https://www.snapchat.com/add/campus_snap',
+  );
+  const visible = page.getByRole('switch', { name: 'Show Snapchat', exact: true });
+  await visible.click();
+  await expect(visible).toHaveAttribute('aria-checked', 'false');
+  await page.reload();
+  await expect(visible).toHaveAttribute('aria-checked', 'false');
+  await page.getByRole('button', { name: 'Change profile photo' }).click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel('Choose profile image')).toHaveAttribute(
+    'accept',
+    'image/jpeg,image/png,image/webp',
+  );
+  await expect(dialog.getByText('Cover photo first.', { exact: false })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  for (const width of [390, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.getByRole('button', { name: /^(Add|Edit) Phone number$/ }).click();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('textbox')).toBeFocused();
+    await page.screenshot({
+      animations: 'disabled',
+      path: testInfo.outputPath(`focused-phone-${width}.png`),
+    });
+    await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+  }
 });

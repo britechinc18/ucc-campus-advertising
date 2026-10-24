@@ -53,22 +53,25 @@ export function Dialog({
   title,
   children,
   onClose,
+  initialFocus,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
+  initialFocus?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
     const d = ref.current;
     d?.showModal();
+    if (initialFocus) d?.querySelector<HTMLElement>(initialFocus)?.focus();
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     return () => {
       d?.close();
       document.body.style.overflow = previous;
     };
-  }, []);
+  }, [initialFocus]);
   return (
     <dialog
       ref={ref}
