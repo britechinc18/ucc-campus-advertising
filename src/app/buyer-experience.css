@@ -2749,3 +2749,8 @@
     height: 21px;
   }
 }
+.owner-status-tabs a[aria-current='page'] {
+  color: var(--brand);
+  border-bottom: 2px solid var(--brand);
+  font-weight: 600;
+}

@@ -1069,7 +1069,7 @@ test('homepage collections, budget deals and footer links remain usable', async 
   await expect(page.locator('.market-promise')).toHaveCount(0);
   await expect(page.locator('.home-campus .flyer-copy')).toHaveCount(0);
   const footer = page.getByRole('contentinfo');
-  await expect(footer).toContainText('Reviewed before publishing.');
+  await expect(footer).toContainText('Buy and sell on campus.');
   await footer.getByRole('link', { name: 'FAQ', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Frequently asked questions');
   await page.getByText('What does “under GH₵100” mean?', { exact: true }).click();
