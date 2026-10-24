@@ -2180,17 +2180,21 @@
   }
 }
 
-/* Keep the notch close to the heading while extending the image's left edge. */
+/* Balance the image notch around the heading and keep the shop mark unframed. */
 .seller-promo-visual {
   height: 240px;
   flex-basis: 240px;
 }
 .seller-signin-intro .seller-signin-copy {
-  margin-top: -61px;
+  margin-top: -68px;
 }
 .seller-promo-shop {
-  background: #d2ead4;
-  border-color: #b6d7bd;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   color: #205a40;
 }
 .seller-promo-shop .seller-shop-mark {
@@ -2203,6 +2207,6 @@
     flex-basis: 210px;
   }
   .seller-signin-intro .seller-signin-copy {
-    margin-top: -55px;
+    margin-top: -61px;
   }
 }
