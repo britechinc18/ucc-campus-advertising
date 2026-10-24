@@ -1,6 +1,6 @@
 'use client';
 import type { ProfileDefaults } from '@/lib/seller-profile';
-import { socialPlatforms } from '@/lib/socials';
+import { profileSocialPlatforms as socialPlatforms, socialLabels } from '@/lib/socials';
 export function readProfileContacts(f: FormData) {
   const socials = Object.fromEntries(
     socialPlatforms.map((p) => [p, String(f.get(`social.${p}`) ?? '').trim()]).filter(([, v]) => v),
@@ -59,9 +59,7 @@ export function ProfileContacts({
         <legend>Social profiles (optional)</legend>
         {socialPlatforms.map((p) => (
           <label className="form-group" key={p}>
-            <span className="form-label">
-              {p === 'x' ? 'X' : p[0].toUpperCase() + p.slice(1)} profile URL
-            </span>
+            <span className="form-label">{socialLabels[p]} profile URL</span>
             <input
               className="field-input"
               type="url"
@@ -85,7 +83,10 @@ export function ProfileContacts({
               name={`visible.${p}`}
               defaultChecked={data.visibility?.[p] !== false}
             />
-            <span>Show {p === 'photo' ? 'profile photo / logo' : p === 'x' ? 'X' : p}</span>
+            <span>
+              Show{' '}
+              {p === 'photo' ? (business ? 'business logo' : 'profile photo') : socialLabels[p]}
+            </span>
           </label>
         ))}
       </fieldset>

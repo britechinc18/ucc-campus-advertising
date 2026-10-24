@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { ProfileOverview } from './profile-overview';
 import { ProfileContacts, readProfileContacts } from './profile-contacts';
 import { BusinessLifecycle } from './business-lifecycle';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import type { Account, BusinessProfile } from '@/lib/market';
@@ -39,6 +39,13 @@ export function BusinessForm({
   const [saved, setSaved] = useState(false);
   const router = useRouter();
   const [editing, setEditing] = useState(!business);
+  const editorRef = useRef<HTMLFormElement>(null);
+  const focusField = useRef('name');
+  useEffect(() => {
+    if (!editing) return;
+    const control = editorRef.current?.elements.namedItem(focusField.current);
+    if (control instanceof HTMLElement) control.focus();
+  }, [editing]);
   if (!editing)
     return (
       <div className="managed-profile">
@@ -52,7 +59,8 @@ export function BusinessForm({
           data={{ ...data, name: data?.name ?? account.profile?.name }}
           image={data?.logoMediaId}
           href={`/businesses/${business?.slug}`}
-          onEdit={() => {
+          onEdit={(field) => {
+            focusField.current = field ?? 'name';
             setLogo(data?.logoMediaId ? [data.logoMediaId] : []);
             setSaved(false);
             setError('');
@@ -80,6 +88,7 @@ export function BusinessForm({
         </div>
       </div>
       <form
+        ref={editorRef}
         className="panel form-panel"
         onSubmit={async (e) => {
           e.preventDefault();
@@ -119,79 +128,85 @@ export function BusinessForm({
           }
         }}
       >
-        <label className="form-group">
-          <span className="form-label">Business name</span>
-          <input
-            className="field-input"
-            name="name"
-            required
-            minLength={2}
-            maxLength={100}
-            defaultValue={data?.name ?? account.profile?.name ?? ''}
-          />
-        </label>
-        <label className="form-group">
-          <span className="form-label">Business URL</span>
-          <input
-            className="field-input"
-            name="slug"
-            required
-            minLength={3}
-            maxLength={60}
-            pattern="[a-z0-9-]{3,60}"
-            defaultValue={business?.slug ?? ''}
-            readOnly={!!business}
-          />
-          <span className="helper">
-            Lowercase letters, numbers and hyphens. The URL cannot be changed after creation.
-          </span>
-        </label>
-        <label className="form-group">
-          <span className="form-label">About your business</span>
-          <textarea
-            className="field-input"
-            name="description"
-            required
-            minLength={20}
-            maxLength={2000}
-            defaultValue={data?.description ?? ''}
-          />
-        </label>
-        <label className="form-group">
-          <span className="form-label">Campus location</span>
-          <input
-            className="field-input"
-            name="location"
-            required
-            minLength={2}
-            maxLength={120}
-            defaultValue={data?.location ?? ''}
-          />
-        </label>
-        <div className="form-group">
-          <span className="form-label">Logo (optional)</span>
-          <Uploads
-            advertiserId={advertiserId ?? account.profiles?.find((p) => p.kind === 'business')?.id}
-            ids={logo}
-            onChange={setLogo}
-            max={1}
-            maxBytes={account.settings.max_image_bytes}
-            onBusy={setUploading}
-          />
-          <p className="helper">Your business initials appear when no logo is supplied.</p>
+        <div className="profile-editor-identity">
+          <label className="form-group">
+            <span className="form-label">Business name</span>
+            <input
+              className="field-input"
+              name="name"
+              required
+              minLength={2}
+              maxLength={100}
+              defaultValue={data?.name ?? account.profile?.name ?? ''}
+            />
+          </label>
+          <label className="form-group">
+            <span className="form-label">Business URL</span>
+            <input
+              className="field-input"
+              name="slug"
+              required
+              minLength={3}
+              maxLength={60}
+              pattern="[a-z0-9-]{3,60}"
+              defaultValue={business?.slug ?? ''}
+              readOnly={!!business}
+            />
+            <span className="helper">
+              Lowercase letters, numbers and hyphens. The URL cannot be changed after creation.
+            </span>
+          </label>
+          <label className="form-group">
+            <span className="form-label">About your business</span>
+            <textarea
+              className="field-input"
+              name="description"
+              required
+              minLength={20}
+              maxLength={2000}
+              defaultValue={data?.description ?? ''}
+            />
+          </label>
+          <label className="form-group">
+            <span className="form-label">Campus location</span>
+            <input
+              className="field-input"
+              name="location"
+              required
+              minLength={2}
+              maxLength={120}
+              defaultValue={data?.location ?? ''}
+            />
+          </label>
+          <div className="form-group">
+            <span className="form-label">Logo (optional)</span>
+            <Uploads
+              advertiserId={
+                advertiserId ?? account.profiles?.find((p) => p.kind === 'business')?.id
+              }
+              ids={logo}
+              onChange={setLogo}
+              max={1}
+              maxBytes={account.settings.max_image_bytes}
+              onBusy={setUploading}
+            />
+            <p className="helper">Your business initials appear when no logo is supplied.</p>
+          </div>
+          <label className="form-group">
+            <span className="form-label">Business category</span>
+            <select className="field-input" name="categoryId" defaultValue={data?.categoryId ?? ''}>
+              <option value="">Choose a category (optional)</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
-        <label className="form-group">
-          <span className="form-label">Business category</span>
-          <select className="field-input" name="categoryId" defaultValue={data?.categoryId ?? ''}>
-            <option value="">Choose a category (optional)</option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <ProfileContacts data={data ?? {}} business />
+        <div className="profile-editor-contacts">
+          <ProfileContacts data={data ?? {}} business />
+        </div>
         {error ? <ErrorMessage message={error} /> : null}
         {saved ? (
           <p className="form-success" role="status">

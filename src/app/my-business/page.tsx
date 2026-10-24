@@ -1,3 +1,4 @@
+import { ProfileWorkspace } from '@/components/profile-workspace';
 import { query } from '@/server/store';
 import { db } from '@/server/db';
 import { sql } from 'drizzle-orm';
@@ -13,6 +14,7 @@ export default async function MyBusiness() {
   const profile = context.profiles.find((p) => p.kind === 'business');
   if (!profile) redirect('/onboarding?kind=business&next=/my-business');
   const business = await ownBusiness(u.id);
+  if (business) return <ProfileWorkspace business />;
   const categories = await query<{ id: string; name: string }>(
     db(),
     sql`select id,name from categories where active order by name`,

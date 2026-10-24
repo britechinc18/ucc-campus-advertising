@@ -22,9 +22,11 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   browser,
 }) => {
   await session(page.context(), 'profilesOwner');
-  await page.goto('/my-medstash');
-  await page.getByRole('link', { name: /Manage Personal Profile/ }).click();
+  await page.goto('/my-profile');
+  await expect(page.getByRole('navigation', { name: 'Profile identity' })).toHaveCount(0);
+  await expect(page.getByText('Business seller', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Edit profile' }).click();
+  await expect(page.getByRole('button', { name: 'Save private draft' })).toHaveCount(0);
   await page.getByLabel('Display name', { exact: true }).fill('Profile Test Seller');
   await page.getByLabel('Default location', { exact: true }).fill('UCC North campus');
   await page.getByLabel('WhatsApp number', { exact: true }).fill('0543982307');
@@ -35,8 +37,7 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   const admin = await browser.newContext();
   await session(admin, 'admin');
   const review = await admin.newPage();
-  await page.goto('/my-medstash');
-  await page.getByRole('link', { name: /Create Business Profile/ }).click();
+  await page.goto('/my-business');
   await page.getByLabel('Advertiser name').fill('Profile Test Business');
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Activate seller tools' }).click();
@@ -51,6 +52,23 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   await page.getByLabel('I consent to publish the visible').check();
   await page.getByRole('button', { name: 'Save changes' }).click();
   await expect(page.getByRole('status')).toContainText('Profile saved');
+  await page.goto('/my-profile');
+  await expect(page.locator('.profile-identity-card h2')).toHaveText('Profile Test Seller');
+  await page
+    .getByRole('navigation', { name: 'Profile identity' })
+    .getByRole('link', { name: 'Business', exact: true })
+    .click();
+  await expect(page.locator('.profile-identity-card h2')).toHaveText('Profile Test Business');
+  await page.getByRole('button', { name: 'Edit profile', exact: true }).click();
+  await page.getByLabel('Facebook profile URL').fill('https://www.facebook.com/campusbusiness');
+  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await expect(page.getByRole('link', { name: '@campusbusiness' })).toBeVisible();
+  await page
+    .getByRole('navigation', { name: 'Profile identity' })
+    .getByRole('link', { name: 'Personal', exact: true })
+    .click();
+  await expect(page.locator('.profile-identity-card h2')).toHaveText('Profile Test Seller');
+  await expect(page.getByRole('link', { name: '@campusbusiness' })).toHaveCount(0);
   const personal = await page.request.get('/api/v1/me/personal');
   const identity = await personal.json();
   await page.goto(`/post?advertiserId=${identity.id}`);
@@ -149,7 +167,7 @@ test('profile management pages remain accessible at mobile and desktop widths in
   for (const theme of ['light', 'dark']) {
     await page.emulateMedia({ colorScheme: theme as 'light' | 'dark' });
     await page.addInitScript((value) => localStorage.setItem('ucc-theme', value), theme);
-    for (const route of ['/my-medstash', '/my-personal-profile']) {
+    for (const route of ['/my-profile', '/my-personal-profile']) {
       for (const width of [320, 390, 768, 1440]) {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(route);
@@ -157,7 +175,7 @@ test('profile management pages remain accessible at mobile and desktop widths in
           await expect(page.locator('.profile-overview')).toBeVisible();
         else
           await expect(
-            page.getByRole('heading', { name: 'My MedStash', exact: true }),
+            page.getByRole('heading', { name: 'My Profile', exact: true }),
           ).toBeVisible();
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
           true,
@@ -242,9 +260,9 @@ test('business lifecycle confirms deactivation, reviewed reopening and closure w
     .fill('Lifecycle Test Business');
   await page.getByRole('dialog').getByRole('checkbox').check();
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
-  await expect(page).toHaveURL(/my-medstash/);
-  await expect(page.getByRole('link', { name: /Manage Personal Profile/ })).toBeVisible();
-  await expect(page.getByRole('link', { name: /Create Business Profile/ })).toBeVisible();
+  await expect(page).toHaveURL(/my-profile/);
+  await expect(page.locator('.profile-identity-card')).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Profile identity' })).toHaveCount(0);
   const context = await (await page.request.get('/api/v1/me/context')).json();
   expect(context.profiles).toHaveLength(1);
   expect(context.profiles[0].kind).toBe('student');

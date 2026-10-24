@@ -18,6 +18,7 @@ export const privacyFields = [
   'instagram',
   'x',
   'photo',
+  'facebook',
 ] as const;
 export type ProfileVisibility = Partial<Record<(typeof privacyFields)[number], boolean>>;
 export interface ProfileDefaults {

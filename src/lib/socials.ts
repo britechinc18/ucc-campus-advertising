@@ -1,17 +1,20 @@
 export const socialPlatforms = ['tiktok', 'snapchat', 'instagram', 'x'] as const;
-export type SocialPlatform = (typeof socialPlatforms)[number];
+export const profileSocialPlatforms = ['instagram', 'tiktok', 'facebook', 'snapchat', 'x'] as const;
+export type SocialPlatform = (typeof profileSocialPlatforms)[number];
 export type SocialLinks = Partial<Record<SocialPlatform, string>>;
 export const socialLabels: Record<SocialPlatform, string> = {
   tiktok: 'TikTok',
   snapchat: 'Snapchat',
   instagram: 'Instagram',
   x: 'X',
+  facebook: 'Facebook',
 };
 export const socialExamples: Record<SocialPlatform, string> = {
   tiktok: 'https://www.tiktok.com/@username',
   snapchat: 'https://www.snapchat.com/add/username',
   instagram: 'https://www.instagram.com/username',
   x: 'https://x.com/username',
+  facebook: 'https://www.facebook.com/username',
 };
 /** Only public profile URLs on the named platform; never arbitrary external links. */
 export function socialProfile(platform: SocialPlatform, value: string) {
@@ -22,6 +25,11 @@ export function socialProfile(platform: SocialPlatform, value: string) {
     const hosts = platform === 'x' ? ['x.com', 'twitter.com'] : [`${platform}.com`];
     if (!hosts.includes(host)) return null;
     const path = url.pathname.replace(/\/$/, '');
+    if (platform === 'facebook' && path === '/profile.php') {
+      const profileId = url.searchParams.get('id') ?? '';
+      if (!/^[0-9]{5,20}$/.test(profileId)) return null;
+      return { username: profileId, url: `https://www.facebook.com/profile.php?id=${profileId}` };
+    }
     const prefix = platform === 'tiktok' ? '/@' : platform === 'snapchat' ? '/add/' : '/';
     if (!path.startsWith(prefix)) return null;
     const username = path.slice(prefix.length);

@@ -15,6 +15,7 @@ export const visibilitySchema = z
     instagram: z.boolean().optional(),
     x: z.boolean().optional(),
     photo: z.boolean().optional(),
+    facebook: z.boolean().optional(),
   })
   .strict();
 export const socialsSchema = z
@@ -23,6 +24,7 @@ export const socialsSchema = z
     snapchat: socialUrl('snapchat').optional(),
     instagram: socialUrl('instagram').optional(),
     x: socialUrl('x').optional(),
+    facebook: socialUrl('facebook').optional(),
   })
   .strict();
 export const defaultsSchema = z
