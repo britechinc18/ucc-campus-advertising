@@ -1,6 +1,7 @@
 'use client';
 import { useState, useRef } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 import { safeReturn, type SellerIdentity } from '@/lib/market';
@@ -49,7 +50,7 @@ export function Onboarding({
     }
   }
   return (
-    <div className="seller-setup-shell">
+    <div className={`seller-setup-shell setup-step-${step}`}>
       <SellerSetupProgress step={step} />
       <h1 ref={heading} tabIndex={-1}>
         {step === 2
@@ -76,17 +77,49 @@ export function Onboarding({
                 className={`setup-role-card ${selected === value ? 'is-selected' : ''}`}
                 onClick={() => setSelected(value)}
               >
-                <span className="setup-role-symbol" aria-hidden="true">
-                  <Icon name={value === 'student' ? 'book' : 'store'} />
+                <span className="setup-role-art">
+                  <Image
+                    src={`/editorial/onboarding-${value === 'student' ? 'student' : 'business'}.webp`}
+                    alt=""
+                    fill
+                    sizes="(max-width: 600px) 90vw, 440px"
+                    priority
+                  />
+                  <span className="setup-role-symbol">
+                    <Icon name={value === 'student' ? 'book' : 'store'} />
+                  </span>
+                  <span className="setup-role-selected" aria-hidden="true">
+                    <Icon name="check" />
+                  </span>
                 </span>
-                <strong>{value === 'student' ? 'Personal' : 'I’m a business owner'}</strong>
-                <span>
-                  {value === 'student'
-                    ? 'Sell your own items and connect with people on campus.'
-                    : 'Advertise your products or services with a business profile.'}
-                </span>
-                <span className="setup-role-choice">
-                  {selected === value ? 'Selected ✓' : 'Choose profile'}
+                <span className="setup-role-content">
+                  <span className="setup-role-kicker">
+                    {value === 'student' ? 'PERSONAL PROFILE' : 'BUSINESS PROFILE'}
+                  </span>
+                  <strong>{value === 'student' ? 'I’m a student' : 'I’m a business owner'}</strong>
+                  <span className="setup-role-description">
+                    {value === 'student'
+                      ? 'Give your pre-loved things their next chapter.'
+                      : 'Make your business part of campus life.'}
+                  </span>
+                  <span className="setup-role-benefits">
+                    <span>
+                      <Icon name="check" />
+                      {value === 'student'
+                        ? 'Sell books, gadgets and more'
+                        : 'Showcase products and services'}
+                    </span>
+                    <span>
+                      <Icon name="check" />
+                      {value === 'student'
+                        ? 'Connect directly with buyers'
+                        : 'Reach students on campus'}
+                    </span>
+                  </span>
+                  <span className="setup-role-choice">
+                    {selected === value ? 'Selected' : 'Choose this profile'}
+                    <Icon name={selected === value ? 'check' : 'arrow'} />
+                  </span>
                 </span>
               </button>
             ))}
@@ -118,6 +151,7 @@ export function Onboarding({
         </>
       ) : step === 3 ? (
         <form
+          className="setup-profile-form"
           onSubmit={async (e) => {
             e.preventDefault();
             const form = new FormData(e.currentTarget);
@@ -162,28 +196,33 @@ export function Onboarding({
               {
                 key: 'name',
                 label: selected === 'business' ? 'Business / advertiser name' : 'Advertiser name',
-                hint: 'This name appears on your adverts.',
+                hint: 'Shown on your adverts.',
+                placeholder:
+                  selected === 'business' ? 'e.g. Campus Essentials' : 'e.g. Bright Asare',
                 initial: defaults?.name ?? existing?.name ?? (selected === 'student' ? name : ''),
                 max: 100,
               },
               {
                 key: 'phone',
                 label: 'Phone number',
-                hint: 'For example: 024 123 4567 or +233 24 123 4567.',
+                hint: 'Ghana or international number.',
+                placeholder: '024 123 4567',
                 initial: defaults?.phone,
                 max: 30,
               },
               {
                 key: 'whatsapp',
                 label: 'WhatsApp number',
-                hint: 'Include your country code if outside Ghana.',
+                hint: 'Where buyers can message you.',
+                placeholder: '+233 24 123 4567',
                 initial: defaults?.whatsapp,
                 max: 30,
               },
               {
                 key: 'location',
                 label: 'Location',
-                hint: 'Your campus, hall or area. No private street address needed.',
+                hint: 'Campus, hall or area.',
+                placeholder: 'e.g. UCC, Valco Hall',
                 initial: defaults?.location,
                 max: 120,
               },
@@ -193,6 +232,7 @@ export function Onboarding({
                 <input
                   className="field-input"
                   name={field.key}
+                  placeholder={field.placeholder}
                   aria-label={field.label}
                   aria-describedby={`setup-${field.key}-hint`}
                   defaultValue={values[`${selected}.${field.key}`] ?? field.initial ?? ''}
@@ -223,8 +263,8 @@ export function Onboarding({
               defaultValue={values[`${selected}.bio`] ?? defaults?.bio ?? ''}
               placeholder={
                 selected === 'business'
-                  ? 'What do you sell or offer, and where can students find you?'
-                  : 'A short introduction about you and what you sell.'
+                  ? 'e.g. Student-run tech accessories, right here on campus.'
+                  : 'e.g. Medical student selling books and campus essentials.'
               }
             />
           </label>
@@ -241,7 +281,7 @@ export function Onboarding({
               <Link href="/privacy">privacy policy</Link>.
             </span>
           </label>
-          <p className="meta">You can add a photo and social links later in My Profile.</p>
+          <p className="meta">Add a photo and socials later in My Profile.</p>
           {error ? <ErrorMessage message={error} /> : null}
           <div className="setup-actions">
             <button

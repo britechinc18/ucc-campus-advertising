@@ -205,6 +205,12 @@ test('theme override, dialog focus and onboarding work', async ({ page }, testIn
       await page.evaluate((t) => {
         document.documentElement.dataset.theme = t;
       }, theme);
+      await page.locator('.setup-role-art img').evaluateAll(async (images) => {
+        await Promise.all(images.map((image) => (image as HTMLImageElement).decode()));
+      });
+      await page.evaluate(async () => {
+        await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined)));
+      });
       await page.screenshot({
         path: testInfo.outputPath(`seller-choice-${width}-${theme}.png`),
         fullPage: true,
@@ -217,6 +223,14 @@ test('theme override, dialog focus and onboarding work', async ({ page }, testIn
   await page.getByRole('button', { name: 'Continue →', exact: true }).click();
   await expect(page.getByRole('navigation', { name: 'Seller setup progress' })).toContainText(
     'Step 3 of 4',
+  );
+  await expect(page.getByLabel('Phone number', { exact: true })).toHaveAttribute(
+    'placeholder',
+    '024 123 4567',
+  );
+  await expect(page.getByLabel('Location', { exact: true })).toHaveAttribute(
+    'placeholder',
+    'e.g. UCC, Valco Hall',
   );
   await page.getByLabel('Advertiser name').fill('Browser New Student');
   await page.getByRole('button', { name: '← Back', exact: true }).click();
@@ -1211,7 +1225,7 @@ test('admin creates an assisted business and hands management to a verified owne
 
 test('simplified discovery and seller welcome keep essential navigation and consent', async ({
   page,
-}) => {
+}, testInfo) => {
   await page.goto('/campus-360');
   await expect(
     page.getByText('Events, offers and updates from your community.', { exact: true }),
@@ -1247,6 +1261,20 @@ test('simplified discovery and seller welcome keep essential navigation and cons
   await consent.check();
   expect(await consent.evaluate((el: HTMLInputElement) => el.checkValidity())).toBe(true);
   await expect(page.getByRole('button', { name: 'Continue with Google' })).toBeVisible();
+  await expect(page.locator('.google-g-icon')).toHaveText('G');
+  await page.locator('.seller-signin-photo').evaluate(async (image) => {
+    await (image as HTMLImageElement).decode();
+  });
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+      true,
+    );
+    await page.screenshot({
+      path: testInfo.outputPath(`seller-signin-${width}.png`),
+      fullPage: true,
+    });
+  }
 });
 
 test('personal profile opens as a profile and saves directly on mobile and desktop', async ({
