@@ -1346,6 +1346,35 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       5,
     );
   });
+  it('preserves the advertiser name while editing a legacy business without a stored name', async () => {
+    await createProfile(owner, { name: 'Old Campus Shop', kind: 'business', consent: true });
+    await saveBusiness(owner, {
+      slug: 'old-campus-shop',
+      description: 'Existing business description for campus students.',
+      location: 'UCC campus',
+      phone: '0241234567',
+      contactConsent: true,
+    });
+    await patchProfileField(owner, {
+      kind: 'business',
+      version: 1,
+      field: 'description',
+      value: 'Updated legacy business description for campus students.',
+    });
+    await patchProfileField(owner, {
+      kind: 'business',
+      version: 2,
+      field: 'whatsapp',
+      value: '0241234567',
+    });
+    const visible = (await listBusinesses('old-campus-shop')) as {
+      approved: { name: string; description: string };
+    };
+    expect(visible.approved.name).toBe('Old Campus Shop');
+    expect(visible.approved.description).toBe(
+      'Updated legacy business description for campus students.',
+    );
+  });
   it('keeps legacy snapshots independent from profile updates', async () => {
     const ad = await submit('Legacy contact stays unchanged');
     await moderate(admin, ad.revisionId, 'approve', 'Reviewed legacy advert');

@@ -354,6 +354,8 @@ test('focused editors guide input, cancel cleanly and keep visibility beside eac
   for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.getByRole('button', { name: /^(Add|Edit) Phone number$/ }).click();
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('textbox')).toBeFocused();
     await page.screenshot({ path: testInfo.outputPath(`focused-phone-${width}.png`) });
     await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   }

@@ -35,7 +35,7 @@ export function BusinessForm({
       <ProfileFieldEditor
         key={id}
         id={id}
-        initial={data}
+        initial={{ ...data, name: data.name ?? identity?.name ?? account.profile?.name }}
         version={business?.version ?? identity?.version ?? 0}
         business
         assisted={assisted}

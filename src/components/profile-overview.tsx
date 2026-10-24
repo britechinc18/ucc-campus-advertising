@@ -169,7 +169,10 @@ export function ProfileOverview({
                   type="button"
                   className="btn secondary"
                   disabled={busy}
-                  onClick={() => setEditing(null)}
+                  onClick={() => {
+                    setEditing(null);
+                    onReset();
+                  }}
                 >
                   Cancel
                 </button>
@@ -304,7 +307,8 @@ export function ProfileOverview({
         <Dialog
           title={label}
           onClose={() => {
-            if (!busy && !uploading) setEditing(null);
+            setEditing(null);
+            onReset();
           }}
         >
           <form
@@ -396,7 +400,10 @@ export function ProfileOverview({
                 type="button"
                 className="btn secondary"
                 disabled={busy || uploading}
-                onClick={() => setEditing(null)}
+                onClick={() => {
+                  setEditing(null);
+                  onReset();
+                }}
               >
                 Cancel
               </button>

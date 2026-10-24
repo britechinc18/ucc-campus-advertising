@@ -84,6 +84,7 @@ export async function patchProfileField(userId: string, input: unknown, sellerId
         business?.approved ??
         owner.approved_defaults ?? { name: owner.name },
     );
+    data.name ??= owner.name;
     const { field, value } = inputData;
     if (field.startsWith('social.')) {
       const platform = field.slice(7) as SocialPlatform;
@@ -126,7 +127,7 @@ export async function patchProfileField(userId: string, input: unknown, sellerId
         'PROFILE_KIND',
         'Categories belong to business profiles',
       );
-      data.categoryId = value ? id.parse(value) : undefined;
+      data.categoryId = value === null || value === '' ? undefined : id.parse(value);
       if (data.categoryId)
         await one(tx, sql`select id from categories where id=${data.categoryId} and active`);
     } else {
@@ -136,7 +137,7 @@ export async function patchProfileField(userId: string, input: unknown, sellerId
         'PROFILE_KIND',
         'Choose the matching profile image',
       );
-      const media = value ? id.parse(value) : undefined;
+      const media = value === null || value === '' ? undefined : id.parse(value);
       await checkProfileImage(tx, target, media);
       if (field === 'logoMediaId') data.logoMediaId = media;
       else data.photoMediaId = media;
