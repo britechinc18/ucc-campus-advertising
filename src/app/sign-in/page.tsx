@@ -23,7 +23,7 @@ export default async function SignInPage({
           <svg className="seller-promo-defs" aria-hidden="true" focusable="false">
             <defs>
               <clipPath id="seller-promo-shape" clipPathUnits="objectBoundingBox">
-                <path d="M.08,0 H.92 Q1,0 1,.12 V.88 Q1,1 .92,1 H.76 C.66,1 .69,.73 .56,.73 H.08 Q0,.73 0,.61 V.12 Q0,0 .08,0 Z" />
+                <path d="M.08,0 H.92 Q1,0 1,.12 V.88 Q1,1 .92,1 H.73 C.63,1 .65,.79 .55,.79 H.06 Q0,.79 0,.69 V.12 Q0,0 .08,0 Z" />
               </clipPath>
             </defs>
           </svg>
@@ -35,7 +35,18 @@ export default async function SignInPage({
             className="seller-signin-photo"
           />
           <span className="seller-promo-shop" aria-hidden="true">
-            <Icon name="store" />
+            <svg className="seller-shop-mark" viewBox="0 0 32 32" focusable="false">
+              <path
+                fill="currentColor"
+                stroke="none"
+                d="M6 13h20v15H6zM4 12 7 4h18l3 8v2c0 4-6 4-6 0 0 4-6 4-6 0 0 4-6 4-6 0 0 4-6 4-6 0z"
+              />
+              <path
+                fill="#e1f1e2"
+                stroke="none"
+                d="M14 20h5v8h-5zM9 20h3v4H9zM9 5h3l-1 7H7zM17 5h3l2 7h-5z"
+              />
+            </svg>
           </span>
         </div>
         <div className="seller-signin-copy">
@@ -54,10 +65,6 @@ export default async function SignInPage({
           <span>
             <Icon name="edit" />
             Create and manage your adverts
-          </span>
-          <span>
-            <Icon name="store" />
-            Build your campus business profile
           </span>
         </div>
       </aside>
