@@ -1276,11 +1276,26 @@ test('simplified discovery and seller welcome keep essential navigation and cons
       await page.locator('.seller-signin-photo').evaluate(async (image) => {
         await (image as HTMLImageElement).decode();
       });
+    if (width === 1440) {
+      const left = await page.locator('.seller-signin-intro').boundingBox();
+      const right = await page.locator('.seller-welcome').boundingBox();
+      expect(Math.abs(left!.y - right!.y)).toBeLessThan(2);
+      expect(Math.abs(left!.height - right!.height)).toBeLessThan(2);
+    }
     await page.screenshot({
       path: testInfo.outputPath(`seller-signin-${width}.png`),
       fullPage: true,
     });
   }
+  await page
+    .locator('.welcome-returning')
+    .getByRole('link', { name: 'Sign in', exact: true })
+    .click();
+  await expect(page).toHaveURL(/returning=1/);
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back.');
+  await session(page.context(), 'owner');
+  await page.reload();
+  await expect(page).toHaveURL(/\/my-adverts$/);
 });
 
 test('personal profile opens as a profile and saves directly on mobile and desktop', async ({
