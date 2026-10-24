@@ -3181,3 +3181,152 @@ h3 {
     overflow: hidden;
   }
 }
+
+/* Guided seller setup: one task at a time, shared progress across sign-in. */
+.seller-onboarding-layout {
+  padding-top: 40px;
+  padding-bottom: 64px;
+}
+.seller-onboarding {
+  max-width: 760px;
+  margin: 0 auto;
+}
+.seller-setup-shell h1 {
+  font-size: clamp(1.8rem, 4vw, 2.5rem);
+  letter-spacing: -0.035em;
+  margin: 28px 0 10px;
+  outline: none;
+}
+.setup-description {
+  color: var(--muted);
+  margin-bottom: 28px;
+}
+.seller-setup-progress {
+  text-align: left;
+  width: 100%;
+  margin-bottom: 24px;
+}
+.seller-setup-progress ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.seller-setup-progress li {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.setup-progress-bar {
+  display: block;
+  height: 4px;
+  border-radius: 8px;
+  background: var(--border);
+  margin-bottom: 8px;
+}
+.seller-setup-progress .is-reached .setup-progress-bar {
+  background: var(--brand);
+}
+.seller-setup-progress [aria-current='step'] {
+  color: var(--ink);
+  font-weight: 700;
+}
+.seller-setup-progress > p {
+  margin-top: 12px;
+}
+.setup-role-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.setup-role-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  text-align: left;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 20px;
+  padding: 26px;
+  cursor: pointer;
+  font: inherit;
+}
+.setup-role-card.is-selected {
+  border-color: var(--brand);
+  outline: 1px solid var(--brand);
+}
+.setup-role-card strong {
+  font-size: 1.2rem;
+}
+.setup-role-card > span:not(.setup-role-symbol):not(.setup-role-choice) {
+  color: var(--muted);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+.setup-role-symbol {
+  font-size: 2rem;
+  color: var(--brand);
+}
+.setup-role-choice {
+  margin-top: auto;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.setup-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 28px;
+}
+.setup-fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 20px;
+}
+.setup-consent {
+  align-items: flex-start;
+  margin-top: 20px;
+}
+.setup-ready {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 28px;
+  background: var(--surface);
+}
+.setup-ready > span {
+  display: block;
+  font-size: 2rem;
+  color: var(--brand);
+  margin-bottom: 16px;
+}
+.setup-ready strong {
+  font-size: 1.2rem;
+}
+.setup-ready p {
+  color: var(--muted);
+  margin-bottom: 0;
+}
+@media (max-width: 600px) {
+  .seller-onboarding-layout {
+    padding-top: 24px;
+  }
+  .setup-role-grid,
+  .setup-fields {
+    grid-template-columns: 1fr;
+  }
+  .setup-role-card {
+    gap: 12px;
+    padding: 20px;
+  }
+  .setup-actions .btn {
+    padding-left: 14px;
+    padding-right: 14px;
+    font-size: 0.85rem;
+  }
+  .seller-setup-progress li {
+    font-size: 0.65rem;
+  }
+}

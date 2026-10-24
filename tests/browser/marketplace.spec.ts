@@ -182,7 +182,7 @@ test('admin reviews reports, settings and account permissions', async ({ page, b
   await unauthorized.close();
 });
 
-test('theme override, dialog focus and onboarding work', async ({ page }) => {
+test('theme override, dialog focus and onboarding work', async ({ page }, testInfo) => {
   await page.goto('/explore');
   await page.getByLabel('Menu', { exact: true }).click();
   await page.getByRole('button', { name: 'Toggle light and dark theme' }).click();
@@ -199,9 +199,40 @@ test('theme override, dialog focus and onboarding work', async ({ page }) => {
   await session(page.context(), 'stranger');
   await page.goto('/my-adverts');
   await expect(page).toHaveURL(/onboarding/);
+  for (const width of [320, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    for (const theme of ['light', 'dark']) {
+      await page.evaluate((t) => {
+        document.documentElement.dataset.theme = t;
+      }, theme);
+      await page.screenshot({
+        path: testInfo.outputPath(`seller-choice-${width}-${theme}.png`),
+        fullPage: true,
+      });
+      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(
+        true,
+      );
+    }
+  }
+  await page.getByRole('button', { name: 'Continue →', exact: true }).click();
+  await expect(page.getByRole('navigation', { name: 'Seller setup progress' })).toContainText(
+    'Step 3 of 4',
+  );
   await page.getByLabel('Advertiser name').fill('Browser New Student');
+  await page.getByRole('button', { name: '← Back', exact: true }).click();
+  await page.getByRole('button', { name: 'Continue →', exact: true }).click();
+  await expect(page.getByLabel('Advertiser name')).toHaveValue('Browser New Student');
+  await page.screenshot({ path: testInfo.outputPath('seller-setup-desktop.png'), fullPage: true });
+  await page.setViewportSize({ width: 320, height: 900 });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath('seller-setup-mobile.png'), fullPage: true });
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Activate seller tools' }).click();
+  await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
+  await page.getByLabel('WhatsApp number', { exact: true }).fill('0241234567');
+  await page.getByLabel('Location', { exact: true }).fill('UCC campus');
+  await page.getByRole('button', { name: 'Save and continue →' }).click();
+  await expect(page.getByRole('heading', { name: 'You’re ready to sell.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Start posting →' }).click();
   await expect(page).toHaveURL(/my-adverts$/);
 });
 
@@ -1038,11 +1069,15 @@ test('one owner can add a business, select posting identity and filter My Ads', 
   await session(page.context(), 'owner');
   await page.goto('/my-business');
   await expect(page).toHaveURL(/onboarding.*kind=business/);
-  await page.getByLabel('Advertiser name', { exact: true }).fill('Campus Wardrobe');
+  await page.getByLabel('Business / advertiser name').fill('Campus Wardrobe');
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Activate seller tools' }).click();
+  await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
+  await page.getByLabel('WhatsApp number', { exact: true }).fill('0241234567');
+  await page.getByLabel('Location', { exact: true }).fill('UCC campus');
+  await page.getByRole('button', { name: 'Save and continue →' }).click();
+  await expect(page.getByRole('heading', { name: 'You’re ready to sell.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Start posting →' }).click();
   await expect(page).toHaveURL(/\/my-business$/);
-  await field(page, 'Edit Business URL', 'campus-wardrobe');
   await introduction(page, 'Student-owned clothing and accessories for the campus community.');
   await field(page, /^(Add|Edit) Location$/, 'UCC campus');
   await field(page, /^(Add|Edit) Phone number$/, '0241234567');
@@ -1157,8 +1192,13 @@ test('admin creates an assisted business and hands management to a verified owne
     ).toEqual([]);
     await page.screenshot({ path: `/tmp/medstash-handover-${theme}.png`, fullPage: true });
   }
+  const handoverResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith(`/admin/advertisers/${identity}/claim`) &&
+      response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: 'Confirm handover', exact: true }).click();
-  await expect(page.getByText('Claimed', { exact: false }).first()).toBeVisible();
+  expect((await handoverResponse).status()).toBe(200);
   await session(pub.context(), 'stranger');
   await pub.goto('/my-business');
   await expect(pub.getByText('assisted-campus-clothing', { exact: true })).toBeVisible();

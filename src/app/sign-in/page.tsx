@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { SellerSetupProgress } from '@/components/seller-setup-progress';
 import Image from 'next/image';
 import { redirect } from 'next/navigation';
 import { viewer } from '@/server/viewer';
@@ -15,8 +16,30 @@ export default async function SignInPage({
   const v = await viewer();
   if (v.user && !v.user.suspended) redirect(next);
   return (
-    <main id="main" className="container seller-welcome-layout">
+    <main id="main" className="container seller-welcome-layout seller-signin-layout">
+      <aside className="seller-signin-intro" aria-label="About MedStash">
+        <p className="eyebrow">SELL ON MEDSTASH</p>
+        <h2>
+          Buy. Sell.
+          <br />
+          Connect on campus.
+        </h2>
+        <p>A place for your next good find—and your next sale.</p>
+        <ul>
+          <li>Sell your own items</li>
+          <li>Showcase your campus business</li>
+          <li>Connect directly with buyers</li>
+        </ul>
+        <Image
+          src="/editorial/electronics-desk.webp"
+          width={660}
+          height={400}
+          alt=""
+          className="seller-signin-photo"
+        />
+      </aside>
       <section className="seller-welcome">
+        {next.startsWith('/onboarding') ? <SellerSetupProgress step={1} /> : null}
         <Image
           src="/icons/icon-192.png?v=2"
           alt=""

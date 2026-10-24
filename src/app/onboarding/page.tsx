@@ -1,6 +1,5 @@
 import { requireViewer } from '@/server/viewer';
 import { accountContext } from '@/server/frontend';
-import { AccountModeSwitch } from '@/components/account-mode-switch';
 import { safeReturn } from '@/lib/market';
 import { Onboarding } from '@/components/onboarding';
 export const metadata = { title: 'Activate your seller profile' };
@@ -11,26 +10,15 @@ export default async function OnboardingPage({
 }) {
   const params = await searchParams;
   const next = safeReturn(params.next);
-  const u = await requireViewer(`/onboarding?next=${encodeURIComponent(next)}`);
+  const u = await requireViewer(
+    `/onboarding?${new URLSearchParams({ next, ...(params.kind ? { kind: params.kind } : {}) })}`,
+  );
   const context = await accountContext(u.id);
   const kind = params.kind === 'student' || params.kind === 'business' ? params.kind : undefined;
-  if (kind ? context.profiles.some((p) => p.kind === kind) : context.profiles.length)
-    return (
-      <main id="main" className="container">
-        <section className="narrow panel auth-panel">
-          <h1>Your seller account is ready.</h1>
-          <p>Your existing listings and profile are waiting for you.</p>
-          <AccountModeSwitch mode="seller" destination={next} className="btn" />
-        </section>
-      </main>
-    );
   return (
-    <main id="main" className="container">
-      <section className="narrow panel auth-panel">
-        <p className="eyebrow">BEFORE YOUR FIRST ADVERT</p>
-        <h1>Your campus identity.</h1>
-        <p>Tell people who they are connecting with.</p>
-        <Onboarding name={kind === 'business' ? '' : (u.name ?? '')} next={next} kind={kind} />
+    <main id="main" className="container seller-onboarding-layout">
+      <section className="seller-onboarding">
+        <Onboarding name={u.name ?? ''} next={next} kind={kind} profiles={context.profiles} />
       </section>
     </main>
   );
