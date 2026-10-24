@@ -209,7 +209,12 @@ test('theme override, dialog focus and onboarding work', async ({ page }, testIn
         await Promise.all(images.map((image) => (image as HTMLImageElement).decode()));
       });
       await page.evaluate(async () => {
-        await Promise.all(document.getAnimations().map((a) => a.finished.catch(() => undefined)));
+        await Promise.all(
+          document
+            .getAnimations()
+            .filter((a) => a instanceof CSSTransition)
+            .map((a) => a.finished.catch(() => undefined)),
+        );
       });
       await page.screenshot({
         path: testInfo.outputPath(`seller-choice-${width}-${theme}.png`),
