@@ -2106,3 +2106,76 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* The lower-left notch makes room for the title, as in the owner's sketch. */
+.seller-signin-intro {
+  gap: 12px;
+  padding: 22px;
+  justify-content: flex-start;
+}
+.seller-promo-visual {
+  height: 210px;
+  flex-basis: 210px;
+  isolation: auto;
+}
+.seller-promo-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+.seller-signin-layout .seller-promo-visual .seller-signin-photo {
+  clip-path: url(#seller-promo-shape);
+  object-fit: cover;
+  object-position: center top;
+}
+.seller-promo-shop {
+  position: absolute;
+  z-index: 2;
+  top: 14px;
+  left: 16px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--brand);
+}
+.seller-promo-shop svg {
+  width: 24px;
+  height: 24px;
+}
+.seller-signin-intro .seller-signin-copy {
+  position: relative;
+  margin-top: -50px;
+  z-index: 1;
+  padding-top: 6px;
+}
+.seller-signin-copy h2 {
+  max-width: 74%;
+  font-size: clamp(24px, 2.5vw, 30px);
+  margin-bottom: 10px;
+}
+.seller-signin-copy p {
+  font-size: 0.84rem;
+}
+.seller-signin-benefits {
+  gap: 11px;
+  margin-top: auto;
+  padding-top: 12px;
+  font-size: 0.79rem;
+}
+@media (min-width: 721px) and (max-width: 950px) {
+  .seller-signin-copy h2 {
+    font-size: 23px;
+  }
+  .seller-promo-visual {
+    height: 190px;
+    flex-basis: 190px;
+  }
+  .seller-signin-intro .seller-signin-copy {
+    margin-top: -44px;
+  }
+}

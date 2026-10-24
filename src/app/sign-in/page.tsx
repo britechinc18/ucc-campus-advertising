@@ -20,14 +20,23 @@ export default async function SignInPage({
     <main id="main" className="container seller-welcome-layout seller-signin-layout">
       <aside className="seller-signin-intro" aria-label="About MedStash">
         <div className="seller-promo-visual">
-          <div className="seller-promo-backdrop" />
+          <svg className="seller-promo-defs" aria-hidden="true" focusable="false">
+            <defs>
+              <clipPath id="seller-promo-shape" clipPathUnits="objectBoundingBox">
+                <path d="M.08,0 H.92 Q1,0 1,.12 V.88 Q1,1 .92,1 H.76 C.66,1 .69,.73 .56,.73 H.08 Q0,.73 0,.61 V.12 Q0,0 .08,0 Z" />
+              </clipPath>
+            </defs>
+          </svg>
           <Image
-            src="/editorial/seller-entry-cutout.webp"
+            src="/editorial/seller-market-display.webp"
             width={660}
             height={440}
             alt=""
             className="seller-signin-photo"
           />
+          <span className="seller-promo-shop" aria-hidden="true">
+            <Icon name="store" />
+          </span>
         </div>
         <div className="seller-signin-copy">
           <h2>Sell on MedStash.</h2>
@@ -41,6 +50,14 @@ export default async function SignInPage({
           <span>
             <Icon name="chat" />
             Chat directly with buyers
+          </span>
+          <span>
+            <Icon name="edit" />
+            Create and manage your adverts
+          </span>
+          <span>
+            <Icon name="store" />
+            Build your campus business profile
           </span>
         </div>
       </aside>
