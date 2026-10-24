@@ -202,7 +202,9 @@ export function Onboarding({
                   maxLength={field.max}
                   required
                 />
-                <span className="meta">{field.hint}</span>
+                <span className="meta" id={`setup-${field.key}-hint`}>
+                  {field.hint}
+                </span>
               </label>
             ))}
           </div>
