@@ -25,6 +25,11 @@ export function socialProfile(platform: SocialPlatform, value: string) {
     const hosts = platform === 'x' ? ['x.com', 'twitter.com'] : [`${platform}.com`];
     if (!hosts.includes(host)) return null;
     const path = url.pathname.replace(/\/$/, '');
+    if (platform === 'facebook' && path === '/profile.php') {
+      const profileId = url.searchParams.get('id') ?? '';
+      if (!/^[0-9]{5,20}$/.test(profileId)) return null;
+      return { username: profileId, url: `https://www.facebook.com/profile.php?id=${profileId}` };
+    }
     const prefix = platform === 'tiktok' ? '/@' : platform === 'snapchat' ? '/add/' : '/';
     if (!path.startsWith(prefix)) return null;
     const username = path.slice(prefix.length);

@@ -83,7 +83,10 @@ export function ProfileContacts({
               name={`visible.${p}`}
               defaultChecked={data.visibility?.[p] !== false}
             />
-            <span>Show {p === 'photo' ? 'profile photo / logo' : p === 'x' ? 'X' : p}</span>
+            <span>
+              Show{' '}
+              {p === 'photo' ? (business ? 'business logo' : 'profile photo') : socialLabels[p]}
+            </span>
           </label>
         ))}
       </fieldset>
