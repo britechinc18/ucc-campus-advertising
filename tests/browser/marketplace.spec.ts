@@ -1,4 +1,4 @@
-import { test, expect, type BrowserContext } from '@playwright/test';
+import { test, expect, type BrowserContext, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 import { readFileSync } from 'node:fs';
 const fixture = JSON.parse(
@@ -15,6 +15,26 @@ async function session(context: BrowserContext, role: 'owner' | 'admin' | 'stran
       sameSite: 'Lax',
     },
   ]);
+}
+
+async function field(page: Page, action: RegExp | string, value: string) {
+  await page.getByRole('button', { name: action, exact: typeof action === 'string' }).click();
+  const dialog = page.getByRole('dialog');
+  await expect(dialog.getByRole('textbox')).toHaveCount(1);
+  await dialog.getByRole('textbox').fill(value);
+  const consent = dialog.getByRole('checkbox');
+  if (await consent.count()) await consent.check();
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog).toHaveCount(0);
+}
+async function introduction(page: Page, value: string) {
+  await page.getByRole('button', { name: /^(Add|Edit) introduction/ }).click();
+  await page.locator('.profile-inline-editor textarea').fill(value);
+  await page
+    .locator('.profile-inline-editor')
+    .getByRole('button', { name: 'Save', exact: true })
+    .click();
+  await expect(page.locator('.profile-inline-editor')).toHaveCount(0);
 }
 
 test('public search, filters, detail, contacts and reporting work without sign-in', async ({
@@ -276,21 +296,13 @@ test('business edits appear immediately and upload failure never looks successfu
 }) => {
   await session(page.context(), 'business');
   await page.goto('/my-business');
-  await page.getByRole('button', { name: 'Edit profile' }).click();
-  await page
-    .getByLabel('About your business')
-    .fill('Browser business profile updated through the real moderation workflow.');
-  await page.getByLabel('Business WhatsApp', { exact: true }).fill('0241234567');
-  await page.getByLabel('Business phone', { exact: true }).fill('0241234567');
-  await page
-    .getByLabel('I consent to publish the visible contact details and social profiles above.')
-    .check();
-  await page.getByRole('button', { name: 'Save changes' }).click();
-  await expect(page.getByRole('button', { name: 'Edit profile' })).toBeVisible();
+  await introduction(page, 'Browser business profile updated through focused inline editing.');
+  await field(page, /^(Add|Edit) WhatsApp$/, '0241234567');
+  await field(page, /^(Add|Edit) Phone number$/, '0241234567');
   const publicContext = await browser.newContext({ baseURL: 'http://localhost:3000' });
   const pub = await publicContext.newPage();
   await pub.goto('/businesses/browser-test-services');
-  await expect(pub.locator('.description')).toContainText('updated through the real moderation');
+  await expect(pub.locator('.description')).toContainText('updated through focused inline editing');
   await expect(pub.getByRole('link', { name: 'WhatsApp', exact: true })).toHaveAttribute(
     'href',
     /^https:\/\/wa\.me\/233241234567\?text=/,
@@ -1030,19 +1042,11 @@ test('one owner can add a business, select posting identity and filter My Ads', 
   await page.getByRole('checkbox').check();
   await page.getByRole('button', { name: 'Activate seller tools' }).click();
   await expect(page).toHaveURL(/\/my-business$/);
-  await page.getByLabel('Business name', { exact: true }).fill('Campus Wardrobe');
-  await page.getByLabel('Business URL').fill('campus-wardrobe');
-  await page
-    .getByLabel('About your business')
-    .fill('Student-owned clothing and accessories for the campus community.');
-  await page.getByLabel('Campus location').fill('UCC campus');
-  await page.getByLabel('Business phone', { exact: true }).fill('0241234567');
-  await page.getByLabel('Business WhatsApp', { exact: true }).fill('0543982307');
-  await page
-    .getByLabel('I consent to publish the visible contact details and social profiles above.')
-    .check();
-  await page.getByRole('button', { name: 'Save changes' }).click();
-  await expect(page.getByRole('button', { name: 'Edit profile' })).toBeVisible();
+  await field(page, 'Edit Business URL', 'campus-wardrobe');
+  await introduction(page, 'Student-owned clothing and accessories for the campus community.');
+  await field(page, /^(Add|Edit) Location$/, 'UCC campus');
+  await field(page, /^(Add|Edit) Phone number$/, '0241234567');
+  await field(page, /^(Add|Edit) WhatsApp$/, '0543982307');
   await page.goto('/post?kind=service');
   await expect(page.getByRole('heading', { name: 'Who are you posting as?' })).toBeVisible();
   await page.getByRole('link', { name: 'Campus Wardrobe Business' }).click();
@@ -1100,18 +1104,11 @@ test('admin creates an assisted business and hands management to a verified owne
   await page.getByRole('button', { name: 'Create advertiser & continue' }).click();
   await expect(page).toHaveURL(/\/admin\/businesses\/.+\/profile/);
   const identity = page.url().split('/').at(-2)!;
-  await page.getByLabel('Business URL').fill('assisted-campus-clothing');
-  await page
-    .getByLabel('About your business')
-    .fill('Student clothing business managed by MedStash with owner permission.');
-  await page.getByLabel('Campus location').fill('UCC campus');
-  await page.getByLabel('Business WhatsApp', { exact: true }).fill('0543982307');
-  await page.getByLabel('Business phone', { exact: true }).fill('0543982307');
-  await page
-    .getByLabel('I consent to publish the visible contact details and social profiles above.')
-    .check();
-  await page.getByRole('button', { name: 'Save changes' }).click();
-  await expect(page.getByRole('button', { name: 'Edit profile' })).toBeVisible();
+  await field(page, 'Edit Business URL', 'assisted-campus-clothing');
+  await introduction(page, 'Student clothing business managed by MedStash with owner permission.');
+  await field(page, /^(Add|Edit) Location$/, 'UCC campus');
+  await field(page, /^(Add|Edit) WhatsApp$/, '0543982307');
+  await field(page, /^(Add|Edit) Phone number$/, '0543982307');
   const publicContext = await browser.newContext({ baseURL: 'http://localhost:3000' });
   const pub = await publicContext.newPage();
   await pub.goto('/campus-360/businesses?q=Assisted%20Campus');
@@ -1164,8 +1161,7 @@ test('admin creates an assisted business and hands management to a verified owne
   await expect(page.getByText('Claimed', { exact: false }).first()).toBeVisible();
   await session(pub.context(), 'stranger');
   await pub.goto('/my-business');
-  await pub.getByRole('button', { name: 'Edit profile' }).click();
-  await expect(pub.getByLabel('Business URL')).toHaveValue('assisted-campus-clothing');
+  await expect(pub.getByText('assisted-campus-clothing', { exact: true })).toBeVisible();
   const protectedSearch = await pub.request.get(
     `/api/v1/admin/advertisers/${identity}/claimants?q=browser`,
   );
@@ -1220,18 +1216,14 @@ test('personal profile opens as a profile and saves directly on mobile and deskt
   await page.goto('/my-personal-profile');
   await expect(page.locator('.profile-overview')).toBeVisible();
   await expect(page.getByLabel('Display name')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Edit profile' }).click();
-  await page.getByLabel('Display name').fill('Browser Profile Seller');
-  await page.getByLabel('Default location').fill('Science Market');
-  await page.getByLabel('Short bio (optional)').fill('Medical books and useful campus essentials.');
-  await page.getByLabel('WhatsApp number', { exact: true }).fill('0543982307');
-  await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
-  await expect(page.getByText('Show WhatsApp', { exact: true })).toHaveCount(0);
-  await expect(page.getByText('Show phone', { exact: true })).toHaveCount(0);
-  await page
-    .getByLabel('I consent to publish the visible contact details and social profiles above.')
-    .check();
-  await page.getByRole('button', { name: 'Save changes', exact: true }).click();
+  await field(page, 'Edit name', 'Browser Profile Seller');
+  await field(page, /^(Add|Edit) Location$/, 'Science Market');
+  await introduction(page, 'Medical books and useful campus essentials.');
+  await field(page, /^(Add|Edit) WhatsApp$/, '0543982307');
+  await field(page, /^(Add|Edit) Phone number$/, '0241234567');
+  await expect(page.getByRole('heading', { name: 'Public visibility', exact: true })).toHaveCount(
+    0,
+  );
   await expect(page.locator('.profile-identity-card h2')).toHaveText('Browser Profile Seller');
   await page.reload();
   await expect(page.locator('.profile-bio')).toHaveText(

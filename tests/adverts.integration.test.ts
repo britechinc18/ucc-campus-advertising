@@ -1,3 +1,4 @@
+import { patchProfileField } from '../src/server/profile-fields';
 import {
   personalProfile,
   savePersonalProfile,
@@ -1236,6 +1237,114 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       approved: { socials?: { facebook?: string } };
     };
     expect(visible.approved.socials?.facebook).toBe('https://www.facebook.com/campusbooks');
+  });
+  it('saves a single profile field without requiring a full form and rejects stale or unauthorized writes', async () => {
+    const p = await personalProfile(owner);
+    const first = await patchProfileField(owner, {
+      kind: 'student',
+      version: 0,
+      field: 'whatsapp',
+      value: '024 123 4567',
+      contactConsent: true,
+    });
+    expect(first.data.whatsapp).toBe('+233241234567');
+    expect(first.complete).toBe(false);
+    expect((await personalProfile(owner)).draft?.whatsapp).toBe('+233241234567');
+    await expect(
+      patchProfileField(owner, {
+        kind: 'student',
+        version: 0,
+        field: 'name',
+        value: 'Stale change',
+      }),
+    ).rejects.toMatchObject({ code: 'PROFILE_CHANGED' });
+    await expect(
+      patchProfileField(
+        stranger,
+        { kind: 'student', version: 1, field: 'name', value: 'Intruder' },
+        p.id,
+      ),
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      patchProfileField(owner, { kind: 'student', version: 1, field: 'phone', value: 'invalid' }),
+    ).rejects.toBeDefined();
+    expect((await personalProfile(owner)).version).toBe(1);
+    await patchProfileField(owner, {
+      kind: 'student',
+      version: 1,
+      field: 'phone',
+      value: '0543982307',
+    });
+    const complete = await patchProfileField(owner, {
+      kind: 'student',
+      version: 2,
+      field: 'location',
+      value: 'Science Market',
+    });
+    expect(complete.complete).toBe(true);
+    expect((await personalProfile(owner)).approved?.location).toBe('Science Market');
+    await patchProfileField(owner, {
+      kind: 'student',
+      version: 3,
+      field: 'social.instagram',
+      value: 'https://www.instagram.com/campus_seller',
+    });
+    await patchProfileField(owner, {
+      kind: 'student',
+      version: 4,
+      field: 'visible.instagram',
+      value: false,
+    });
+    expect((await personalProfile(owner)).approved?.visibility?.instagram).toBe(false);
+    await patchProfileField(owner, {
+      kind: 'student',
+      version: 5,
+      field: 'social.instagram',
+      value: '',
+    });
+    expect((await personalProfile(owner)).approved?.socials?.instagram).toBeUndefined();
+  });
+  it('persists unfinished business fields independently and publishes once complete', async () => {
+    const business = (await createProfile(owner, {
+      name: 'Campus Books',
+      kind: 'business',
+      consent: true,
+    })) as { id: string };
+    const changes = [
+      ['slug', 'focused-campus-books'],
+      ['description', 'Medical textbooks and stationery for students.'],
+      ['location', 'Science Market'],
+      ['whatsapp', '0241234567'],
+      ['phone', '0543982307'],
+    ];
+    for (let version = 0; version < changes.length; version++) {
+      const [field, value] = changes[version];
+      await patchProfileField(owner, {
+        kind: 'business',
+        version,
+        field,
+        value,
+        contactConsent: true,
+      });
+      if (version < 4)
+        await expect(listBusinesses('focused-campus-books')).rejects.toMatchObject({ status: 404 });
+    }
+    expect(
+      ((await listBusinesses('focused-campus-books')) as { approved: { phone: string } }).approved
+        .phone,
+    ).toBe('+233543982307');
+    const mid = randomUUID();
+    const personal = await personalProfile(owner);
+    await pool.query(
+      "insert into media_assets(id,advertiser_id,object_key,state,bytes) values($1,$2,$3,'ready',10)",
+      [mid, personal.id, `derived/${mid}.webp`],
+    );
+    await expect(
+      patchProfileField(owner, { kind: 'business', version: 5, field: 'logoMediaId', value: mid }),
+    ).rejects.toMatchObject({ code: 'INVALID_MEDIA' });
+    expect((await accountContext(owner)).profiles.find((p) => p.id === business.id)?.version).toBe(
+      5,
+    );
   });
   it('keeps legacy snapshots independent from profile updates', async () => {
     const ad = await submit('Legacy contact stays unchanged');

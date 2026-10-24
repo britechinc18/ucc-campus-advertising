@@ -1542,3 +1542,129 @@
     padding: 9px 10px;
   }
 }
+
+.profile-photo-wrap {
+  position: relative;
+  margin-bottom: 16px;
+}
+.profile-photo-wrap .profile-portrait {
+  margin: 0;
+}
+.profile-camera {
+  position: absolute;
+  bottom: 0;
+  right: -4px;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--surface);
+  border-radius: 50%;
+  background: var(--action);
+  color: var(--on-action);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.profile-camera svg {
+  width: 16px;
+  height: 16px;
+}
+.profile-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: 100%;
+}
+.profile-name-row h2 {
+  margin: 0 0 8px;
+}
+.profile-name-row .icon-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+}
+.profile-name-row svg {
+  width: 16px;
+  height: 16px;
+}
+.profile-photo-visibility {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 18px;
+  font-size: 11px;
+  color: var(--muted);
+}
+.profile-row-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+.profile-visibility-switch {
+  width: 34px;
+  height: 21px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--muted);
+  padding: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.profile-visibility-switch span {
+  display: block;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--surface);
+  transform: translateX(0);
+}
+.profile-visibility-switch[aria-checked='true'] {
+  background: var(--action);
+  border-color: var(--action);
+}
+.profile-visibility-switch[aria-checked='true'] span {
+  transform: translateX(12px);
+  background: var(--on-action);
+}
+.profile-field-dialog {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding-top: 16px;
+}
+.profile-field-dialog .helper {
+  display: block;
+  margin-top: 10px;
+  line-height: 1.65;
+}
+.profile-editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+.profile-inline-editor textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+.profile-inline-editor .helper {
+  text-align: right;
+  font-size: 10px;
+  color: var(--muted);
+}
+.profile-field-dialog .upload-grid {
+  grid-template-columns: 1fr;
+}
+.profile-field-dialog .uploaded-photo {
+  max-width: 180px;
+}
+@media (max-width: 360px) {
+  .profile-row-controls {
+    gap: 6px;
+  }
+  .profile-detail-row {
+    gap: 8px;
+  }
+}

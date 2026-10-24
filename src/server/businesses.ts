@@ -81,7 +81,7 @@ export async function saveBusiness(userId: string, input: unknown, sellerId?: st
       sql`insert into business_profiles(advertiser_id,slug,approved,state) values(${p.id},${data.slug},${JSON.stringify(data)}::jsonb,'approved') on conflict(advertiser_id) do update set approved=excluded.approved,pending=null,state='approved',reason=null returning id`,
     );
     await tx.execute(
-      sql`update advertisers set defaults_version=defaults_version+1,approved_defaults_version=defaults_version+1,privacy=${JSON.stringify(data.visibility)}::jsonb,name=coalesce(${data.name ?? null},name) where id=${p.id}`,
+      sql`update advertisers set draft_defaults=null,defaults_version=defaults_version+1,approved_defaults_version=defaults_version+1,privacy=${JSON.stringify(data.visibility)}::jsonb,name=coalesce(${data.name ?? null},name) where id=${p.id}`,
     );
     await audit(tx, userId, 'business_profile_saved', b.id, {
       version: version.defaults_version + 1,
@@ -179,7 +179,7 @@ export async function assistedBusinessContext(userId: string, sellerId: string) 
     ensure(p.kind === 'business', 422, 'BUSINESS_REQUIRED', 'Choose a business advertiser');
     const profile = await one<{ id: string; name: string; kind: string; suspended: boolean }>(
       tx,
-      sql`select id,name,kind,suspended from advertisers where id=${sellerId}`,
+      sql`select id,name,kind,suspended,defaults_version as version,draft_defaults as defaults from advertisers where id=${sellerId}`,
     );
     const rows = await query(
       tx,
@@ -190,7 +190,7 @@ export async function assistedBusinessContext(userId: string, sellerId: string) 
       account: {
         role: user.role,
         profile,
-        profiles: [],
+        profiles: [profile],
         settings: await limits(tx),
         activeCount: 0,
         dailyUsed: 0,

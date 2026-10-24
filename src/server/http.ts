@@ -1,3 +1,4 @@
+import { patchProfileField } from './profile-fields';
 import {
   personalProfile,
   savePersonalProfile,
@@ -252,6 +253,18 @@ export async function dispatch(request: Request, path: string[]): Promise<Respon
       path[3] === 'claimants'
     )
       return Response.json(await findClaimants(userId, path[2], url.searchParams.get('q')), {
+        headers,
+      });
+    if (method === 'PATCH' && route === 'me/profile-details')
+      return Response.json(await patchProfileField(userId, await body(request)), { headers });
+    if (
+      method === 'PATCH' &&
+      path[0] === 'admin' &&
+      path[1] === 'advertisers' &&
+      path[3] === 'profile-details' &&
+      path.length === 4
+    )
+      return Response.json(await patchProfileField(userId, await body(request), path[2]), {
         headers,
       });
     if (method === 'GET' && route === 'me/personal')
