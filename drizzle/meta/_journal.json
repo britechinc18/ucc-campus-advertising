@@ -29,6 +29,13 @@
       "when": 1792784313603,
       "tag": "0003_seller_profile_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792884000000,
+      "tag": "0004_open_publishing",
+      "breakpoints": true
     }
   ]
 }

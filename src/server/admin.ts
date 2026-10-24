@@ -30,7 +30,7 @@ export async function updateSettings(userId: string, input: unknown) {
     await actor(tx, userId, true);
     const rows = await query<{ version: number }>(
       tx,
-      sql`update platform_settings set max_active=${data.maxActive},daily_limit=${data.dailyLimit},duration_days=${data.durationDays},max_images=${data.maxImages},max_image_bytes=${data.maxImageBytes},version=version+1 where id=1 and version=${data.expectedVersion} returning version`,
+      sql`update platform_settings set auto_publish=${data.autoPublish},posting_limits_enabled=${data.postingLimitsEnabled},max_active=${data.maxActive},daily_limit=${data.dailyLimit},duration_days=${data.durationDays},max_images=${data.maxImages},max_image_bytes=${data.maxImageBytes},version=version+1 where id=1 and version=${data.expectedVersion} returning version`,
     );
     ensure(rows[0], 409, 'STALE_SETTINGS', 'Settings changed; reload before saving');
     await audit(tx, userId, 'settings_updated', userId, { ...data });

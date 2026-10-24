@@ -110,7 +110,8 @@ export const settings = pgTable(
     durationDays: integer('duration_days').notNull().default(30),
     maxImages: integer('max_images').notNull().default(5),
     maxImageBytes: integer('max_image_bytes').notNull().default(5242880),
-    autoPublish: boolean('auto_publish').notNull().default(false),
+    autoPublish: boolean('auto_publish').notNull().default(true),
+    postingLimitsEnabled: boolean('posting_limits_enabled').notNull().default(false),
     version: integer('version').notNull().default(1),
   },
   (t) => [
@@ -119,7 +120,6 @@ export const settings = pgTable(
       'settings_bounds',
       sql`${t.maxActive} between 1 and 100 and ${t.dailyLimit} between 1 and 100 and ${t.durationDays} between 1 and 365 and ${t.maxImages} between 1 and 5 and ${t.maxImageBytes} between 1 and 5242880`,
     ),
-    check('auto_publish_disabled', sql`${t.autoPublish}=false`),
   ],
 );
 export const adverts = pgTable(

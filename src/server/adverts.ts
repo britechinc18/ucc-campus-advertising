@@ -335,7 +335,7 @@ export async function submitAdvert(
         sql`select ${a.state}='published' and ${a.expires_at}::timestamptz>clock_timestamp() as live`,
       );
       ensure(live.live, 409, 'EXPIRED', 'Inactive advert must be renewed');
-    } else if (user.role !== 'admin')
+    } else if (settings.posting_limits_enabled && user.role !== 'admin')
       ensure(
         (await activeCount(tx, seller.id)) < settings.max_active,
         409,
@@ -347,12 +347,17 @@ export async function submitAdvert(
       sql`select r.id from advert_revisions r join adverts other on other.id=r.advert_id where other.advertiser_id in (${ownerIdentities(seller.id)}) and other.id<>${a.id} and (r.status='pending' or (r.id=other.approved_revision_id and other.state='published' and other.expires_at>now())) and (r.fingerprint=${r.fingerprint} or exists(select 1 from revision_media x join media_assets xm on xm.id=x.media_id join revision_media y on y.revision_id=${r.id} join media_assets ym on ym.id=y.media_id where x.revision_id=r.id and xm.checksum=ym.checksum)) limit 1`,
     );
     ensure(
-      !duplicates.length,
+      !settings.posting_limits_enabled || !duplicates.length,
       409,
       'DUPLICATE',
       'A matching advert or image is already pending or published',
     );
-    if (user.role !== 'admin' && r.purpose !== 'edit' && !r.quota_charged) {
+    if (
+      settings.posting_limits_enabled &&
+      user.role !== 'admin' &&
+      r.purpose !== 'edit' &&
+      !r.quota_charged
+    ) {
       const day = await one<{ day: string }>(
         tx,
         sql`select to_char(clock_timestamp() at time zone 'Africa/Accra','YYYY-MM-DD') as day`,
@@ -374,17 +379,28 @@ export async function submitAdvert(
         sql`update advertiser_daily_usage set count=count+1 where advertiser_id=${seller.id} and day=${day.day}`,
       );
     }
-    await tx.execute(
-      sql`update advert_revisions set status='pending',submitted_at=now(),quota_charged=${user.role !== 'admin' || r.quota_charged} where id=${r.id}`,
-    );
-    if (r.purpose !== 'edit')
-      await tx.execute(sql`update adverts set state='pending' where id=${a.id}`);
-    await audit(tx, userId, 'advert_submitted', a.id, {
+    const status = settings.auto_publish ? 'published' : 'pending';
+    if (settings.auto_publish) {
+      await tx.execute(
+        sql`update advert_revisions set status='approved',submitted_at=now(),reviewed_at=now() where id=${r.id}`,
+      );
+      await tx.execute(
+        sql`update adverts set approved_revision_id=${r.id},privacy_hidden=false,state='published',published_at=case when ${r.purpose}='edit' then published_at else now() end,expires_at=case when ${r.purpose}='edit' then expires_at else now()+${settings.duration_days}*interval '1 day' end where id=${a.id}`,
+      );
+    } else {
+      await tx.execute(
+        sql`update advert_revisions set status='pending',submitted_at=now(),quota_charged=${settings.posting_limits_enabled && (user.role !== 'admin' || r.quota_charged)} where id=${r.id}`,
+      );
+      if (r.purpose !== 'edit')
+        await tx.execute(sql`update adverts set state='pending' where id=${a.id}`);
+    }
+    await audit(tx, userId, settings.auto_publish ? 'advert_published' : 'advert_submitted', a.id, {
       revisionId: r.id,
       purpose: r.purpose,
-      postingLimitExempt: user.role === 'admin',
+      postingLimitExempt: user.role === 'admin' || !settings.posting_limits_enabled,
+      automatic: settings.auto_publish,
     });
-    const response = { advertId: a.id, revisionId: r.id, status: 'pending' };
+    const response = { advertId: a.id, revisionId: r.id, status };
     await tx.execute(
       sql`insert into idempotency_keys(advertiser_id,key,request_hash,response) values(${seller.id},${key},${hash},${JSON.stringify(response)}::jsonb)`,
     );
@@ -466,7 +482,7 @@ export async function moderate(
           tx,
           sql`select id from audit_events where target_id=${a.id} and action='advert_submitted' and detail->>'revisionId'=${r.id} and detail->>'postingLimitExempt'='true' limit 1`,
         );
-        if (!exemption.length)
+        if (settings.posting_limits_enabled && !exemption.length)
           ensure(
             (await activeCount(tx, seller.id)) <= settings.max_active,
             409,

@@ -77,7 +77,9 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     await pool.query(
       'TRUNCATE users,advertisers,adverts,advert_revisions,advertiser_daily_usage,idempotency_keys,audit_events,reports,media_assets,revision_media,business_profiles,featured_adverts,daily_advert_metrics,rate_limit_buckets CASCADE',
     );
-    await pool.query('update platform_settings set max_active=5,daily_limit=3,duration_days=30');
+    await pool.query(
+      'update platform_settings set auto_publish=false,posting_limits_enabled=true,max_active=5,daily_limit=3,duration_days=30',
+    );
     vi.mocked(auth).mockReset();
     process.env.APP_ORIGIN = 'https://campus.test';
     process.env.AUTH_SECRET = 'synthetic-test-key-with-more-than-32-characters';
@@ -457,7 +459,42 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     await expect(updateSettings(owner, settings)).rejects.toMatchObject({ status: 403 });
     await updateSettings(admin, settings);
     await expect(updateSettings(admin, settings)).rejects.toMatchObject({ code: 'STALE_SETTINGS' });
-    await expect(updateSettings(admin, { ...settings, autoPublish: true })).rejects.toBeDefined();
+    await updateSettings(admin, {
+      ...settings,
+      expectedVersion: version + 1,
+      autoPublish: true,
+      postingLimitsEnabled: false,
+    });
+  });
+  it('publishes immediately without quotas or duplicate gates and preserves edit expiry', async () => {
+    await pool.query(
+      'update platform_settings set auto_publish=true,posting_limits_enabled=false,max_active=1,daily_limit=1',
+    );
+    const first = await draft();
+    const key = randomUUID();
+    const result = await submitAdvert(owner, first.advertId, first.revisionId, key);
+    expect(result).toMatchObject({ status: 'published' });
+    expect(await submitAdvert(owner, first.advertId, first.revisionId, key)).toEqual(result);
+    const expiry = (
+      await pool.query('select expires_at from adverts where id=$1', [first.advertId])
+    ).rows[0].expires_at;
+    const duplicate = await draft();
+    await expect(
+      submitAdvert(owner, duplicate.advertId, duplicate.revisionId, randomUUID()),
+    ).resolves.toMatchObject({ status: 'published' });
+    const edit = await saveAdvert(owner, first.advertId, content('Updated campus tutoring'));
+    await submitAdvert(owner, first.advertId, edit.revisionId, randomUUID());
+    expect(
+      (await pool.query('select expires_at from adverts where id=$1', [first.advertId])).rows[0]
+        .expires_at,
+    ).toEqual(expiry);
+    expect((await listAdverts({})).items).toHaveLength(2);
+    expect(
+      (await pool.query('select count(*)::int as n from advertiser_daily_usage')).rows[0].n,
+    ).toBe(0);
+    await expect(
+      submitAdvert(stranger, first.advertId, edit.revisionId, randomUUID()),
+    ).rejects.toMatchObject({ status: 403 });
   });
   it('requires approval for assisted posts and audits verified claiming', async () => {
     const p = await createAssistedProfile(admin, {

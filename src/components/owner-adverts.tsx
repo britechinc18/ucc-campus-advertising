@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -27,6 +27,7 @@ export function OwnerDashboard({
   state,
   submitted,
   identity = '',
+  userId = '',
 }: {
   page: OwnerPage;
   account: Account;
@@ -34,230 +35,208 @@ export function OwnerDashboard({
   state: string;
   submitted: boolean;
   identity?: string;
+  userId?: string;
 }) {
-  const count = (s: string) => page.counts.find((c) => c.state === s)?.count ?? 0;
+  const router = useRouter();
+  const [drafts, setDrafts] = useState<{ key: string; title: string; href: string }[]>([]);
+  const [closing, setClosing] = useState<OwnAdvert | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  useEffect(() => {
+    Promise.resolve().then(() => {
+      const prefix = `ucc-draft-v1:${userId}:`;
+      const found: typeof drafts = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i)!;
+          if (!key.startsWith(prefix)) continue;
+          const value = JSON.parse(localStorage.getItem(key)!);
+          if (!value.title?.trim()) continue;
+          const id = key.slice(prefix.length);
+          const profile = account.profiles.some((p) => p.id === id);
+          found.push({
+            key,
+            title: value.title,
+            href: `/post?${profile ? 'advertiserId' : 'edit'}=${encodeURIComponent(id)}`,
+          });
+        }
+      } catch {}
+      setDrafts(found);
+    });
+  }, [userId, account.profiles]);
+  const queryString = (status: string) =>
+    `/my-adverts?${new URLSearchParams({ ...(status ? { state: status } : {}), ...(identity ? { identity } : {}) })}`;
   return (
-    <>
-      <div className="page-head">
+    <div className="owner-dashboard-clean">
+      <header className="page-head">
         <div>
-          <p className="eyebrow">YOUR CAMPUS CORNER</p>
-          <h1>My adverts</h1>
-          <p>Your items, services and Campus 360 adverts, all in one place.</p>
+          <h1>My Ads</h1>
         </div>
-      </div>
-      <nav className="tabs" aria-label="Selling identity">
-        <Link href="/my-adverts" aria-current={!identity ? 'page' : undefined}>
-          All identities
+        <Link className="btn" href={`/post${identity ? `?advertiserId=${identity}` : ''}`}>
+          <Icon name="plus" />
+          Post an advert
         </Link>
-        {account.profiles.map((p) => (
-          <Link
-            key={p.id}
-            href={`/my-adverts?identity=${p.id}`}
-            aria-current={identity === p.id ? 'page' : undefined}
-          >
-            {p.kind === 'business' ? 'Business' : 'Personal'}
+      </header>
+      {submitted ? (
+        <p className="form-success" role="status">
+          {account.settings.auto_publish
+            ? 'Your advert is live.'
+            : 'Your advert was submitted for approval.'}
+        </p>
+      ) : null}
+      {account.profiles.some((p) => p.kind === 'business') ? (
+        <nav className="owner-identity-filter" aria-label="Selling identity">
+          <Link href="/my-adverts" aria-current={!identity ? 'page' : undefined}>
+            All profiles
+          </Link>
+          {account.profiles.map((p) => (
+            <Link
+              key={p.id}
+              href={`/my-adverts?identity=${p.id}`}
+              aria-current={identity === p.id ? 'page' : undefined}
+            >
+              {p.kind === 'business' ? 'Business' : 'Personal'}
+            </Link>
+          ))}
+        </nav>
+      ) : null}
+      {drafts.length && (!state || state === 'draft') ? (
+        <section className="device-drafts" aria-label="Drafts on this device">
+          <h2>Saved on this device</h2>
+          {drafts.map((d) => (
+            <div key={d.key}>
+              <strong>{d.title}</strong>
+              <Link className="text-link" href={d.href}>
+                Continue draft <Icon name="arrow" />
+              </Link>
+              <button
+                type="button"
+                className="text-link"
+                onClick={() => {
+                  localStorage.removeItem(d.key);
+                  setDrafts((old) => old.filter((x) => x.key !== d.key));
+                }}
+              >
+                Discard
+              </button>
+            </div>
+          ))}
+        </section>
+      ) : null}
+      <nav className="tabs owner-status-tabs" aria-label="Advert status">
+        {[
+          ['', 'All'],
+          ['published', 'Live'],
+          ['draft', 'Drafts'],
+          ...(page.pendingCount ? [['pending', 'Pending']] : []),
+          ['closed', 'Closed'],
+        ].map(([key, label]) => (
+          <Link key={key} href={queryString(key)} aria-current={state === key ? 'page' : undefined}>
+            {label}
           </Link>
         ))}
       </nav>
-      <p className="helper">
-        {!account.profiles.some((p) => p.kind === 'student') ? (
-          <Link href="/onboarding?kind=student&next=/my-adverts">Add personal identity →</Link>
-        ) : null}{' '}
-        {!account.profiles.some((p) => p.kind === 'business') ? (
-          <Link href="/onboarding?kind=business&next=/my-business">Add a business →</Link>
-        ) : (
-          <Link href="/my-business">Manage business →</Link>
-        )}
-      </p>
-      {submitted ? (
-        <p className="form-success" role="status">
-          Your advert was submitted for approval. It will appear publicly after review.
-        </p>
-      ) : null}
-      {(
-        identity
-          ? account.profiles.find((p) => p.id === identity)?.suspended
-          : account.profiles.every((p) => p.suspended)
-      ) ? (
-        <ErrorMessage message="This advertiser profile is suspended. Contact an administrator before posting." />
-      ) : null}
-      <section className="seller-launch" aria-label="Create an advert">
-        <div>
-          <p className="eyebrow">WHAT WILL YOU SHARE?</p>
-          <h2>Create something for campus.</h2>
-          <p>Choose a format. Every submission is reviewed before it goes live.</p>
-        </div>
-        <div className="seller-formats">
-          {(
-            [
-              ['product', 'bag', 'Sell an item'],
-              ['wanted', 'search', 'Find something'],
-              ['service', 'tools', 'Offer a service'],
-              ['event', 'calendar', 'Share an event'],
-              ['promotion', 'tag', 'Run a promotion'],
-              ['announcement', 'megaphone', 'Post a notice'],
-              ['business_ad', 'store', 'Advertise a business'],
-            ] as const
-          ).map(([kind, icon, label]) => (
-            <Link
-              key={kind}
-              href={`/post?kind=${kind}${identity ? `&advertiserId=${identity}` : ''}`}
-            >
-              <Icon name={icon} />
-              <span>{label}</span>
-              <Icon name="chevron" />
-            </Link>
-          ))}
-        </div>
-      </section>
-      <div className="stats">
-        {[
-          ['Live adverts', count('published')],
-          ['Pending review', page.pendingCount],
-          ['Drafts', count('draft')],
-          ['Fulfilled', count('fulfilled')],
-        ].map(([label, value]) => (
-          <div className="stat" key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-          </div>
-        ))}
-      </div>
-      <div className="dashboard-grid">
-        <section>
-          <nav className="tabs" aria-label="Advert status">
-            {[
-              ['', 'All'],
-              ['published', 'Live'],
-              ['pending', 'Pending'],
-              ['draft', 'Drafts'],
-              ['rejected', 'Rejected'],
-              ['fulfilled', 'Fulfilled'],
-              ['expired', 'Expired'],
-              ['withdrawn', 'Withdrawn'],
-              ['suspended', 'Suspended'],
-            ].map(([key, label]) => (
-              <Link
-                className={state === key ? 'active' : ''}
-                key={key}
-                href={`/my-adverts?${new URLSearchParams({ ...(key ? { state: key } : {}), ...(identity ? { identity } : {}) })}`}
-                aria-current={state === key ? 'page' : undefined}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-          {page.items.length ? (
-            page.items.map((a) => {
-              const d = a.revisions[0]?.data;
-              const status = effectiveState(a);
-              const pending = a.revisions.some((r) => r.status === 'pending');
-              return (
-                <article className="advert-row" key={a.id}>
-                  <div className={`row-photo ${d && isFlyer(d.kind) ? 'flyer-photo' : ''}`}>
-                    <MediaImage id={d?.mediaIds[0]} alt={d?.title ?? 'Advert'} />
-                  </div>
-                  <div className="row-main">
-                    <h3>{d?.title ?? 'Untitled advert'}</h3>
-                    <p className="meta">{a.advertiser_name}</p>
-                    {d ? <p className="price">{priceText(d)}</p> : null}
-                    <p>
-                      {a.revisions[0]?.status === 'rejected'
-                        ? a.revisions[0].reason
-                        : status === 'published'
-                          ? `Expires ${dateText(a.expires_at)}`
-                          : `Updated ${dateText(a.revisions[0]?.created_at)}`}
-                    </p>
-                  </div>
-                  <div className="row-status">
-                    <span
-                      className={`badge ${pending ? 'pending' : status === 'rejected' ? 'rejected' : ''}`}
-                    >
-                      {a.profile_closed
-                        ? 'Closed business'
-                        : a.profile_deactivated
-                          ? 'Business inactive'
-                          : a.privacy_hidden
-                            ? 'Hidden: contact privacy'
-                            : pending && status === 'published'
-                              ? 'Live · edit pending'
-                              : stateLabel(status, d?.kind)}
-                    </span>
-                  </div>
-                  <Link className="btn secondary small" href={`/my-adverts/${a.id}`}>
+      {error ? <ErrorMessage message={error} /> : null}
+      <section className="owner-advert-list">
+        {page.items.length ? (
+          page.items.map((a) => {
+            const d = a.revisions[0]?.data;
+            const status = effectiveState(a);
+            const pending = a.revisions.some((r) => r.status === 'pending');
+            return (
+              <article className="advert-row" key={a.id}>
+                <div className={`row-photo ${d && isFlyer(d.kind) ? 'flyer-photo' : ''}`}>
+                  <MediaImage id={d?.mediaIds[0]} alt={d?.title ?? 'Advert'} />
+                </div>
+                <div className="row-main">
+                  <h3>{d?.title ?? 'Untitled advert'}</h3>
+                  {d ? <p className="price">{priceText(d)}</p> : null}
+                  <p className="meta">
+                    {account.profiles.length > 1 ? `${a.advertiser_name} · ` : ''}
+                    {status === 'published'
+                      ? `Expires ${dateText(a.expires_at)}`
+                      : `Updated ${dateText(a.revisions[0]?.created_at)}`}
+                  </p>
+                </div>
+                <span className={`badge ${status === 'published' ? 'live' : ''}`}>
+                  {a.privacy_hidden
+                    ? 'Hidden: contact privacy'
+                    : pending
+                      ? 'Pending review'
+                      : stateLabel(status, d?.kind)}
+                </span>
+                <div className="owner-row-actions">
+                  {!pending &&
+                  ['draft', 'published', 'rejected'].includes(status) &&
+                  !a.profile_closed ? (
+                    <Link className="btn secondary small" href={`/post?edit=${a.id}`}>
+                      {status === 'draft' ? 'Continue draft' : 'Edit'}
+                    </Link>
+                  ) : null}
+                  {status === 'published' && !a.profile_closed ? (
+                    <button className="btn secondary small" onClick={() => setClosing(a)}>
+                      Mark as{' '}
+                      {d?.kind === 'product'
+                        ? 'sold'
+                        : d?.kind === 'wanted'
+                          ? 'found'
+                          : 'completed'}
+                    </button>
+                  ) : null}
+                  <Link className="text-link" href={`/my-adverts/${a.id}`}>
                     Manage <Icon name="chevron" />
                   </Link>
-                </article>
-              );
-            })
-          ) : (
-            <EmptyState
-              title="No adverts here yet."
-              message="Create an item, service, wanted advert or Campus 360 flyer. Approved adverts are visible to everyone."
-              action={false}
-            />
-          )}
-          <div className="form-actions">
-            {offset > 0 ? (
-              <Link
-                className="btn secondary"
-                href={`/my-adverts?offset=${Math.max(0, offset - 20)}${state ? `&state=${state}` : ''}${identity ? `&identity=${identity}` : ''}`}
-              >
-                Previous
-              </Link>
-            ) : null}
-            {page.nextOffset !== null ? (
-              <Link
-                className="btn secondary"
-                href={`/my-adverts?offset=${page.nextOffset}${state ? `&state=${state}` : ''}${identity ? `&identity=${identity}` : ''}`}
-              >
-                Next adverts
-              </Link>
-            ) : null}
-          </div>
-        </section>
-        <aside className="dashboard-aside">
-          <div className="panel">
-            <h3>Your posting allowance</h3>
-            {account.role === 'admin' ? (
-              <p>
-                No daily or active-advert limit for administrator submissions, including adverts
-                posted for others. Content review and image checks still apply.
-              </p>
-            ) : (
-              <>
-                <p>
-                  <strong>
-                    {account.activeCount} of {account.settings.max_active}
-                  </strong>{' '}
-                  active slots reserved
-                </p>
-                <div className="progress">
-                  <span
-                    style={{
-                      width: `${Math.min(100, (account.activeCount / account.settings.max_active) * 100)}%`,
-                    }}
-                  />
                 </div>
-                <p>
-                  {Math.max(0, account.settings.daily_limit - account.dailyUsed)} new submissions
-                  left today.
-                </p>
-                <p style={{ marginTop: 16 }}>
-                  Personal and business adverts share this allowance. Pending adverts reserve a
-                  slot. Editing an existing advert does not use another daily submission.
-                </p>
-              </>
-            )}
-            {account.profiles.some((p) => p.kind === 'business') ? (
-              <Link className="text-link" href="/my-business">
-                Manage business profile →
-              </Link>
-            ) : null}
-          </div>
-        </aside>
+              </article>
+            );
+          })
+        ) : (
+          <EmptyState
+            title="No adverts here yet."
+            message="Your adverts will appear here."
+            action={false}
+          />
+        )}
+      </section>
+      <div className="form-actions">
+        {offset > 0 ? (
+          <Link
+            className="btn secondary"
+            href={`${queryString(state)}&offset=${Math.max(0, offset - 20)}`}
+          >
+            Previous
+          </Link>
+        ) : null}
+        {page.nextOffset !== null ? (
+          <Link className="btn secondary" href={`${queryString(state)}&offset=${page.nextOffset}`}>
+            Next adverts
+          </Link>
+        ) : null}
       </div>
-    </>
+      {closing ? (
+        <Dialog title="Close this advert?" onClose={() => !busy && setClosing(null)}>
+          <p>This will move the advert out of live listings.</p>
+          <button
+            className="btn"
+            disabled={busy}
+            onClick={async () => {
+              setBusy(true);
+              try {
+                await api(`me/adverts/${closing.id}/fulfill`, 'POST');
+                setClosing(null);
+                router.refresh();
+              } catch (e) {
+                setError(e instanceof Error ? e.message : 'Could not update advert.');
+              } finally {
+                setBusy(false);
+              }
+            }}
+          >
+            Confirm
+          </button>
+        </Dialog>
+      ) : null}
+    </div>
   );
 }
 export function OwnerDetail({ advert }: { advert: OwnAdvert }) {
