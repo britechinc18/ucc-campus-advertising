@@ -23,7 +23,7 @@ export default async function SignInPage({
           <svg className="seller-promo-defs" aria-hidden="true" focusable="false">
             <defs>
               <clipPath id="seller-promo-shape" clipPathUnits="objectBoundingBox">
-                <path d="M.08,0 H.92 Q1,0 1,.12 V.88 Q1,1 .92,1 H.73 C.63,1 .65,.79 .55,.79 H.06 Q0,.79 0,.69 V.12 Q0,0 .08,0 Z" />
+                <path d="M.08,0 H.92 Q1,0 1,.12 V.88 Q1,1 .92,1 H.65 C.56,1 .59,.76 .49,.76 H.06 Q0,.76 0,.66 V.12 Q0,0 .08,0 Z" />
               </clipPath>
             </defs>
           </svg>
