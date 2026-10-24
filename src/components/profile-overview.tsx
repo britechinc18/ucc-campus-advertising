@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { initials } from '@/lib/market';
 import {
@@ -20,7 +20,8 @@ export function ProfileOverview({
   href,
   advertiserId,
   categories,
-  busy,
+  pendingFields,
+  lifecycle,
   error,
   onSave,
   onReset,
@@ -30,7 +31,8 @@ export function ProfileOverview({
   href?: string;
   advertiserId: string;
   categories: { id: string; name: string }[];
-  busy: boolean;
+  pendingFields: string[];
+  lifecycle?: ReactNode;
   error: string;
   onReset: () => void;
   onSave: (field: string, value: unknown, consent?: boolean) => Promise<boolean>;
@@ -44,6 +46,7 @@ export function ProfileOverview({
     image = data[imageField],
     bioField = business ? 'description' : 'bio',
     bio = data[bioField];
+  const busy = !!editing && pendingFields.includes(editing);
   const name = data.name || 'Add your name';
   const labels: Record<string, string> = {
     name: business ? 'Business name' : 'Display name',
@@ -80,7 +83,8 @@ export function ProfileOverview({
     if (social && next && !String(next).startsWith('https://'))
       next = socialExamples[social].replace('username', String(next).replace(/^@/, ''));
     if (editing === imageField) next = photo[0] ?? null;
-    if (await onSave(editing, next, consent)) setEditing(null);
+    if (await onSave(editing, next, consent))
+      setEditing((current) => (current === editing ? null : current));
   }
   function visibility(field: 'photo' | SocialPlatform, label: string) {
     return (
@@ -89,7 +93,7 @@ export function ProfileOverview({
         role="switch"
         aria-checked={data.visibility?.[field] !== false}
         aria-label={`Show ${label}`}
-        disabled={busy}
+        disabled={pendingFields.includes(`visible.${field}`)}
         onClick={() => void onSave(`visible.${field}`, data.visibility?.[field] === false)}
       >
         <span />
@@ -110,7 +114,7 @@ export function ProfileOverview({
             <button
               className="profile-camera"
               aria-label={business ? 'Change business logo' : 'Change profile photo'}
-              disabled={busy}
+              disabled={pendingFields.includes(imageField)}
               onClick={() => open(imageField)}
             >
               <Icon name="camera" />
@@ -121,7 +125,7 @@ export function ProfileOverview({
             <button
               className="icon-btn"
               aria-label="Edit name"
-              disabled={busy}
+              disabled={pendingFields.includes('name')}
               onClick={() => open('name')}
             >
               <Icon name="edit" />
@@ -129,9 +133,10 @@ export function ProfileOverview({
           </div>
           <span className="profile-kind">{business ? 'Business seller' : 'Personal seller'}</span>
           <div className="profile-photo-visibility">
-            <span>Show {business ? 'logo' : 'photo'}</span>
+            <span>Show {business ? 'logo' : 'photo'} publicly</span>
             {visibility('photo', business ? 'business logo' : 'profile photo')}
           </div>
+          {lifecycle}
         </section>
         <section className="profile-section profile-about">
           <h2>{business ? 'About your business' : 'About you'}</h2>
@@ -149,6 +154,7 @@ export function ProfileOverview({
                 </span>
                 <textarea
                   className="field-input"
+                  aria-label={label}
                   autoFocus
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
@@ -189,12 +195,62 @@ export function ProfileOverview({
                     ? 'Tell buyers about your business and what you offer.'
                     : 'Tell buyers a little about yourself and what you sell.')}
               </p>
-              <button className="text-link" disabled={busy} onClick={() => open(bioField)}>
+              <button
+                className="profile-intro-action"
+                disabled={pendingFields.includes(bioField)}
+                onClick={() => open(bioField)}
+              >
+                <Icon name="edit" />
                 {bio ? 'Edit introduction' : 'Add introduction'} →
               </button>
             </>
           )}
         </section>
+        {business ? (
+          <section className="profile-section">
+            <h2>Business details</h2>
+            {['slug', 'categoryId'].map((field) => (
+              <div className="profile-detail-row" key={field}>
+                <div>
+                  <h3>{labels[field]}</h3>
+                  <p>
+                    {field === 'categoryId'
+                      ? (categories.find((c) => c.id === data.categoryId)?.name ?? 'Not added')
+                      : (data.slug ?? 'Assigned when your profile is complete')}
+                  </p>
+                </div>
+                <button
+                  className="profile-row-action"
+                  disabled={pendingFields.includes(field) || (field === 'slug' && !!href)}
+                  onClick={() => open(field)}
+                  aria-label={`Edit ${labels[field]}`}
+                >
+                  Edit
+                </button>
+              </div>
+            ))}
+          </section>
+        ) : (
+          <section className="profile-section profile-public-card">
+            <h2>View public profile</h2>
+            <p>
+              {href
+                ? 'See the profile buyers see when they browse your adverts.'
+                : 'Your public profile appears once an advert is live.'}
+            </p>
+            {href ? (
+              <Link className="profile-intro-action" href={href}>
+                View profile <Icon name="arrow" />
+              </Link>
+            ) : (
+              <>
+                <button className="profile-intro-action" disabled>
+                  View profile <Icon name="arrow" />
+                </button>
+              </>
+            )}
+          </section>
+        )}
       </div>
       <div className="profile-right-column">
         <section className="profile-section">
@@ -217,7 +273,7 @@ export function ProfileOverview({
               </div>
               <button
                 className="profile-row-action"
-                disabled={busy}
+                disabled={pendingFields.includes(row.field)}
                 aria-label={`${row.value ? 'Edit' : 'Add'} ${row.label}`}
                 onClick={() => open(row.field)}
               >
@@ -252,10 +308,13 @@ export function ProfileOverview({
                   </p>
                 </div>
                 <div className="profile-row-controls">
-                  {visibility(platform, socialLabels[platform])}
+                  <div className="profile-public-control">
+                    <span>{data.visibility?.[platform] === false ? 'Hidden' : 'Public'}</span>
+                    {visibility(platform, socialLabels[platform])}
+                  </div>
                   <button
                     className="profile-row-action"
-                    disabled={busy}
+                    disabled={pendingFields.includes(`social.${platform}`)}
                     aria-label={`${link ? 'Edit' : 'Add'} ${socialLabels[platform]}`}
                     onClick={() => open(`social.${platform}`)}
                   >
@@ -266,45 +325,11 @@ export function ProfileOverview({
             );
           })}
         </section>
-        {business ? (
-          <section className="profile-section">
-            <h2>Business details</h2>
-            {['slug', 'categoryId'].map((field) => (
-              <div className="profile-detail-row" key={field}>
-                <div>
-                  <h3>{labels[field]}</h3>
-                  <p>
-                    {field === 'categoryId'
-                      ? (categories.find((c) => c.id === data.categoryId)?.name ?? 'Not added')
-                      : (data.slug ?? 'Assigned when your profile is complete')}
-                  </p>
-                </div>
-                <button
-                  className="profile-row-action"
-                  disabled={busy || (field === 'slug' && !!href)}
-                  onClick={() => open(field)}
-                  aria-label={`Edit ${labels[field]}`}
-                >
-                  Edit
-                </button>
-              </div>
-            ))}
-          </section>
-        ) : null}
         {error && !editing ? <ErrorMessage message={error} /> : null}
-        <div className="profile-overview-links">
-          {href ? (
-            <Link className="text-link" href={href}>
-              View public profile →
-            </Link>
-          ) : null}
-          <Link className="text-link" href="/my-adverts">
-            Manage adverts →
-          </Link>
-        </div>
       </div>
       {editing && editing !== bioField ? (
         <Dialog
+          className="profile-edit-dialog"
           initialFocus=".profile-field-dialog input:not([type='checkbox']), .profile-field-dialog select"
           title={label}
           onClose={() => {
@@ -336,9 +361,9 @@ export function ProfileOverview({
               </>
             ) : editing === 'categoryId' ? (
               <label className="form-group">
-                <span className="form-label">{label}</span>
                 <select
                   className="field-input"
+                  aria-label={label}
                   value={value}
                   onChange={(e) => setValue(e.target.value)}
                 >
@@ -352,9 +377,9 @@ export function ProfileOverview({
               </label>
             ) : (
               <label className="form-group">
-                <span className="form-label">{label}</span>
                 <input
                   className="field-input"
+                  aria-label={label}
                   autoFocus
                   value={value}
                   onChange={(e) => setValue(e.target.value)}

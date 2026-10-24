@@ -54,11 +54,13 @@ export function Dialog({
   children,
   onClose,
   initialFocus,
+  className = '',
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   initialFocus?: string;
+  className?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   useEffect(() => {
@@ -75,7 +77,7 @@ export function Dialog({
   return (
     <dialog
       ref={ref}
-      className="app-dialog"
+      className={`app-dialog ${className}`}
       onClose={onClose}
       onClick={(e) => {
         if (e.target === ref.current) onClose();

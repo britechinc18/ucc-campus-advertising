@@ -1,6 +1,5 @@
 'use client';
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useRef, type ReactNode } from 'react';
 import type { ProfileDefaults } from '@/lib/seller-profile';
 import { api } from '@/lib/api';
 import { ProfileOverview } from './profile-overview';
@@ -18,6 +17,7 @@ export function ProfileFieldEditor({
   assisted = false,
   href,
   categories = [],
+  lifecycle,
 }: {
   initial: ProfileDetails;
   version: number;
@@ -26,39 +26,50 @@ export function ProfileFieldEditor({
   assisted?: boolean;
   href?: string;
   categories?: { id: string; name: string }[];
+  lifecycle?: (name: string) => ReactNode;
 }) {
   const [data, setData] = useState(initial),
-    [version, setVersion] = useState(initialVersion),
-    [busy, setBusy] = useState(false),
+    [pendingFields, setPendingFields] = useState<string[]>([]),
     [error, setError] = useState(''),
     [notice, setNotice] = useState('');
-  const router = useRouter();
+  const versionRef = useRef(initialVersion);
+  const queue = useRef<Promise<unknown>>(Promise.resolve());
+  const [publicHref, setPublicHref] = useState(href);
   async function save(field: string, value: unknown, contactConsent?: boolean) {
-    setBusy(true);
+    setPendingFields((fields) => [...fields, field]);
+    const previous = queue.current;
+    let release!: () => void;
+    queue.current = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await previous;
     setError('');
     setNotice('');
     try {
-      const result = await api<{ data: ProfileDetails; version: number }>(
+      const result = await api<{ data: ProfileDetails; version: number; complete: boolean }>(
         assisted ? `admin/advertisers/${id}/profile-details` : 'me/profile-details',
         'PATCH',
         {
           kind: business ? 'business' : 'student',
           field,
           value,
-          version,
+          version: versionRef.current,
           ...(contactConsent ? { contactConsent: true } : {}),
         },
       );
       setData(result.data);
-      setVersion(result.version);
+      versionRef.current = result.version;
+      if (business && result.complete && result.data.slug)
+        setPublicHref(`/businesses/${result.data.slug}`);
       setNotice('Saved.');
-      router.refresh();
+
       return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save. Please try again.');
       return false;
     } finally {
-      setBusy(false);
+      setPendingFields((fields) => fields.filter((item) => item !== field));
+      release();
     }
   }
   return (
@@ -66,10 +77,11 @@ export function ProfileFieldEditor({
       <ProfileOverview
         data={data}
         business={business}
-        href={href}
+        href={publicHref}
+        lifecycle={lifecycle?.(data.name ?? '')}
         advertiserId={id}
         categories={categories}
-        busy={busy}
+        pendingFields={pendingFields}
         error={error}
         onReset={() => {
           setError('');
@@ -78,7 +90,7 @@ export function ProfileFieldEditor({
         onSave={save}
       />
       {notice ? (
-        <p className="form-success" role="status">
+        <p className="sr-only" role="status">
           {notice}
         </p>
       ) : null}

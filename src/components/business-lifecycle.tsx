@@ -17,15 +17,8 @@ export function BusinessLifecycle({
     [error, setError] = useState('');
   const router = useRouter();
   return (
-    <section className="panel profile-review">
-      <h2>Business availability</h2>
-      <p>
-        {reactivationPending
-          ? 'Reactivation is awaiting administrator review.'
-          : deactivated
-            ? 'Your storefront and associated adverts are hidden.'
-            : 'Your approved storefront and eligible adverts can appear publicly.'}
-      </p>
+    <div className="profile-business-actions">
+      {reactivationPending ? <p>Reactivation is awaiting administrator review.</p> : null}
       <div className="form-actions">
         <button
           className="btn secondary"
@@ -107,6 +100,6 @@ export function BusinessLifecycle({
           </form>
         </Dialog>
       ) : null}
-    </section>
+    </div>
   );
 }
