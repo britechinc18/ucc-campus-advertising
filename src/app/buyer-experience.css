@@ -1173,6 +1173,9 @@
   text-underline-offset: 3px;
 }
 .google-continue {
+  background: #fff;
+  color: #1f1f1f;
+  border-color: #747775;
   width: 100%;
   min-height: 46px;
   gap: 12px;
