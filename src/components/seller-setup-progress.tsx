@@ -15,7 +15,6 @@ export function SellerSetupProgress({ step }: { step: number }) {
           </li>
         ))}
       </ol>
-      <p className="meta">Step {currentStep} of 3</p>
     </nav>
   );
 }

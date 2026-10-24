@@ -15,7 +15,9 @@ export default async function SignInPage({
   const returning = params.returning === '1';
   const next = returning ? '/my-adverts' : safeReturn(params.next);
   const v = await viewer();
-  if (v.user && !v.user.suspended) redirect(next);
+  if (v.user?.suspended) redirect('/account-restricted');
+  const afterSignIn = `/sign-in/complete?${new URLSearchParams({ next })}`;
+  if (v.user) redirect(afterSignIn);
   return (
     <main id="main" className="container seller-welcome-layout seller-signin-layout">
       <aside className="seller-signin-intro" aria-label="About MedStash">
@@ -106,7 +108,13 @@ export default async function SignInPage({
                 redirect(
                   `/sign-in?${new URLSearchParams({ next, error: 'rules', ...(returning ? { returning: '1' } : {}) })}`,
                 );
-              await signIn('google', { redirectTo: next });
+              await signIn(
+                'google',
+                {
+                  redirectTo: formData.get('intent') === 'returning' ? '/my-adverts' : afterSignIn,
+                },
+                { prompt: 'select_account' },
+              );
             }}
           >
             <label className="welcome-consent">
@@ -122,28 +130,18 @@ export default async function SignInPage({
               </span>
               Continue with Google
             </button>
+            <p className="welcome-returning">
+              Already have an account?{' '}
+              <button type="submit" name="intent" value="returning" className="welcome-signin">
+                Sign in
+              </button>
+            </p>
           </form>
         ) : (
           <Link className="btn" href="/explore">
             Browse the market
           </Link>
         )}
-        {v.configured ? (
-          <p className="welcome-returning">
-            {returning ? (
-              <>
-                New to selling?{' '}
-                <Link href="/sign-in?next=%2Fonboarding%3Fnext%3D%2Fpost">
-                  Create your seller profile
-                </Link>
-              </>
-            ) : (
-              <>
-                Already have an account? <Link href="/sign-in?returning=1">Sign in</Link>
-              </>
-            )}
-          </p>
-        ) : null}
         <Link className="welcome-browse btn secondary" href="/explore">
           Keep browsing <Icon name="arrow" />
         </Link>

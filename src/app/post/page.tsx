@@ -1,4 +1,3 @@
-import { IdentityPicker } from '@/components/identity-picker';
 import { redirect } from 'next/navigation';
 import { sql } from 'drizzle-orm';
 import { requireViewer } from '@/server/viewer';
@@ -26,12 +25,12 @@ export default async function PostPage({
       ? selected
       : undefined;
   if (selected && !assisted) context = await accountContext(u.id, selected);
-  if (!p.edit && !selected && context.profiles.length > 1)
-    return (
-      <main id="main" className="container">
-        <IdentityPicker profiles={context.profiles} kind={initialKind} />
-      </main>
+  if (!p.edit && !selected) {
+    const business = context.profiles.find(
+      (profile) => profile.kind === 'business' && !profile.suspended && !profile.deactivated,
     );
+    if (business) context = { ...context, profile: business };
+  }
   if (!context.profiles.length && !assisted && !(p.edit && u.role === 'admin'))
     redirect('/onboarding?next=/post');
   if (!p.edit && !assisted && context.profile?.suspended)

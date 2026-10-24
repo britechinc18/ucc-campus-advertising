@@ -226,8 +226,11 @@ test('theme override, dialog focus and onboarding work', async ({ page }, testIn
     }
   }
   await page.getByRole('button', { name: 'Continue →', exact: true }).click();
-  await expect(page.getByRole('navigation', { name: 'Seller setup progress' })).toContainText(
-    'Step 2 of 3',
+  await expect(page.getByRole('navigation', { name: 'Seller setup progress' })).not.toContainText(
+    /Step \d+ of \d+/,
+  );
+  await expect(page.locator('.seller-setup-progress [aria-current=step]')).toHaveText(
+    'Set up profile',
   );
   await expect(page.getByLabel('Phone number', { exact: true })).toHaveAttribute(
     'placeholder',
@@ -463,6 +466,8 @@ test('existing seller gets flat navigation and can draft every supported advert 
   await session(page.context(), 'owner');
   await page.goto('/');
   await expect(page.locator('.seller-nav')).toContainText('My Ads');
+  await page.goto('/post');
+  await expect(page.getByLabel('Public identity')).toHaveCount(0);
   await expect(page.locator('.buyer-nav')).toHaveCount(0);
   await page.setViewportSize({ width: 1440, height: 1000 });
   await expect(
@@ -1102,13 +1107,15 @@ test('one owner can add a business, select posting identity and filter My Ads', 
   await field(page, /^(Add|Edit) Phone number$/, '0241234567');
   await field(page, /^(Add|Edit) WhatsApp$/, '0543982307');
   await page.goto('/post?kind=service');
-  await expect(page.getByRole('heading', { name: 'Who are you posting as?' })).toBeVisible();
-  await page.getByRole('link', { name: 'Campus Wardrobe Business' }).click();
-  await expect(page.getByText('Posting as', { exact: false }).first()).toContainText(
-    'Campus Wardrobe',
+  await expect(page.getByRole('heading', { name: 'Who are you posting as?' })).toHaveCount(0);
+  await expect(page.getByLabel('Public identity')).toHaveValue(
+    (await page
+      .getByLabel('Public identity')
+      .locator('option', { hasText: 'Business — Campus Wardrobe' })
+      .getAttribute('value')) ?? '',
   );
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Post an advert');
-  const selected = new URL(page.url()).searchParams.get('advertiserId');
+  const selected = await page.getByLabel('Public identity').inputValue();
   const context = await (await page.request.get('/api/v1/me/context')).json();
   expect(context.profiles).toHaveLength(2);
   const content = {
@@ -1292,14 +1299,42 @@ test('simplified discovery and seller welcome keep essential navigation and cons
       fullPage: true,
     });
   }
+  // Both entry points start the same Google account chooser, without another welcome page.
+  await page.route('https://accounts.google.com/**', (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<h1>Google account chooser</h1>' }),
+  );
   await page
     .locator('.welcome-returning')
-    .getByRole('link', { name: 'Sign in', exact: true })
+    .getByRole('button', { name: 'Sign in', exact: true })
     .click();
-  await expect(page).toHaveURL(/returning=1/);
-  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Welcome back.');
+  await expect(page).toHaveURL(/^https:\/\/accounts\.google\.com\//);
+  expect(new URL(page.url()).searchParams.get('prompt')).toBe('select_account');
+  let callback = (await page.context().cookies('http://localhost:3000')).find(
+    (cookie) => cookie.name === 'authjs.callback-url',
+  );
+  expect(decodeURIComponent(callback!.value)).toBe('http://localhost:3000/my-adverts');
+  await page.goto('/sell');
+  await page.getByRole('checkbox').check();
+  await page.getByRole('button', { name: 'Continue with Google', exact: true }).click();
+  await expect(page).toHaveURL(/^https:\/\/accounts\.google\.com\//);
+  expect(new URL(page.url()).searchParams.get('prompt')).toBe('select_account');
+  callback = (await page.context().cookies('http://localhost:3000')).find(
+    (cookie) => cookie.name === 'authjs.callback-url',
+  );
+  const afterGoogle = new URL(decodeURIComponent(callback!.value));
+  expect(afterGoogle.pathname).toBe('/sign-in/complete');
+  expect(new URL(afterGoogle.searchParams.get('next')!, 'http://localhost:3000').pathname).toBe(
+    '/onboarding',
+  );
+  // Use a synthetic authenticated session for the post-OAuth destination.
   await session(page.context(), 'owner');
-  await page.reload();
+  await page.goto(afterGoogle.href);
+  await expect(page).toHaveURL(/\/my-adverts$/);
+  await page.goto('/sign-in?next=/onboarding%3Fnext%3D%2Fpost');
+  await expect(page).toHaveURL(/\/my-adverts$/);
+  await page.goto('/sign-in/complete?next=/post');
+  await expect(page).toHaveURL(/\/my-adverts$/);
+  await page.goto('/sell');
   await expect(page).toHaveURL(/\/my-adverts$/);
 });
 
