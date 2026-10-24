@@ -10,6 +10,7 @@ export function Uploads({
   maxBytes = 5242880,
   advertiserId,
   onBusy,
+  profilePhoto = false,
 }: {
   ids: string[];
   onChange: (ids: string[]) => void;
@@ -17,6 +18,7 @@ export function Uploads({
   maxBytes?: number;
   advertiserId?: string;
   onBusy?: (busy: boolean) => void;
+  profilePhoto?: boolean;
 }) {
   const [busy, setBusy] = useState(false);
   const [failures, setFailures] = useState<{ file: File; message: string }[]>([]);
@@ -69,33 +71,42 @@ export function Uploads({
       <div className="upload-grid">
         {ids.map((id, i) => (
           <div className="uploaded-photo" key={id}>
-            <MediaImage id={id} alt={`Advert photograph ${i + 1}`} />
-            <span className="upload-cover">{i === 0 ? 'Cover' : `Photo ${i + 1}`}</span>
+            <MediaImage
+              id={id}
+              alt={profilePhoto ? 'Profile photograph' : `Advert photograph ${i + 1}`}
+            />
+            {!profilePhoto ? (
+              <span className="upload-cover">{i === 0 ? 'Cover' : `Photo ${i + 1}`}</span>
+            ) : null}
             <div className="upload-controls">
-              <button
-                type="button"
-                disabled={busy || i === 0}
-                aria-label={`Move photo ${i + 1} earlier`}
-                onClick={() => {
-                  const next = [...ids];
-                  [next[i - 1], next[i]] = [next[i], next[i - 1]];
-                  onChange(next);
-                }}
-              >
-                ←
-              </button>
-              <button
-                type="button"
-                disabled={busy || i === ids.length - 1}
-                aria-label={`Move photo ${i + 1} later`}
-                onClick={() => {
-                  const next = [...ids];
-                  [next[i + 1], next[i]] = [next[i], next[i + 1]];
-                  onChange(next);
-                }}
-              >
-                →
-              </button>
+              {!profilePhoto ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={busy || i === 0}
+                    aria-label={`Move photo ${i + 1} earlier`}
+                    onClick={() => {
+                      const next = [...ids];
+                      [next[i - 1], next[i]] = [next[i], next[i - 1]];
+                      onChange(next);
+                    }}
+                  >
+                    ←
+                  </button>
+                  <button
+                    type="button"
+                    disabled={busy || i === ids.length - 1}
+                    aria-label={`Move photo ${i + 1} later`}
+                    onClick={() => {
+                      const next = [...ids];
+                      [next[i + 1], next[i]] = [next[i], next[i + 1]];
+                      onChange(next);
+                    }}
+                  >
+                    →
+                  </button>
+                </>
+              ) : null}
               <button
                 type="button"
                 disabled={busy}
@@ -110,13 +121,13 @@ export function Uploads({
         {ids.length < max ? (
           <label className="upload-tile">
             <Icon name="upload" />
-            <span>{busy ? 'Uploading…' : 'Add photos'}</span>
+            <span>{busy ? 'Uploading…' : profilePhoto ? 'Add photo' : 'Add photos'}</span>
             <input
               type="file"
               multiple={max > 1}
               accept="image/jpeg,image/png,image/webp"
               disabled={busy}
-              aria-label="Select photographs"
+              aria-label={profilePhoto ? 'Choose profile image' : 'Select photographs'}
               onChange={(e) => {
                 const files = Array.from(e.target.files ?? []);
                 e.target.value = '';
@@ -127,8 +138,8 @@ export function Uploads({
         ) : null}
       </div>
       <p className="helper">
-        Cover photo first. Up to {max} photos · JPEG, PNG or WebP ·{' '}
-        {(maxBytes / 1048576).toFixed(1)} MB each.
+        {profilePhoto ? 'One profile image' : `Cover photo first. Up to ${max} photos`} · JPEG, PNG
+        or WebP · {(maxBytes / 1048576).toFixed(1)} MB each.
       </p>
       {progress ? (
         <p className="inline-notice" role="status">

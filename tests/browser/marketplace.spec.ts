@@ -560,8 +560,6 @@ test('brand icons, buyer and seller menus and real notification panels work', as
   await expect(page.locator('.footer .brand-logo')).toBeAttached();
   await expect(page.getByLabel('Menu', { exact: true })).toBeVisible();
   await expect(page.locator('.seller-avatar')).toHaveCount(0);
-  await page.getByRole('link', { name: 'Search MedStash', exact: true }).click();
-  await expect(page.locator('#home-search')).toBeFocused();
   const bell = page.locator('.notification-menu > summary');
   await bell.click();
   await expect(page.locator('.notification-content')).toHaveAttribute('aria-busy', 'false');
@@ -570,6 +568,8 @@ test('brand icons, buyer and seller menus and real notification panels work', as
   await page.keyboard.press('Escape');
   await expect(bell).toBeFocused();
   await expect(page.locator('.notification-menu')).not.toHaveAttribute('open');
+  await page.getByRole('link', { name: 'Search MedStash', exact: true }).click();
+  await expect(page.locator('#home-search')).toBeFocused();
   await page.route('**/api/v1/notifications', async (route) => {
     await new Promise((resolve) => setTimeout(resolve, 250));
     await route.fulfill({ status: 503, json: { message: 'Unavailable' } });

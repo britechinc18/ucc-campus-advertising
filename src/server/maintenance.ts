@@ -12,7 +12,7 @@ export async function maintenance(objects?: ObjectStorage) {
   const stale = await db().transaction(async (tx) => {
     const rows = await query<{ id: string; object_key: string; advertiser_id: string }>(
       tx,
-      sql`select m.id,m.object_key,m.advertiser_id from media_assets m where m.created_at<now()-interval '1 day' and m.state in ('staged','ready','deleting') and not exists(select 1 from revision_media rm where rm.media_id=m.id) and not exists(select 1 from advertisers p where p.approved_defaults->>'photoMediaId'=m.id::text or p.draft_defaults->>'photoMediaId'=m.id::text) and not exists(select 1 from business_profiles b where b.approved->>'logoMediaId'=m.id::text or b.pending->>'logoMediaId'=m.id::text) order by m.id for update skip locked limit 50`,
+      sql`select m.id,m.object_key,m.advertiser_id from media_assets m where m.created_at<now()-interval '1 day' and m.state in ('staged','ready','deleting') and not exists(select 1 from revision_media rm where rm.media_id=m.id) and not exists(select 1 from advertisers p where p.approved_defaults->>'photoMediaId'=m.id::text or p.draft_defaults->>'photoMediaId'=m.id::text or p.draft_defaults->>'logoMediaId'=m.id::text) and not exists(select 1 from business_profiles b where b.approved->>'logoMediaId'=m.id::text or b.pending->>'logoMediaId'=m.id::text) order by m.id for update skip locked limit 50`,
     );
     for (const m of rows)
       await tx.execute(sql`update media_assets set state='deleting' where id=${m.id}`);

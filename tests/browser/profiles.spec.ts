@@ -350,13 +350,23 @@ test('focused editors guide input, cancel cleanly and keep visibility beside eac
   await expect(visible).toHaveAttribute('aria-checked', 'false');
   await page.reload();
   await expect(visible).toHaveAttribute('aria-checked', 'false');
-  await expect(page.getByRole('button', { name: 'Change profile photo' })).toBeVisible();
+  await page.getByRole('button', { name: 'Change profile photo' }).click();
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByLabel('Choose profile image')).toHaveAttribute(
+    'accept',
+    'image/jpeg,image/png,image/webp',
+  );
+  await expect(dialog.getByText('Cover photo first.', { exact: false })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   for (const width of [390, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     await page.getByRole('button', { name: /^(Add|Edit) Phone number$/ }).click();
     await expect(dialog).toBeVisible();
     await expect(dialog.getByRole('textbox')).toBeFocused();
-    await page.screenshot({ path: testInfo.outputPath(`focused-phone-${width}.png`) });
+    await page.screenshot({
+      animations: 'disabled',
+      path: testInfo.outputPath(`focused-phone-${width}.png`),
+    });
     await dialog.getByRole('button', { name: 'Cancel', exact: true }).click();
   }
 });

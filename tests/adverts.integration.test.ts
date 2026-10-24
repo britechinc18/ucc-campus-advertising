@@ -1375,6 +1375,32 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       'Updated legacy business description for campus students.',
     );
   });
+  it('retains a business logo saved before the rest of the profile is complete', async () => {
+    const p = (await createProfile(owner, {
+      name: 'New Campus Business',
+      kind: 'business',
+      consent: true,
+    })) as { id: string };
+    const mid = randomUUID();
+    await pool.query(
+      "insert into media_assets(id,advertiser_id,object_key,state,bytes,created_at) values($1,$2,$3,'ready',10,now()-interval '2 days')",
+      [mid, p.id, `derived/${mid}.webp`],
+    );
+    await patchProfileField(owner, {
+      kind: 'business',
+      version: 0,
+      field: 'logoMediaId',
+      value: mid,
+    });
+    const objects: ObjectStorage = {
+      sign: async () => '',
+      read: async () => Buffer.from('logo-bytes'),
+      write: async () => {},
+      remove: async () => {},
+    };
+    expect((await maintenance(objects)).cleaned).toBe(0);
+    expect((await readMedia(owner, mid, objects)).toString()).toBe('logo-bytes');
+  });
   it('keeps legacy snapshots independent from profile updates', async () => {
     const ad = await submit('Legacy contact stays unchanged');
     await moderate(admin, ad.revisionId, 'approve', 'Reviewed legacy advert');

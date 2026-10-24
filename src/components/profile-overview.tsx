@@ -305,6 +305,7 @@ export function ProfileOverview({
       </div>
       {editing && editing !== bioField ? (
         <Dialog
+          initialFocus=".profile-field-dialog input:not([type='checkbox']), .profile-field-dialog select"
           title={label}
           onClose={() => {
             setEditing(null);
@@ -325,6 +326,7 @@ export function ProfileOverview({
                   it.
                 </p>
                 <Uploads
+                  profilePhoto
                   advertiserId={advertiserId}
                   ids={photo}
                   onChange={setPhoto}
