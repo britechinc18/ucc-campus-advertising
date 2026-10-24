@@ -1192,10 +1192,13 @@ test('admin creates an assisted business and hands management to a verified owne
     ).toEqual([]);
     await page.screenshot({ path: `/tmp/medstash-handover-${theme}.png`, fullPage: true });
   }
-  await page.getByRole('button', { name: 'Confirm handover', exact: true }).click();
-  await expect(page.getByRole('status')).toHaveText(
-    'Management handed over to the verified owner.',
+  const handoverResponse = page.waitForResponse(
+    (response) =>
+      response.url().endsWith(`/admin/advertisers/${identity}/claim`) &&
+      response.request().method() === 'POST',
   );
+  await page.getByRole('button', { name: 'Confirm handover', exact: true }).click();
+  expect((await handoverResponse).status()).toBe(200);
   await session(pub.context(), 'stranger');
   await pub.goto('/my-business');
   await expect(pub.getByText('assisted-campus-clothing', { exact: true })).toBeVisible();
