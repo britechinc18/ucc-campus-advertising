@@ -429,9 +429,7 @@ test('profile cards align, dialogs stay compact and only the saved control react
   await page
     .locator('.profile-inline-editor textarea')
     .fill('A short introduction saved without disturbing another editor.');
-  const bioSave = page
-    .locator('.profile-inline-editor')
-    .getByRole('button', { name: 'Save', exact: true });
+  const bioSave = page.locator('.profile-inline-editor').getByRole('button', { name: /^Sav/ });
   await bioSave.click();
   await expect(bioSave).toBeDisabled();
   await page.getByRole('button', { name: /^(Add|Edit) Phone number$/ }).click();
