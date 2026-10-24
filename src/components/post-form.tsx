@@ -458,10 +458,10 @@ export function PostForm({
             ))}
           </select>
         </label>
-      ) : advert ? (
+      ) : advert || assisted ? (
         <p className="inline-notice">
-          Posting as <strong>{identity?.name ?? account.profile?.name}</strong> · Identity fixed for
-          this advert.
+          Posting as <strong>{identity?.name ?? account.profile?.name}</strong>
+          {identityLocked ? ' · Identity fixed for this advert.' : ''}
         </p>
       ) : null}
       {stored ? (
