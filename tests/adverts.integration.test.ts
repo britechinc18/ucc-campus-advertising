@@ -1216,6 +1216,27 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     });
     expect((await personalProfile(owner)).approved?.visibility?.instagram).toBe(true);
   });
+  it('keeps optional Facebook links private on business profiles until made visible', async () => {
+    await createProfile(owner, { name: 'Campus Books', kind: 'business', consent: true });
+    const input = {
+      name: 'Campus Books',
+      slug: 'campus-books',
+      description: 'Medical textbooks for students around campus.',
+      location: 'UCC campus',
+      socials: { facebook: 'https://www.facebook.com/campusbooks' },
+      visibility: { facebook: false },
+    };
+    await saveBusiness(owner, input);
+    const hidden = (await listBusinesses('campus-books')) as {
+      approved: { socials?: { facebook?: string } };
+    };
+    expect(hidden.approved.socials?.facebook).toBeUndefined();
+    await saveBusiness(owner, { ...input, visibility: { facebook: true } });
+    const visible = (await listBusinesses('campus-books')) as {
+      approved: { socials?: { facebook?: string } };
+    };
+    expect(visible.approved.socials?.facebook).toBe('https://www.facebook.com/campusbooks');
+  });
   it('keeps legacy snapshots independent from profile updates', async () => {
     const ad = await submit('Legacy contact stays unchanged');
     await moderate(admin, ad.revisionId, 'approve', 'Reviewed legacy advert');

@@ -72,7 +72,7 @@ export function BusinessLifecycle({
                     : {}),
                 });
                 setAction(null);
-                if (action === 'close') router.push('/my-medstash');
+                if (action === 'close') router.push('/my-profile');
                 router.refresh();
               } catch (e) {
                 setError(

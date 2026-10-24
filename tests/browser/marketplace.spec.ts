@@ -1232,7 +1232,7 @@ test('personal profile opens as a profile and saves directly on mobile and deskt
     .getByLabel('I consent to publish the visible contact details and social profiles above.')
     .check();
   await page.getByRole('button', { name: 'Save changes', exact: true }).click();
-  await expect(page.locator('.profile-overview h1')).toHaveText('Browser Profile Seller');
+  await expect(page.locator('.profile-identity-card h2')).toHaveText('Browser Profile Seller');
   await page.reload();
   await expect(page.locator('.profile-bio')).toHaveText(
     'Medical books and useful campus essentials.',

@@ -215,10 +215,8 @@ export function Shell({
                 {seller ? <p>{user?.name ?? 'Your seller account'}</p> : null}
                 {seller ? (
                   <>
-                    <Link href="/my-medstash">My MedStash</Link>
                     <Link href="/my-adverts">My adverts</Link>
-                    <Link href="/my-personal-profile">Personal profile</Link>
-                    <Link href="/my-business">Business profile</Link>
+                    <Link href="/my-profile">My Profile</Link>
                   </>
                 ) : !user?.sellerActive ? (
                   <Link href="/sell">Start Selling</Link>

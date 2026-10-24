@@ -1,7 +1,6 @@
 'use client';
 import { ProfileOverview } from './profile-overview';
-import { useState } from 'react';
-import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ManagedProfile } from '@/lib/seller-profile';
 import { ProfileContacts, readProfileContacts } from './profile-contacts';
@@ -23,6 +22,13 @@ export function PersonalProfileForm({
     [notice, setNotice] = useState('');
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const editorRef = useRef<HTMLFormElement>(null);
+  const focusField = useRef('name');
+  useEffect(() => {
+    if (!editing) return;
+    const control = editorRef.current?.elements.namedItem(focusField.current);
+    if (control instanceof HTMLElement) control.focus();
+  }, [editing]);
   if (!editing)
     return (
       <div className="managed-profile">
@@ -35,7 +41,8 @@ export function PersonalProfileForm({
           data={data}
           image={data.photoMediaId}
           href={`/sellers/${profile.id}`}
-          onEdit={() => {
+          onEdit={(field) => {
+            focusField.current = field ?? 'name';
             setPhoto(data.photoMediaId ? [data.photoMediaId] : []);
             setNotice('');
             setError('');
@@ -54,13 +61,13 @@ export function PersonalProfileForm({
         </div>
       </div>
       <form
+        ref={editorRef}
         className="panel form-panel"
         onSubmit={async (e) => {
           e.preventDefault();
           const form = e.currentTarget;
           const f = new FormData(form);
-          const submit =
-            (e.nativeEvent as SubmitEvent).submitter?.getAttribute('value') !== 'draft';
+          const submit = true;
           setBusy(true);
           setError('');
           setNotice('');
@@ -90,48 +97,52 @@ export function PersonalProfileForm({
           }
         }}
       >
-        <label className="form-group">
-          <span className="form-label">Display name</span>
-          <input
-            name="name"
-            className="field-input"
-            minLength={2}
-            maxLength={100}
-            required
-            defaultValue={data.name ?? profile.name}
-          />
-        </label>
-        <label className="form-group">
-          <span className="form-label">Default location</span>
-          <input
-            name="location"
-            className="field-input"
-            minLength={2}
-            maxLength={120}
-            required
-            defaultValue={data.location ?? ''}
-          />
-        </label>
-        <label className="form-group">
-          <span className="form-label">Short bio (optional)</span>
-          <textarea
-            name="bio"
-            className="field-input"
-            maxLength={500}
-            defaultValue={data.bio ?? ''}
-          />
-        </label>
-        <div className="form-group">
-          <span className="form-label">Profile photo (optional)</span>
-          <Uploads
-            advertiserId={profile.id}
-            ids={photo}
-            onChange={setPhoto}
-            max={1}
-            onBusy={setUploading}
-          />
+        <div className="profile-editor-identity">
+          <label className="form-group">
+            <span className="form-label">Display name</span>
+            <input
+              name="name"
+              className="field-input"
+              minLength={2}
+              maxLength={100}
+              required
+              defaultValue={data.name ?? profile.name}
+            />
+          </label>
+          <label className="form-group">
+            <span className="form-label">Default location</span>
+            <input
+              name="location"
+              className="field-input"
+              minLength={2}
+              maxLength={120}
+              required
+              defaultValue={data.location ?? ''}
+            />
+          </label>
+          <label className="form-group">
+            <span className="form-label">Short bio (optional)</span>
+            <textarea
+              name="bio"
+              className="field-input"
+              maxLength={500}
+              defaultValue={data.bio ?? ''}
+            />
+          </label>
+          <div className="form-group">
+            <span className="form-label">Profile photo (optional)</span>
+            <Uploads
+              advertiserId={profile.id}
+              ids={photo}
+              onChange={setPhoto}
+              max={1}
+              onBusy={setUploading}
+            />
+          </div>
         </div>
-        <ProfileContacts data={data} />
+        <div className="profile-editor-contacts">
+          <ProfileContacts data={data} />
+        </div>
         {error ? <ErrorMessage message={error} /> : null}
         {notice ? (
           <p className="form-success" role="status">
@@ -150,23 +161,11 @@ export function PersonalProfileForm({
           <button className="btn" disabled={busy || uploading}>
             Save changes
           </button>
-          <button
-            className="btn secondary"
-            type="submit"
-            value="draft"
-            formNoValidate
-            disabled={busy || uploading}
-          >
-            Save private draft
-          </button>
         </div>
         <p className="helper">
           Login email and account credentials are never included in this profile.
         </p>
       </form>
-      <Link className="text-link" href="/my-medstash">
-        Back to My MedStash →
-      </Link>
     </section>
   );
 }
