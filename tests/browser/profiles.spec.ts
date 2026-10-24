@@ -118,8 +118,8 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   await expect(page.locator('.uploaded-photo')).toHaveCount(1);
 
   await page
-    .getByLabel('Use contact details from')
-    .selectOption({ label: 'Business Profile — Profile Test Business' });
+    .getByLabel('Public identity')
+    .selectOption({ label: 'Business — Profile Test Business' });
   await expect(page.getByRole('dialog')).toContainText('Photos belong to the current identity');
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.locator('.uploaded-photo')).toHaveCount(0);
@@ -165,7 +165,7 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   await page.reload();
   await page.getByRole('link', { name: 'Edit advert', exact: true }).click();
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
-  await expect(page.getByLabel('Use contact details from')).toHaveCount(0);
+  await expect(page.getByLabel('Public identity')).toHaveCount(0);
   await expect(page.getByLabel('Phone number', { exact: true })).toHaveValue('+233271234567');
   await page.getByRole('button', { name: 'Back', exact: true }).click();
   await expect(page.getByLabel('Advert title')).toHaveValue('Profile autofill campus tutoring');

@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation';
 import { requireViewer } from '@/server/viewer';
 import { accountContext } from '@/server/frontend';
 import { safeReturn } from '@/lib/market';
@@ -15,6 +16,7 @@ export default async function OnboardingPage({
   );
   const context = await accountContext(u.id);
   const kind = params.kind === 'student' || params.kind === 'business' ? params.kind : undefined;
+  if (!kind && context.profiles.length) redirect('/my-adverts');
   return (
     <main id="main" className="container seller-onboarding-layout">
       <section className="seller-onboarding">

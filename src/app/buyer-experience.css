@@ -1997,12 +1997,17 @@
   margin-top: 24px;
   object-position: right top;
 }
-.seller-welcome > .welcome-returning {
+.seller-welcome .welcome-returning {
   margin: 20px 0 0;
   font-size: 0.82rem;
   line-height: 1.6;
 }
-.welcome-returning a {
+.welcome-returning .welcome-signin {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
   color: var(--brand);
   font-weight: 600;
   text-decoration: underline;

@@ -96,6 +96,7 @@ export function PostForm({
   const profiles = postingProfiles ?? account.profiles;
   const [advertiserId, setAdvertiserId] = useState(initialAdvertiserId);
   const identity = profiles.find((p) => p.id === advertiserId);
+  const canChooseIdentity = !advert && profiles.some((p) => p.kind === 'business');
   const [confirmChange, setConfirmChange] = useState<{
     type: 'identity' | 'restore';
     id: string;
@@ -437,12 +438,32 @@ export function PostForm({
           Manage adverts <Icon name="arrow" />
         </Link>
       </div>
-      <p className="inline-notice">
-        Posting as{' '}
-        <strong>{identity?.name ?? account.profile?.name ?? 'Selected advertiser'}</strong> ·{' '}
-        {identity?.kind === 'business' ? 'Business' : 'Personal'}
-        {identityLocked ? ' · Identity fixed for this advert.' : ''}
-      </p>
+      {canChooseIdentity ? (
+        <label className="form-group posting-identity">
+          <span className="form-label">Public identity</span>
+          <select
+            className="field-input"
+            value={advertiserId}
+            disabled={busy || uploading || identityLocked}
+            onChange={(e) => {
+              const id = e.target.value;
+              if (form.mediaIds.length) setConfirmChange({ type: 'identity', id });
+              else chooseIdentity(id);
+            }}
+          >
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id} disabled={p.suspended || p.deactivated}>
+                {p.kind === 'business' ? 'Business' : 'Personal'} — {p.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : advert || assisted ? (
+        <p className="inline-notice">
+          Posting as <strong>{identity?.name ?? account.profile?.name}</strong>
+          {identityLocked ? ' · Identity fixed for this advert.' : ''}
+        </p>
+      ) : null}
       {stored ? (
         <div className="inline-notice">
           <div>
@@ -710,35 +731,6 @@ export function PostForm({
               <h2>Photos & contact</h2>
               <p>Use your own photos and contacts you have permission to share.</p>
               <div className="profile-defaults">
-                {!advert && profiles.length > 1 ? (
-                  <label className="form-group">
-                    <span className="form-label">Use contact details from</span>
-                    <select
-                      className="field-input"
-                      value={advertiserId}
-                      disabled={busy || uploading || identityLocked}
-                      onChange={(e) => {
-                        const id = e.target.value;
-                        if (form.mediaIds.length) setConfirmChange({ type: 'identity', id });
-                        else chooseIdentity(id);
-                      }}
-                    >
-                      {profiles.map((p) => (
-                        <option key={p.id} value={p.id} disabled={p.suspended || p.deactivated}>
-                          {p.kind === 'business' ? 'Business Profile' : 'Personal Profile'} —{' '}
-                          {p.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                ) : (
-                  <p>
-                    <strong>
-                      {identity?.kind === 'business' ? 'Business Profile' : 'Personal Profile'} —{' '}
-                      {identity?.name ?? account.profile?.name ?? 'Selected advertiser'}
-                    </strong>
-                  </p>
-                )}
                 <p>
                   {form.contactSources
                     ? 'Auto-filled from your saved profile. Changes here apply only to this advert.'
