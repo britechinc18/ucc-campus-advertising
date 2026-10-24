@@ -9,29 +9,22 @@ export const metadata = { title: 'Sign in' };
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string; error?: string }>;
+  searchParams: Promise<{ next?: string; error?: string; returning?: string }>;
 }) {
   const params = await searchParams;
-  const next = safeReturn(params.next);
+  const returning = params.returning === '1';
+  const next = returning ? '/my-adverts' : safeReturn(params.next);
   const v = await viewer();
   if (v.user && !v.user.suspended) redirect(next);
   return (
     <main id="main" className="container seller-welcome-layout seller-signin-layout">
       <aside className="seller-signin-intro" aria-label="About MedStash">
-        <p className="eyebrow">SELL ON MEDSTASH</p>
-        <h2>
-          Buy. Sell.
-          <br />
-          Connect on campus.
-        </h2>
-        <p>A place for your next good find—and your next sale.</p>
-        <ul>
-          <li>Sell your own items</li>
-          <li>Showcase your campus business</li>
-          <li>Connect directly with buyers</li>
-        </ul>
+        <div className="seller-signin-copy">
+          <h2>Sell on MedStash.</h2>
+          <p>Connect with buyers on your campus.</p>
+        </div>
         <Image
-          src="/editorial/onboarding-student.webp"
+          src="/editorial/onboarding-business.webp"
           width={660}
           height={400}
           alt=""
@@ -48,10 +41,18 @@ export default async function SignInPage({
           width={58}
           height={58}
         />
-        <h1>{v.configured ? 'Welcome to MedStash.' : 'Sign-in temporarily unavailable'}</h1>
+        <h1>
+          {v.configured
+            ? returning
+              ? 'Welcome back.'
+              : 'Welcome to MedStash.'
+            : 'Sign-in temporarily unavailable'}
+        </h1>
         <p>
           {v.configured
-            ? 'Your next sale starts here.'
+            ? returning
+              ? 'Sign in to open My Adverts.'
+              : 'Your next sale starts here.'
             : 'You can still browse and contact advertisers.'}
         </p>
         {params.error ? (
@@ -66,7 +67,9 @@ export default async function SignInPage({
             action={async (formData: FormData) => {
               'use server';
               if (formData.get('rules') !== 'on')
-                redirect(`/sign-in?${new URLSearchParams({ next, error: 'rules' })}`);
+                redirect(
+                  `/sign-in?${new URLSearchParams({ next, error: 'rules', ...(returning ? { returning: '1' } : {}) })}`,
+                );
               await signIn('google', { redirectTo: next });
             }}
           >
@@ -89,6 +92,22 @@ export default async function SignInPage({
             Browse the market
           </Link>
         )}
+        {v.configured ? (
+          <p className="welcome-returning">
+            {returning ? (
+              <>
+                New to selling?{' '}
+                <Link href="/sign-in?next=%2Fonboarding%3Fnext%3D%2Fpost">
+                  Create your seller profile
+                </Link>
+              </>
+            ) : (
+              <>
+                Already have an account? <Link href="/sign-in?returning=1">Sign in</Link>
+              </>
+            )}
+          </p>
+        ) : null}
         <Link className="welcome-browse" href="/explore">
           Keep browsing
         </Link>

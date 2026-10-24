@@ -59,13 +59,11 @@ export function Onboarding({
             ? `Set up your ${selected === 'business' ? 'business' : 'personal'} profile.`
             : 'You’re ready to sell.'}
       </h1>
-      <p className="setup-description">
-        {step === 2
-          ? 'Choose the profile people will see on your adverts.'
-          : step === 3
-            ? 'Add your name and contact details so buyers can reach you.'
-            : 'Your profile is saved. Create your first advert whenever you’re ready.'}
-      </p>
+      {step === 4 ? (
+        <p className="setup-description">
+          Your profile is saved. Create your first advert whenever you’re ready.
+        </p>
+      ) : null}
       {step === 2 ? (
         <>
           <div className="setup-role-grid" role="group" aria-label="Profile type">

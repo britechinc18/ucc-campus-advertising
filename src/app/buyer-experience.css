@@ -1963,3 +1963,57 @@
     padding: 24px 20px;
   }
 }
+
+/* Keep the seller introduction level with its sign-in card. */
+.seller-signin-layout {
+  max-width: 1000px;
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 410px);
+  align-items: stretch;
+  gap: 28px;
+}
+.seller-signin-intro {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 26px;
+  border-radius: 24px;
+}
+.seller-signin-copy h2 {
+  font-size: clamp(25px, 2.8vw, 34px);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+  margin: 0 0 10px;
+}
+.seller-signin-copy p {
+  font-size: 0.9rem;
+  color: var(--muted);
+  margin: 0;
+}
+.seller-signin-layout .seller-signin-photo {
+  flex: 0 1 auto;
+  min-height: 0;
+  max-height: 290px;
+  aspect-ratio: 1.35;
+  margin-top: 24px;
+  object-position: right top;
+}
+.seller-welcome > .welcome-returning {
+  margin: 20px 0 0;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+.welcome-returning a {
+  color: var(--brand);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+@media (max-width: 720px) {
+  .seller-signin-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .seller-signin-intro {
+    display: none;
+  }
+}
