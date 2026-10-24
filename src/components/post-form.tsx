@@ -687,7 +687,7 @@ export function PostForm({
               ) : (
                 <div className="flyer-fields">
                   <p className="inline-notice">
-                    This advert appears in Campus 360 after approval. No product price is required.
+                    This advert appears in Campus 360 when published. No product price is required.
                   </p>
                   {form.kind === 'event' ? (
                     <label className="form-group">

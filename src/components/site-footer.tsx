@@ -28,7 +28,7 @@ export function SiteFooter() {
           <Wordmark showLogo />
           <p>Your campus marketplace.</p>
           <p className="footer-assurances">
-            Reviewed before publishing.
+            Buy and sell on campus.
             <br />
             Connect directly with advertisers.
           </p>

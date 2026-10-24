@@ -300,10 +300,7 @@ export function Onboarding({
           <div className="setup-ready">
             <span aria-hidden="true">✓</span>
             <strong>{selected === 'business' ? 'Business' : 'Personal'} profile ready</strong>
-            <p>
-              Your contact details will be available when you post. Adverts are reviewed before
-              publication.
-            </p>
+            <p>Your saved contact details will be ready when you create an advert.</p>
           </div>
           {error ? <ErrorMessage message={error} /> : null}
           <div className="setup-actions">

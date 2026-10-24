@@ -2254,15 +2254,15 @@
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface);
-  color: var(--text);
+  color: var(--ink);
   padding: 9px 18px;
   font: inherit;
   font-size: 13px;
   cursor: pointer;
 }
 .composer-identity button[aria-pressed='true'] {
-  background: var(--brand);
-  color: var(--on-brand, #fff);
+  background: var(--action);
+  color: var(--on-action);
   border-color: var(--brand);
 }
 .composer-identity > span {
@@ -2306,8 +2306,8 @@
 }
 .advert-composer .step.current > span,
 .advert-composer .step.complete > span {
-  background: var(--brand);
-  color: #fff;
+  background: var(--action);
+  color: var(--on-action);
 }
 .advert-composer .post-columns {
   display: grid;
@@ -2475,8 +2475,8 @@
   align-items: center;
   gap: 8px;
   margin-top: 18px;
-  background: var(--brand);
-  color: #fff;
+  background: var(--action);
+  color: var(--on-action);
   border-radius: 12px;
   padding: 12px;
   font-size: 13px;

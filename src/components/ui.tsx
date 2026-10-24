@@ -96,7 +96,7 @@ export function Dialog({
 }
 export function EmptyState({
   title = 'No finds just yet.',
-  message = 'Fresh adverts will appear here as they are approved.',
+  message = 'Fresh adverts will appear here as they are published.',
   action = true,
 }: {
   title?: string;

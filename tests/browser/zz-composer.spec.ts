@@ -76,6 +76,14 @@ test('composer updates preview, restores local drafts and publishes without revi
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('button', { name: 'Preview', exact: true }).click();
     await expect(page.getByRole('dialog')).toContainText('Live preview campus tutoring');
+    await page.evaluate(async () => {
+      await Promise.all(
+        document
+          .getAnimations()
+          .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
+          .map((a) => a.finished.catch(() => undefined)),
+      );
+    });
     await page.screenshot({
       path: testInfo.outputPath('composer-mobile-preview.png'),
       fullPage: true,

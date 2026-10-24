@@ -146,6 +146,7 @@ test('advertiser submits, admin approves, public search finds it, advertiser mar
     .filter({ hasText: 'Browser review tutoring appointment' })
     .getByRole('link', { name: 'Manage' })
     .click();
+  await expect(page).toHaveURL(/\/my-adverts\/[0-9a-f-]+$/);
   await page.getByRole('button', { name: 'Mark as completed' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Confirm', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Mark as completed' })).toHaveCount(0);
@@ -476,7 +477,7 @@ test('existing seller gets flat navigation and can draft every supported advert 
   ).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/my-adverts');
-  await page.getByRole('link', { name: 'Post an advert', exact: true }).click();
+  await page.locator('#main').getByRole('link', { name: 'Post an advert', exact: true }).click();
   await page.getByLabel('What are you posting?').selectOption('event');
   await expect(page.getByLabel('What are you posting?')).toHaveValue('event');
   await expect(page.getByLabel('Event start (Ghana time)')).toBeVisible();
