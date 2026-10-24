@@ -1193,7 +1193,9 @@ test('admin creates an assisted business and hands management to a verified owne
     await page.screenshot({ path: `/tmp/medstash-handover-${theme}.png`, fullPage: true });
   }
   await page.getByRole('button', { name: 'Confirm handover', exact: true }).click();
-  await expect(page.getByText('Claimed', { exact: false }).first()).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText(
+    'Management handed over to the verified owner.',
+  );
   await session(pub.context(), 'stranger');
   await pub.goto('/my-business');
   await expect(pub.getByText('assisted-campus-clothing', { exact: true })).toBeVisible();
