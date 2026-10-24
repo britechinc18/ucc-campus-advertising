@@ -3,7 +3,7 @@ import { Icon } from './icon';
 import { MediaImage } from './ui';
 import { priceText, parseMoney, type AdvertContent } from '@/lib/market';
 import { kindName } from '@/lib/campus';
-import { socialLabels, socialPlatforms, type SocialLinks } from '@/lib/socials';
+import { socialLabels, socialPlatforms, socialProfile, type SocialLinks } from '@/lib/socials';
 
 export function AdvertPreview({
   data,
@@ -21,6 +21,10 @@ export function AdvertPreview({
     mediaIds: string[];
     socials: SocialLinks;
     displayName?: string;
+    startsAt?: string;
+    endsAt?: string;
+    offer?: string;
+    externalUrl?: string;
   };
   seller: string;
 }) {
@@ -64,12 +68,32 @@ export function AdvertPreview({
             {data.phone}
           </p>
         ) : null}
+        {data.whatsapp ? (
+          <p className="preview-phone">
+            <Icon name="chat" />
+            {data.whatsapp}
+          </p>
+        ) : null}
+        {data.startsAt ? (
+          <p className="preview-phone">
+            <Icon name="calendar" />
+            {data.startsAt.replace('T', ' ')} · Ghana time
+          </p>
+        ) : null}
+        {data.endsAt ? (
+          <p className="preview-phone">Until {data.endsAt.replace('T', ' ')} · Ghana time</p>
+        ) : null}
+        {data.offer ? <p className="preview-description">{data.offer}</p> : null}
+        {data.externalUrl ? <p className="preview-description">{data.externalUrl}</p> : null}
         {socialPlatforms.some((p) => data.socials[p]) ? (
           <div className="preview-socials">
             {socialPlatforms
               .filter((p) => data.socials[p])
               .map((p) => (
-                <span key={p}>{socialLabels[p]}</span>
+                <span key={p}>
+                  {socialLabels[p]} · @
+                  {socialProfile(p, data.socials[p]!)?.username ?? data.socials[p]}
+                </span>
               ))}
           </div>
         ) : null}

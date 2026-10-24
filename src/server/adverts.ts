@@ -381,6 +381,16 @@ export async function submitAdvert(
     }
     const status = settings.auto_publish ? 'published' : 'pending';
     if (settings.auto_publish) {
+      const contact = await one<{ visible: boolean }>(
+        tx,
+        sql`select (nullif(medstash_effective_content(${JSON.stringify(r.data)}::jsonb,case when p.kind='business' then b.approved else p.approved_defaults end,p.approved_defaults_version,p.privacy)->>'phone','') is not null or nullif(medstash_effective_content(${JSON.stringify(r.data)}::jsonb,case when p.kind='business' then b.approved else p.approved_defaults end,p.approved_defaults_version,p.privacy)->>'whatsapp','') is not null) as visible from advertisers p left join business_profiles b on b.advertiser_id=p.id where p.id=${seller.id}`,
+      );
+      ensure(
+        contact.visible,
+        409,
+        'CONTACT_HIDDEN',
+        'Add a visible phone or WhatsApp number before publishing.',
+      );
       await tx.execute(
         sql`update advert_revisions set status='approved',submitted_at=now(),reviewed_at=now() where id=${r.id}`,
       );
