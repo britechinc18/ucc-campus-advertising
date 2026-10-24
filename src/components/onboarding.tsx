@@ -193,6 +193,8 @@ export function Onboarding({
                 <input
                   className="field-input"
                   name={field.key}
+                  aria-label={field.label}
+                  aria-describedby={`setup-${field.key}-hint`}
                   defaultValue={values[`${selected}.${field.key}`] ?? field.initial ?? ''}
                   type={field.key === 'phone' || field.key === 'whatsapp' ? 'tel' : 'text'}
                   autoComplete={
