@@ -1,5 +1,6 @@
-import { profileComplete } from '../lib/seller-profile';
-import { requireCompleteDefaults } from './profiles';
+import { z } from 'zod';
+import { profileComplete, type ProfileDefaults } from '../lib/seller-profile';
+import { defaultsSchema, requireCompleteDefaults } from './profiles';
 import { sql } from 'drizzle-orm';
 import { db, type Executor } from './db';
 import {
@@ -130,7 +131,22 @@ async function writeRevision(
   return r;
 }
 export async function createProfile(userId: string, input: unknown) {
-  const data = profileSchema.parse(input);
+  const data = profileSchema
+    .extend({
+      setup: defaultsSchema
+        .pick({
+          name: true,
+          phone: true,
+          whatsapp: true,
+          location: true,
+          bio: true,
+          contactConsent: true,
+        })
+        .optional(),
+      setupVersion: z.number().int().min(0).optional(),
+    })
+    .parse(input);
+  if (data.setup) requireCompleteDefaults({ ...data.setup, name: data.name });
   return db().transaction(async (tx) => {
     await actor(tx, userId);
     await tx.execute(sql`select id from users where id=${userId} for update`);
@@ -139,15 +155,60 @@ export async function createProfile(userId: string, input: unknown) {
       tx,
       sql`select id from advertisers where user_id=${userId} and kind=${data.kind} and closed_at is null`,
     );
-    if (existing.length)
-      return one(
+    if (existing.length && !data.setup)
+      return one<{ id: string; name: string; kind: string }>(
         tx,
         sql`select id,name,kind from advertisers where user_id=${userId} and kind=${data.kind} and closed_at is null`,
       );
-    return one(
-      tx,
-      sql`insert into advertisers(user_id,name,kind,consent_at,created_by,automatic_personal) values(${userId},${data.name},${data.kind},now(),${userId},${data.kind === 'student'}) returning id,name,kind`,
-    );
+    const identity =
+      existing[0] ??
+      (await one<{ id: string }>(
+        tx,
+        sql`insert into advertisers(user_id,name,kind,consent_at,created_by,automatic_personal) values(${userId},${data.name},${data.kind},now(),${userId},${data.kind === 'student'}) returning id`,
+      ));
+    if (data.setup) {
+      const current = await one<{
+        profile_state: string;
+        defaults_version: number;
+        draft_defaults: (ProfileDefaults & { slug?: string; description?: string }) | null;
+        suspended: boolean;
+        deactivated_at: Date | null;
+      }>(tx, sql`select * from advertisers where id=${identity.id} for update`);
+      ensure(
+        current.profile_state === 'incomplete' && !current.suspended && !current.deactivated_at,
+        409,
+        'PROFILE_CHANGED',
+        'This profile is already set up or unavailable. Open My Profile to make changes.',
+      );
+      ensure(
+        !existing.length || current.defaults_version === data.setupVersion,
+        409,
+        'PROFILE_CHANGED',
+        'This profile changed. Reload before continuing.',
+      );
+      const saved = {
+        ...current.draft_defaults,
+        ...data.setup,
+        name: data.name,
+        defaultsEnabled: true,
+        visibility: { ...current.draft_defaults?.visibility, phone: true, whatsapp: true },
+        ...(data.kind === 'business'
+          ? {
+              description: data.setup.bio ?? '',
+              slug: current.draft_defaults?.slug ?? `business-${identity.id}`,
+            }
+          : {}),
+      };
+      await tx.execute(
+        sql`update advertisers set name=${data.name},privacy=${JSON.stringify(saved.visibility)}::jsonb,draft_defaults=${JSON.stringify(saved)}::jsonb,approved_defaults=${JSON.stringify(saved)}::jsonb,defaults_version=defaults_version+1,approved_defaults_version=defaults_version+1,profile_state='approved',automatic_personal=false where id=${identity.id}`,
+      );
+      if (data.kind === 'business')
+        await tx.execute(
+          sql`insert into business_profiles(advertiser_id,slug,approved,state) values(${identity.id},${'slug' in saved ? (saved.slug as string) : `business-${identity.id}`},${JSON.stringify(saved)}::jsonb,'approved')`,
+        );
+      await audit(tx, userId, 'seller_setup_completed', identity.id);
+    }
+    return { id: identity.id, name: data.name, kind: data.kind };
   });
 }
 export async function createAdvert(userId: string, input: unknown, sellerId?: string) {

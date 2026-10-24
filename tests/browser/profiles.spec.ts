@@ -54,11 +54,15 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   await session(admin, 'admin');
   const review = await admin.newPage();
   await page.goto('/my-business');
-  await page.getByLabel('Advertiser name').fill('Profile Test Business');
+  await page.getByLabel('Business / advertiser name').fill('Profile Test Business');
   await page.getByRole('checkbox').check();
-  await page.getByRole('button', { name: 'Activate seller tools' }).click();
+  await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
+  await page.getByLabel('WhatsApp number', { exact: true }).fill('0241234567');
+  await page.getByLabel('Location', { exact: true }).fill('UCC campus');
+  await page.getByRole('button', { name: 'Save and continue →' }).click();
+  await expect(page.getByRole('heading', { name: 'You’re ready to sell.' })).toBeVisible();
+  await page.getByRole('button', { name: 'Start posting →' }).click();
   await expect(page).toHaveURL(/my-business/);
-  await field(page, 'Edit Business URL', 'profile-test-business');
   await introduction(page, 'Student-run services and supplies at UCC campus.');
   await field(page, /^(Add|Edit) Location$/, 'UCC Business Centre');
   await field(page, /^(Add|Edit) WhatsApp$/, '0201234567');

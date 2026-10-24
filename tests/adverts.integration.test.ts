@@ -100,6 +100,69 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     await pool.end();
     await db().$client.end();
   });
+  it('saves complete seller setup atomically and refuses overwrites or invalid contacts', async () => {
+    const setup = {
+      phone: '0241234567',
+      whatsapp: '0543982307',
+      location: 'UCC campus',
+      bio: 'Campus books',
+      contactConsent: true,
+    };
+    await expect(
+      createProfile(stranger, {
+        name: 'New Seller',
+        kind: 'student',
+        consent: true,
+        setup: { ...setup, phone: 'bad' },
+      }),
+    ).rejects.toThrow();
+    expect((await accountContext(stranger)).profiles).toHaveLength(0);
+    const saved = await createProfile(stranger, {
+      name: 'New Seller',
+      kind: 'student',
+      consent: true,
+      setup,
+    });
+    const context = await accountContext(stranger);
+    expect(context.profiles[0].id).toBe(saved.id);
+    expect(context.profiles[0].defaults).toMatchObject({
+      name: 'New Seller',
+      phone: '+233241234567',
+      whatsapp: '+233543982307',
+      location: 'UCC campus',
+      contactConsent: true,
+    });
+    await expect(
+      createProfile(stranger, {
+        name: 'Overwrite',
+        kind: 'student',
+        consent: true,
+        setup,
+        setupVersion: context.profiles[0].version,
+      }),
+    ).rejects.toThrow();
+    expect((await accountContext(stranger)).profiles[0].name).toBe('New Seller');
+    const business = await createProfile(stranger, {
+      name: 'Campus Business',
+      kind: 'business',
+      consent: true,
+      setup,
+    });
+    const both = await accountContext(stranger, business.id);
+    expect(both.profiles).toHaveLength(2);
+    expect(both.profile?.id).toBe(business.id);
+    expect(
+      (
+        await pool.query('select state,approved from business_profiles where advertiser_id=$1', [
+          business.id,
+        ])
+      ).rows[0],
+    ).toMatchObject({
+      state: 'approved',
+      approved: { name: 'Campus Business', description: 'Campus books' },
+    });
+  });
+
   it('restricts seller activity to its owner and keeps public notifications anonymous', async () => {
     const approved = await submit('Private seller approval update');
     await moderate(admin, approved.revisionId, 'approve', 'Reviewed');
