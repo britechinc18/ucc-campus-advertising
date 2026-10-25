@@ -1,3 +1,4 @@
+import { controlMode, pauseMessage } from '../lib/platform-controls';
 import { applyPrivacy, requireCompleteDefaults, socialsSchema, visibilitySchema } from './profiles';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
@@ -65,10 +66,17 @@ export async function saveBusiness(userId: string, input: unknown, sellerId?: st
         'Choose a completed image belonging to this business',
       );
     }
-    const old = await query<{ id: string; state: string; slug: string }>(
+    const old = await query<{ id: string; state: string; slug: string; approved: unknown }>(
       tx,
       sql`select * from business_profiles where advertiser_id=${p.id} for update`,
     );
+    const settings = await limits(tx);
+    const mode =
+      user.role === 'admin'
+        ? 'open'
+        : controlMode(settings, old[0]?.approved ? 'profileEdits' : 'businessCreation');
+    ensure(mode !== 'paused', 403, 'ACTION_PAUSED', pauseMessage(settings));
+    const pending = mode === 'approval';
     ensure(old[0]?.state !== 'suspended', 409, 'SUSPENDED', 'Business profile suspended');
     ensure(
       !old[0] || old[0].slug === data.slug,
@@ -78,16 +86,16 @@ export async function saveBusiness(userId: string, input: unknown, sellerId?: st
     );
     const b = await one<{ id: string }>(
       tx,
-      sql`insert into business_profiles(advertiser_id,slug,approved,state) values(${p.id},${data.slug},${JSON.stringify(data)}::jsonb,'approved') on conflict(advertiser_id) do update set approved=excluded.approved,pending=null,state='approved',reason=null returning id`,
+      sql`insert into business_profiles(advertiser_id,slug,approved,pending,state) values(${p.id},${data.slug},${pending ? null : JSON.stringify(data)}::jsonb,${pending ? JSON.stringify(data) : null}::jsonb,${pending ? 'pending' : 'approved'}) on conflict(advertiser_id) do update set approved=case when ${pending} then business_profiles.approved else excluded.approved end,pending=excluded.pending,state=excluded.state,reason=null returning id`,
     );
     await tx.execute(
-      sql`update advertisers set draft_defaults=null,defaults_version=defaults_version+1,approved_defaults_version=defaults_version+1,privacy=${JSON.stringify(data.visibility)}::jsonb,name=coalesce(${data.name ?? null},name) where id=${p.id}`,
+      sql`update advertisers set draft_defaults=${pending ? JSON.stringify(data) : null}::jsonb,defaults_version=defaults_version+1,approved_defaults_version=case when ${pending} then approved_defaults_version else defaults_version+1 end,privacy=case when ${pending} then privacy else ${JSON.stringify(data.visibility)}::jsonb end,name=case when ${pending} then name else coalesce(${data.name ?? null},name) end where id=${p.id}`,
     );
     await audit(tx, userId, 'business_profile_saved', b.id, {
       version: version.defaults_version + 1,
       profile: data,
     });
-    return b;
+    return { ...b, pending };
   });
 }
 export async function moderateBusiness(userId: string, businessId: string, input: unknown) {
@@ -143,7 +151,7 @@ export async function moderateBusiness(userId: string, businessId: string, input
       );
     if (data.decision === 'approve')
       await tx.execute(
-        sql`update advertisers set approved_defaults_version=defaults_version,privacy=${JSON.stringify(b.pending?.visibility ?? {})}::jsonb where id=${b.advertiser_id}`,
+        sql`update advertisers set draft_defaults=null,profile_state='approved',name=coalesce(${(b.pending as { name?: string })?.name ?? null},name),approved_defaults_version=defaults_version,privacy=${JSON.stringify(b.pending?.visibility ?? {})}::jsonb where id=${b.advertiser_id}`,
       );
     await audit(tx, userId, 'business_moderated', businessId, {
       ...data,

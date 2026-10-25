@@ -46,22 +46,27 @@ export function ProfileFieldEditor({
     setError('');
     setNotice('');
     try {
-      const result = await api<{ data: ProfileDetails; version: number; complete: boolean }>(
-        assisted ? `admin/advertisers/${id}/profile-details` : 'me/profile-details',
-        'PATCH',
-        {
-          kind: business ? 'business' : 'student',
-          field,
-          value,
-          version: versionRef.current,
-          ...(contactConsent ? { contactConsent: true } : {}),
-        },
-      );
+      const result = await api<{
+        data: ProfileDetails;
+        version: number;
+        complete: boolean;
+        pending?: boolean;
+      }>(assisted ? `admin/advertisers/${id}/profile-details` : 'me/profile-details', 'PATCH', {
+        kind: business ? 'business' : 'student',
+        field,
+        value,
+        version: versionRef.current,
+        ...(contactConsent ? { contactConsent: true } : {}),
+      });
       setData(result.data);
       versionRef.current = result.version;
-      if (business && result.complete && result.data.slug)
+      if (business && result.complete && !result.pending && result.data.slug)
         setPublicHref(`/businesses/${result.data.slug}`);
-      setNotice('Saved.');
+      setNotice(
+        result.pending
+          ? 'Changes submitted for approval. Your public profile keeps its approved details.'
+          : 'Saved.',
+      );
 
       return true;
     } catch (e) {

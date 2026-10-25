@@ -1,3 +1,5 @@
+import { defaultControls, type PlatformControls } from '../src/lib/platform-controls';
+import { registrationAllowed } from '../src/server/registration';
 import { patchProfileField } from '../src/server/profile-fields';
 import {
   personalProfile,
@@ -78,7 +80,7 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       'TRUNCATE users,advertisers,adverts,advert_revisions,advertiser_daily_usage,idempotency_keys,audit_events,reports,media_assets,revision_media,business_profiles,featured_adverts,daily_advert_metrics,rate_limit_buckets CASCADE',
     );
     await pool.query(
-      'update platform_settings set auto_publish=false,posting_limits_enabled=true,max_active=5,daily_limit=3,duration_days=30',
+      'update platform_settings set platform_controls=null,auto_publish=false,posting_limits_enabled=true,max_active=5,daily_limit=3,duration_days=30',
     );
     vi.mocked(auth).mockReset();
     process.env.APP_ORIGIN = 'https://campus.test';
@@ -101,6 +103,143 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
   afterAll(async () => {
     await pool.end();
     await db().$client.end();
+  });
+  async function setControls(values: Partial<PlatformControls>) {
+    await pool.query('update platform_settings set platform_controls=$1::jsonb', [
+      JSON.stringify({ ...defaultControls, enabled: true, ...values }),
+    ]);
+  }
+  it('master off bypasses saved restrictions and limits without erasing them', async () => {
+    await setControls({
+      enabled: false,
+      personalPosting: 'paused',
+      businessCreation: 'paused',
+      profileEdits: 'paused',
+      postingLimits: true,
+    });
+    await pool.query('update platform_settings set max_active=1,daily_limit=1');
+    for (let i = 0; i < 2; i++) {
+      const d = await draft('Repeated service');
+      expect(await submitAdvert(owner, d.advertId, d.revisionId, randomUUID())).toMatchObject({
+        status: 'published',
+      });
+    }
+    expect(
+      (await pool.query('select platform_controls from platform_settings')).rows[0]
+        .platform_controls.personalPosting,
+    ).toBe('paused');
+  });
+  it('pauses new registration while allowing existing accounts to sign in', async () => {
+    await setControls({ registration: 'paused' });
+    expect(await registrationAllowed(db(), 'owner@test.invalid')).toBe(true);
+    expect(await registrationAllowed(db(), 'new@test.invalid')).toBe(false);
+    await setControls({ enabled: false, registration: 'paused' });
+    expect(await registrationAllowed(db(), 'new@test.invalid')).toBe(true);
+  });
+  it('checks the latest posting policy at submission and keeps drafts available', async () => {
+    const d = await draft();
+    await setControls({
+      personalPosting: 'paused',
+      pauseMessage: 'Posting paused for maintenance.',
+    });
+    await expect(submitAdvert(owner, d.advertId, d.revisionId, randomUUID())).rejects.toMatchObject(
+      { code: 'ACTION_PAUSED', message: 'Posting paused for maintenance.' },
+    );
+    expect(
+      (await pool.query('select status from advert_revisions where id=$1', [d.revisionId])).rows[0]
+        .status,
+    ).toBe('draft');
+    await setControls({ personalPosting: 'approval' });
+    expect(await submitAdvert(owner, d.advertId, d.revisionId, randomUUID())).toMatchObject({
+      status: 'pending',
+    });
+  });
+  it('keeps existing adverts visible and controls advert edits separately', async () => {
+    await setControls({ personalPosting: 'open' });
+    const d = await submit();
+    await setControls({ personalPosting: 'paused', advertEdits: 'approval' });
+    expect((await listAdverts({})).items).toHaveLength(1);
+    const edit = await saveAdvert(owner, d.advertId, content('Updated campus tutoring'));
+    expect(await submitAdvert(owner, edit.advertId, edit.revisionId, randomUUID())).toMatchObject({
+      status: 'pending',
+    });
+    expect((await advertDetail(d.advertId)).data.title).toBe('Campus tutoring offer');
+  });
+  it('blocks business creation and routes approval-required setup to the business queue', async () => {
+    await setControls({ businessCreation: 'paused' });
+    await expect(
+      createProfile(stranger, { name: 'New business', kind: 'business', consent: true }),
+    ).rejects.toMatchObject({ code: 'ACTION_PAUSED' });
+    await setControls({ businessCreation: 'approval' });
+    const b = await createProfile(stranger, {
+      name: 'New business',
+      kind: 'business',
+      consent: true,
+      setup: { phone: '0241234567', whatsapp: '0543982307', location: 'UCC', contactConsent: true },
+    });
+    expect(b).toMatchObject({ pending: true });
+    const row = (await pool.query('select * from business_profiles where advertiser_id=$1', [b.id]))
+      .rows[0];
+    expect(row.state).toBe('pending');
+    expect(row.approved).toBeNull();
+    await moderateBusiness(admin, row.id, {
+      decision: 'approve',
+      version: 1,
+      reason: 'Verified business',
+    });
+    const d = await createAdvert(stranger, content(), b.id);
+    await setControls({ businessPosting: 'paused' });
+    await expect(
+      submitAdvert(stranger, d.advertId, d.revisionId, randomUUID()),
+    ).rejects.toMatchObject({ code: 'ACTION_PAUSED' });
+    await setControls({ businessPosting: 'approval' });
+    expect(await submitAdvert(stranger, d.advertId, d.revisionId, randomUUID())).toMatchObject({
+      status: 'pending',
+    });
+  });
+  it('enforces paused profile edits on full and individual-field endpoints', async () => {
+    await setControls({ profileEdits: 'paused' });
+    await expect(
+      patchProfileField(owner, {
+        kind: 'student',
+        version: 0,
+        field: 'name',
+        value: 'Changed name',
+      }),
+    ).rejects.toMatchObject({ code: 'ACTION_PAUSED' });
+    await expect(
+      savePersonalProfile(owner, { version: 0, profile: { name: 'Changed name' }, submit: false }),
+    ).rejects.toMatchObject({ code: 'ACTION_PAUSED' });
+  });
+  it('keeps approved personal profile details public until approval of field edits', async () => {
+    const id = (await pool.query('select id from advertisers where user_id=$1', [owner])).rows[0]
+      .id;
+    const profile = {
+      name: 'Approved seller',
+      phone: '0241234567',
+      whatsapp: '0543982307',
+      location: 'UCC',
+      contactConsent: true,
+    };
+    await savePersonalProfile(owner, { version: 0, profile });
+    await setControls({ profileEdits: 'approval' });
+    const changed = await patchProfileField(owner, {
+      kind: 'student',
+      version: 1,
+      field: 'name',
+      value: 'Pending seller',
+    });
+    expect(changed.pending).toBe(true);
+    let row = (await pool.query('select name,profile_state from advertisers where id=$1', [id]))
+      .rows[0];
+    expect(row).toMatchObject({ name: 'Approved seller', profile_state: 'pending' });
+    await moderatePersonalProfile(admin, id, {
+      decision: 'approve',
+      version: 2,
+      reason: 'Checked name',
+    });
+    row = (await pool.query('select name from advertisers where id=$1', [id])).rows[0];
+    expect(row.name).toBe('Pending seller');
   });
   it('uses the saved profile name even when an advert supplies a different name', async () => {
     const saved = await createAdvert(owner, { ...content(), displayName: 'Unrelated seller' });

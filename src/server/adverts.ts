@@ -1,3 +1,9 @@
+import {
+  controlMode,
+  postingAction,
+  postingLimitsEnabled,
+  pauseMessage,
+} from '../lib/platform-controls';
 import { z } from 'zod';
 import { profileComplete, type ProfileDefaults } from '../lib/seller-profile';
 import { defaultsSchema, requireCompleteDefaults } from './profiles';
@@ -148,7 +154,17 @@ export async function createProfile(userId: string, input: unknown) {
     .parse(input);
   if (data.setup) requireCompleteDefaults({ ...data.setup, name: data.name });
   return db().transaction(async (tx) => {
-    await actor(tx, userId);
+    const user = await actor(tx, userId);
+    const settings = await limits(tx);
+    const creationMode =
+      data.kind === 'business' ? controlMode(settings, 'businessCreation') : 'open';
+    ensure(
+      user.role === 'admin' || creationMode !== 'paused',
+      403,
+      'ACTION_PAUSED',
+      pauseMessage(settings),
+    );
+    const pendingSetup = user.role !== 'admin' && creationMode === 'approval';
     await tx.execute(sql`select id from users where id=${userId} for update`);
     if (data.kind === 'business') await ensurePersonal(tx, userId);
     const existing = await query<{ id: string }>(
@@ -200,15 +216,15 @@ export async function createProfile(userId: string, input: unknown) {
           : {}),
       };
       await tx.execute(
-        sql`update advertisers set name=${data.name},privacy=${JSON.stringify(saved.visibility)}::jsonb,draft_defaults=${JSON.stringify(saved)}::jsonb,approved_defaults=${JSON.stringify(saved)}::jsonb,defaults_version=defaults_version+1,approved_defaults_version=defaults_version+1,profile_state='approved',automatic_personal=false where id=${identity.id}`,
+        sql`update advertisers set name=${data.name},privacy=${JSON.stringify(saved.visibility)}::jsonb,draft_defaults=${JSON.stringify(saved)}::jsonb,approved_defaults=case when ${pendingSetup} then null else ${JSON.stringify(saved)}::jsonb end,defaults_version=defaults_version+1,approved_defaults_version=case when ${pendingSetup} then approved_defaults_version else defaults_version+1 end,profile_state=${pendingSetup ? 'pending' : 'approved'},automatic_personal=false where id=${identity.id}`,
       );
       if (data.kind === 'business')
         await tx.execute(
-          sql`insert into business_profiles(advertiser_id,slug,approved,state) values(${identity.id},${'slug' in saved ? (saved.slug as string) : `business-${identity.id}`},${JSON.stringify(saved)}::jsonb,'approved')`,
+          sql`insert into business_profiles(advertiser_id,slug,approved,pending,state) values(${identity.id},${'slug' in saved ? (saved.slug as string) : `business-${identity.id}`},${pendingSetup ? null : JSON.stringify(saved)}::jsonb,${pendingSetup ? JSON.stringify(saved) : null}::jsonb,${pendingSetup ? 'pending' : 'approved'})`,
         );
       await audit(tx, userId, 'seller_setup_completed', identity.id);
     }
-    return { id: identity.id, name: data.name, kind: data.kind };
+    return { id: identity.id, name: data.name, kind: data.kind, pending: pendingSetup };
   });
 }
 export async function createAdvert(userId: string, input: unknown, sellerId?: string) {
@@ -328,6 +344,22 @@ export async function submitAdvert(
       sql`select * from advert_revisions where id=${revisionId} and advert_id=${a.id} for update`,
     );
     ensure(r.status === 'draft', 409, 'STATE_CONFLICT', 'Only drafts can be submitted');
+    const mode = controlMode(settings, postingAction(seller.kind, r.purpose === 'edit'));
+    ensure(mode !== 'paused', 403, 'ACTION_PAUSED', pauseMessage(settings));
+    const autoPublish = mode === 'open';
+    if (seller.kind === 'business') {
+      const business = await query<{ approved: unknown }>(
+        tx,
+        sql`select approved from business_profiles where advertiser_id=${seller.id}`,
+      );
+      ensure(
+        business[0]?.approved || controlMode(settings, 'businessCreation') !== 'approval',
+        409,
+        'BUSINESS_REVIEW',
+        'Your business must be approved before publishing adverts.',
+      );
+    }
+
     await validateContent(tx, seller.id, contentSchema.parse(r.data), settings);
     if (r.purpose === 'edit') {
       const live = await one<{ live: boolean }>(
@@ -335,7 +367,7 @@ export async function submitAdvert(
         sql`select ${a.state}='published' and ${a.expires_at}::timestamptz>clock_timestamp() as live`,
       );
       ensure(live.live, 409, 'EXPIRED', 'Inactive advert must be renewed');
-    } else if (settings.posting_limits_enabled && user.role !== 'admin')
+    } else if (postingLimitsEnabled(settings) && user.role !== 'admin')
       ensure(
         (await activeCount(tx, seller.id)) < settings.max_active,
         409,
@@ -347,13 +379,13 @@ export async function submitAdvert(
       sql`select r.id from advert_revisions r join adverts other on other.id=r.advert_id where other.advertiser_id in (${ownerIdentities(seller.id)}) and other.id<>${a.id} and (r.status='pending' or (r.id=other.approved_revision_id and other.state='published' and other.expires_at>now())) and (r.fingerprint=${r.fingerprint} or exists(select 1 from revision_media x join media_assets xm on xm.id=x.media_id join revision_media y on y.revision_id=${r.id} join media_assets ym on ym.id=y.media_id where x.revision_id=r.id and xm.checksum=ym.checksum)) limit 1`,
     );
     ensure(
-      !settings.posting_limits_enabled || !duplicates.length,
+      !postingLimitsEnabled(settings) || !duplicates.length,
       409,
       'DUPLICATE',
       'A matching advert or image is already pending or published',
     );
     if (
-      settings.posting_limits_enabled &&
+      postingLimitsEnabled(settings) &&
       user.role !== 'admin' &&
       r.purpose !== 'edit' &&
       !r.quota_charged
@@ -379,8 +411,8 @@ export async function submitAdvert(
         sql`update advertiser_daily_usage set count=count+1 where advertiser_id=${seller.id} and day=${day.day}`,
       );
     }
-    const status = settings.auto_publish ? 'published' : 'pending';
-    if (settings.auto_publish) {
+    const status = autoPublish ? 'published' : 'pending';
+    if (autoPublish) {
       const contact = await one<{ visible: boolean }>(
         tx,
         sql`select (nullif(medstash_effective_content(${JSON.stringify(r.data)}::jsonb,case when p.kind='business' then b.approved else p.approved_defaults end,p.approved_defaults_version,p.privacy)->>'phone','') is not null or nullif(medstash_effective_content(${JSON.stringify(r.data)}::jsonb,case when p.kind='business' then b.approved else p.approved_defaults end,p.approved_defaults_version,p.privacy)->>'whatsapp','') is not null) as visible from advertisers p left join business_profiles b on b.advertiser_id=p.id where p.id=${seller.id}`,
@@ -399,16 +431,16 @@ export async function submitAdvert(
       );
     } else {
       await tx.execute(
-        sql`update advert_revisions set status='pending',submitted_at=now(),quota_charged=${settings.posting_limits_enabled && (user.role !== 'admin' || r.quota_charged)} where id=${r.id}`,
+        sql`update advert_revisions set status='pending',submitted_at=now(),quota_charged=${postingLimitsEnabled(settings) && (user.role !== 'admin' || r.quota_charged)} where id=${r.id}`,
       );
       if (r.purpose !== 'edit')
         await tx.execute(sql`update adverts set state='pending' where id=${a.id}`);
     }
-    await audit(tx, userId, settings.auto_publish ? 'advert_published' : 'advert_submitted', a.id, {
+    await audit(tx, userId, autoPublish ? 'advert_published' : 'advert_submitted', a.id, {
       revisionId: r.id,
       purpose: r.purpose,
-      postingLimitExempt: user.role === 'admin' || !settings.posting_limits_enabled,
-      automatic: settings.auto_publish,
+      postingLimitExempt: user.role === 'admin' || !postingLimitsEnabled(settings),
+      automatic: autoPublish,
     });
     const response = { advertId: a.id, revisionId: r.id, status };
     await tx.execute(
@@ -492,7 +524,7 @@ export async function moderate(
           tx,
           sql`select id from audit_events where target_id=${a.id} and action='advert_submitted' and detail->>'revisionId'=${r.id} and detail->>'postingLimitExempt'='true' limit 1`,
         );
-        if (settings.posting_limits_enabled && !exemption.length)
+        if (postingLimitsEnabled(settings) && !exemption.length)
           ensure(
             (await activeCount(tx, seller.id)) <= settings.max_active,
             409,

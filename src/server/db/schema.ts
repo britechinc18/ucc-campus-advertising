@@ -110,6 +110,11 @@ export const settings = pgTable(
     durationDays: integer('duration_days').notNull().default(30),
     maxImages: integer('max_images').notNull().default(5),
     maxImageBytes: integer('max_image_bytes').notNull().default(5242880),
+    platformControls: jsonb('platform_controls')
+      .$type<import('../../lib/platform-controls').PlatformControls>()
+      .default(
+        sql`'{"enabled":false,"registration":"open","businessCreation":"open","profileEdits":"open","personalPosting":"open","businessPosting":"open","advertEdits":"open","postingLimits":false,"pauseMessage":"This action is temporarily paused. Please try again later."}'::jsonb`,
+      ),
     autoPublish: boolean('auto_publish').notNull().default(true),
     postingLimitsEnabled: boolean('posting_limits_enabled').notNull().default(false),
     version: integer('version').notNull().default(1),

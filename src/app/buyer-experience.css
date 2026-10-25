@@ -3217,3 +3217,121 @@
     gap: 10px;
   }
 }
+
+.platform-control-fields {
+  border: 0;
+  padding: 0;
+  margin: 20px 0;
+}
+.platform-control-fields:disabled {
+  opacity: 0.6;
+}
+.platform-control-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 20px;
+}
+.platform-master-switch {
+  padding: 16px;
+  background: var(--soft);
+  border-radius: 14px;
+}
+.platform-master-switch small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.platform-master-switch input {
+  width: 36px;
+  height: 22px;
+  accent-color: var(--brand);
+}
+.advert-review-summary section {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.review-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.review-section-heading h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.review-section-heading button {
+  font-size: 12px;
+}
+.review-title {
+  font-size: 17px;
+  overflow-wrap: anywhere;
+}
+.review-price {
+  color: var(--brand);
+  font-weight: 600;
+  margin: 4px 0;
+}
+.review-description {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+.review-photo-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.review-photo-strip img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: var(--soft);
+}
+.review-contact-list {
+  margin: 0;
+  font-size: 12px;
+}
+.review-contact-list > div {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 12px;
+  margin: 6px 0;
+}
+.review-contact-list dt {
+  color: var(--muted);
+}
+.review-contact-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.review-publishing-notice {
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--soft);
+  font-size: 12px;
+  margin: 16px 0 10px;
+}
+.review-publishing-notice p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+.review-preview-button {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  font-size: 12px;
+}
+.review-preview-button svg {
+  width: 15px;
+  height: 15px;
+}
+@media (max-width: 600px) {
+  .platform-control-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

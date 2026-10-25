@@ -1,0 +1,1 @@
+ALTER TABLE "platform_settings" ADD COLUMN "platform_controls" jsonb DEFAULT '{"enabled":false,"registration":"open","businessCreation":"open","profileEdits":"open","personalPosting":"open","businessPosting":"open","advertEdits":"open","postingLimits":false,"pauseMessage":"This action is temporarily paused. Please try again later."}'::jsonb;

@@ -15,7 +15,7 @@ try {
     'TRUNCATE users,advertisers,adverts,advert_revisions,advertiser_daily_usage,idempotency_keys,audit_events,reports,media_assets,revision_media,business_profiles,featured_adverts,daily_advert_metrics,rate_limit_buckets CASCADE',
   );
   await pool.query(
-    'update platform_settings set auto_publish=false,posting_limits_enabled=true,max_active=5,daily_limit=3,duration_days=30,max_images=5,max_image_bytes=5242880,version=1',
+    'update platform_settings set platform_controls=null,auto_publish=false,posting_limits_enabled=true,max_active=5,daily_limit=3,duration_days=30,max_images=5,max_image_bytes=5242880,version=1',
   );
   const businessUser = randomUUID();
   const businessToken = randomBytes(24).toString('hex');

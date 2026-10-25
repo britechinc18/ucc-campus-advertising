@@ -32,6 +32,12 @@ export function BusinessForm({
     business?.approved ?? { name: account.profile?.name }) as ProfileDetails;
   return (
     <>
+      {business?.pending ? (
+        <p className="inline-notice" role="status">
+          Your business changes are awaiting approval. Your approved details stay public until
+          reviewed.
+        </p>
+      ) : null}
       <ProfileFieldEditor
         key={id}
         id={id}

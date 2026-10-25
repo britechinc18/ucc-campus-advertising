@@ -1,3 +1,4 @@
+import { controlMode, pauseMessage } from '../lib/platform-controls';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db, type Executor } from './db';
@@ -151,6 +152,10 @@ export async function savePersonalProfile(userId: string, input: unknown, seller
       ).id;
     const p = await advertiser(tx, user, own);
     ensure(p.kind === 'student', 422, 'PERSONAL_REQUIRED', 'Choose a personal profile');
+    const settings = await limits(tx);
+    const mode = user.role === 'admin' ? 'open' : controlMode(settings, 'profileEdits');
+    ensure(mode !== 'paused', 403, 'ACTION_PAUSED', pauseMessage(settings));
+    const approveNow = data.submit && mode === 'open';
     const old = await one<{ defaults_version: number; draft_defaults: ProfileDefaults | null }>(
       tx,
       sql`select defaults_version,draft_defaults from advertisers where id=${own}`,
@@ -166,7 +171,7 @@ export async function savePersonalProfile(userId: string, input: unknown, seller
     await applyPrivacy(tx, own, data.profile.visibility);
     const saved = await one<{ version: number }>(
       tx,
-      sql`update advertisers set draft_defaults=${JSON.stringify(data.profile)}::jsonb,defaults_version=defaults_version+1,profile_state=${data.submit ? 'approved' : 'incomplete'},approved_defaults=case when ${data.submit} then ${JSON.stringify(data.profile)}::jsonb else approved_defaults end,approved_defaults_version=case when ${data.submit} then defaults_version+1 else approved_defaults_version end,name=case when ${data.submit} then coalesce(${data.profile.name ?? null},name) else name end,privacy=case when ${data.submit} then ${JSON.stringify(data.profile.visibility)}::jsonb else privacy end,profile_reason=null,automatic_personal=false where id=${own} returning defaults_version as version`,
+      sql`update advertisers set draft_defaults=${JSON.stringify(data.profile)}::jsonb,defaults_version=defaults_version+1,profile_state=${data.submit ? (approveNow ? 'approved' : 'pending') : 'incomplete'},approved_defaults=case when ${approveNow} then ${JSON.stringify(data.profile)}::jsonb else approved_defaults end,approved_defaults_version=case when ${approveNow} then defaults_version+1 else approved_defaults_version end,name=case when ${approveNow} then coalesce(${data.profile.name ?? null},name) else name end,privacy=case when ${approveNow} then ${JSON.stringify(data.profile.visibility)}::jsonb else privacy end,profile_reason=null,automatic_personal=false where id=${own} returning defaults_version as version`,
     );
     await audit(
       tx,
@@ -175,7 +180,7 @@ export async function savePersonalProfile(userId: string, input: unknown, seller
       own,
       { version: saved.version, previous: old.draft_defaults, submitted: data.profile },
     );
-    return saved;
+    return { ...saved, pending: data.submit && !approveNow };
   });
 }
 export async function personalProfileQueue(userId: string) {
@@ -260,7 +265,11 @@ export async function businessLifecycle(userId: string, input: unknown, sellerId
       ensure(p.deactivated_at, 409, 'ALREADY_ACTIVE', 'Business is already active');
       const settings = await limits(tx);
       await tx.execute(
-        settings.auto_publish
+        (
+          settings.platform_controls
+            ? controlMode(settings, 'businessCreation') === 'open'
+            : settings.auto_publish
+        )
           ? sql`update advertisers set deactivated_at=null,reactivation_pending=false where id=${own}`
           : sql`update advertisers set reactivation_pending=true where id=${own}`,
       );

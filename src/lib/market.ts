@@ -97,6 +97,7 @@ export interface Account {
   role: string;
   profile: { id: string; name: string; kind: string; suspended: boolean } | null;
   settings: {
+    platform_controls?: import('./platform-controls').PlatformControls | null;
     auto_publish: boolean;
     posting_limits_enabled: boolean;
     max_active: number;

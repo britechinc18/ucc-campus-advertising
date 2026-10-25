@@ -1,4 +1,5 @@
 'use client';
+import { controlActions, defaultControls, type PlatformControls } from '@/lib/platform-controls';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api';
@@ -453,7 +454,7 @@ export function AdminScreen({ resource, target }: { resource: string; target?: s
       ) : resource === 'overview' && detail ? (
         <Overview data={detail} />
       ) : resource === 'settings' && detail ? (
-        <Settings data={detail} onSaved={reload} />
+        <Settings key={text(detail.version)} data={detail} onSaved={reload} />
       ) : target && detail ? (
         resource === 'submissions' ? (
           <Submission row={detail} onDecision={moderation} />
@@ -1033,6 +1034,9 @@ function AdvertiserDetails({
   );
 }
 function Settings({ data, onSaved }: { data: Row; onSaved: () => void }) {
+  const [controls, setControls] = useState<PlatformControls>(
+    (data.platform_controls as PlatformControls) ?? defaultControls,
+  );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -1059,8 +1063,13 @@ function Settings({ data, onSaved }: { data: Row; onSaved: () => void }) {
             durationDays: Number(f.get('duration_days')),
             maxImages: Number(f.get('max_images')),
             maxImageBytes: Number(f.get('max_image_bytes')),
-            autoPublish: f.get('auto_publish') === 'on',
-            postingLimitsEnabled: f.get('posting_limits_enabled') === 'on',
+            platformControls: controls,
+            autoPublish:
+              !controls.enabled ||
+              ['personalPosting', 'businessPosting', 'advertEdits'].every(
+                (action) => controls[action as 'personalPosting'] === 'open',
+              ),
+            postingLimitsEnabled: controls.enabled && controls.postingLimits,
             reason: f.get('reason'),
           });
           setSuccess(true);
@@ -1072,21 +1081,68 @@ function Settings({ data, onSaved }: { data: Row; onSaved: () => void }) {
         }
       }}
     >
-      <h2>Publishing controls</h2>
-      <label className="check">
-        <input type="checkbox" name="auto_publish" defaultChecked={!!data.auto_publish} />
-        <span>Publish adverts immediately without approval</span>
-      </label>
-      <label className="check">
+      <h2>Platform controls</h2>
+      <label className="check platform-master-switch">
         <input
           type="checkbox"
-          name="posting_limits_enabled"
-          defaultChecked={!!data.posting_limits_enabled}
+          role="switch"
+          checked={controls.enabled}
+          onChange={(e) => setControls({ ...controls, enabled: e.target.checked })}
         />
-        <span>Enforce posting quotas, duplicate checks and posting rate limits</span>
+        <span>
+          <strong>Enable restrictions</strong>
+          <small>
+            Off keeps registration, profiles and publishing open. Your individual settings are
+            retained.
+          </small>
+        </span>
       </label>
+      <fieldset className="platform-control-fields" disabled={!controls.enabled}>
+        <legend className="sr-only">Individual restrictions</legend>
+        <div className="platform-control-grid">
+          {controlActions.map(([key, label, approval]) => (
+            <label className="form-group" key={key}>
+              <span className="form-label">{label}</span>
+              <select
+                className="field-input"
+                value={controls[key]}
+                onChange={(e) => setControls({ ...controls, [key]: e.target.value })}
+              >
+                <option value="open">
+                  {key === 'registration' || key === 'businessCreation' ? 'Open' : 'Immediate'}
+                </option>
+                {approval ? <option value="approval">Approval required</option> : null}
+                <option value="paused">Paused</option>
+              </select>
+            </label>
+          ))}
+        </div>
+        <label className="check">
+          <input
+            type="checkbox"
+            checked={controls.postingLimits}
+            onChange={(e) => setControls({ ...controls, postingLimits: e.target.checked })}
+          />
+          <span>Enforce posting quotas, duplicate checks and posting rate limits</span>
+        </label>
+        <label className="form-group">
+          <span className="form-label">Message for paused actions</span>
+          <input
+            className="field-input"
+            minLength={3}
+            maxLength={300}
+            value={controls.pauseMessage}
+            onChange={(e) => setControls({ ...controls, pauseMessage: e.target.value })}
+          />
+        </label>
+      </fieldset>
       <p className="helper">
-        Limits below are retained for when enforcement is enabled. Moderation remains available.
+        Existing adverts stay visible when new posting is paused. Admin profile management remains
+        available.
+      </p>
+      <h3>Posting limits</h3>
+      <p className="helper">
+        Quotas apply only while restrictions and posting limits are both enabled.
       </p>
       {fields.map(([key, label, min, max]) => (
         <label className="form-group" key={key}>

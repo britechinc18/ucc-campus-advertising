@@ -1,3 +1,4 @@
+import { registrationAllowed } from './registration';
 import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import { DrizzleAdapter } from '@auth/drizzle-adapter';
@@ -33,7 +34,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth(() => {
     pages: { signIn: '/sign-in', error: '/sign-in' },
     session: { strategy: 'database', maxAge: 60 * 60 * 24 * 7 },
     callbacks: {
-      signIn: async ({ profile }) => profile?.email_verified === true,
+      signIn: async ({ profile }) => {
+        if (profile?.email_verified !== true || !profile.email) return false;
+        if (!(await registrationAllowed(db(), profile.email)))
+          return '/sign-in?error=registration-paused';
+        return true;
+      },
       session: async ({ session, user }) => ({
         ...session,
         user: { ...session.user, id: user.id },

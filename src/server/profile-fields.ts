@@ -1,7 +1,8 @@
+import { controlMode, pauseMessage } from '../lib/platform-controls';
 import { sql } from 'drizzle-orm';
 import { z } from 'zod';
 import { db } from './db';
-import { actor, advertiser, audit, one, query } from './store';
+import { actor, advertiser, audit, one, query, limits } from './store';
 import { ensure } from './errors';
 import { defaultsSchema, applyPrivacy, checkProfileImage } from './profiles';
 import { id, phone, socialUrl } from './validation';
@@ -77,6 +78,18 @@ export async function patchProfileField(userId: string, input: unknown, sellerId
             )
           )[0]
         : undefined;
+    const settings = await limits(tx);
+    const mode =
+      user.role === 'admin'
+        ? 'open'
+        : controlMode(
+            settings,
+            inputData.kind === 'business' && !business?.approved
+              ? 'businessCreation'
+              : 'profileEdits',
+          );
+    ensure(mode !== 'paused', 403, 'ACTION_PAUSED', pauseMessage(settings));
+    const pending = mode === 'approval';
     ensure(business?.state !== 'suspended', 409, 'SUSPENDED', 'Business profile suspended');
     const data = detailsSchema.parse(
       owner.draft_defaults ??
@@ -159,16 +172,16 @@ export async function patchProfileField(userId: string, input: unknown, sellerId
     }
     await applyPrivacy(tx, target, data.visibility);
     await tx.execute(
-      sql`update advertisers set draft_defaults=${JSON.stringify(data)}::jsonb,defaults_version=defaults_version+1,name=${data.name ?? owner.name},privacy=${JSON.stringify(data.visibility)}::jsonb,approved_defaults=case when ${complete && inputData.kind === 'student'} then ${JSON.stringify(data)}::jsonb else approved_defaults end,approved_defaults_version=case when ${complete} then defaults_version+1 else approved_defaults_version end,profile_state=${complete ? 'approved' : 'incomplete'},profile_reason=null,automatic_personal=false where id=${target}`,
+      sql`update advertisers set draft_defaults=${JSON.stringify(data)}::jsonb,defaults_version=defaults_version+1,name=case when ${pending} then name else ${data.name ?? owner.name} end,privacy=case when ${pending} then privacy else ${JSON.stringify(data.visibility)}::jsonb end,approved_defaults=case when ${complete && !pending && inputData.kind === 'student'} then ${JSON.stringify(data)}::jsonb else approved_defaults end,approved_defaults_version=case when ${complete && !pending} then defaults_version+1 else approved_defaults_version end,profile_state=${complete ? (pending ? 'pending' : 'approved') : 'incomplete'},profile_reason=null,automatic_personal=false where id=${target}`,
     );
     if (inputData.kind === 'business' && complete)
       await tx.execute(
-        sql`insert into business_profiles(advertiser_id,slug,approved,state) values(${target},${data.slug!},${JSON.stringify(data)}::jsonb,'approved') on conflict(advertiser_id) do update set approved=excluded.approved,pending=null,state='approved',reason=null`,
+        sql`insert into business_profiles(advertiser_id,slug,approved,pending,state) values(${target},${data.slug!},${pending ? null : JSON.stringify(data)}::jsonb,${pending ? JSON.stringify(data) : null}::jsonb,${pending ? 'pending' : 'approved'}) on conflict(advertiser_id) do update set approved=case when ${pending} then business_profiles.approved else excluded.approved end,pending=excluded.pending,state=excluded.state,reason=null`,
       );
     await audit(tx, userId, 'profile_field_saved', target, {
       field,
       version: inputData.version + 1,
     });
-    return { data, version: inputData.version + 1, complete };
+    return { data, version: inputData.version + 1, complete, pending: pending && complete };
   });
 }
