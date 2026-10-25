@@ -720,43 +720,45 @@ export function PostForm({
               </div>
             </form>
           ) : step === 2 ? (
-            <form onSubmit={advance}>
+            <form onSubmit={advance} className="composer-contacts-form">
               <h2>Photos & contact</h2>
-              <label className="form-group">
-                <span className="form-label">Seller / Business Name</span>
-                <input
-                  className="field-input"
-                  minLength={2}
-                  maxLength={100}
-                  value={identity?.name ?? account.profile?.name ?? form.displayName}
-                  readOnly
-                  aria-describedby="seller-profile-name-link"
+              <div className="composer-seller-photos">
+                <label className="form-group">
+                  <span className="form-label">Seller / Business Name</span>
+                  <input
+                    className="field-input"
+                    minLength={2}
+                    maxLength={100}
+                    value={identity?.name ?? account.profile?.name ?? form.displayName}
+                    readOnly
+                    aria-describedby="seller-profile-name-link"
+                  />
+                  <Link
+                    id="seller-profile-name-link"
+                    className="text-link seller-name-link"
+                    href={
+                      assisted
+                        ? `/admin/${identity?.kind === 'business' ? `businesses/${advertiserId}/profile` : `personal/${advertiserId}`}`
+                        : identity?.kind === 'business'
+                          ? '/my-business'
+                          : '/my-personal-profile'
+                    }
+                    target="_blank"
+                  >
+                    Edit name in profile
+                  </Link>
+                </label>
+                <Uploads
+                  compact
+                  inputRef={uploadInput}
+                  ids={form.mediaIds}
+                  onChange={(ids) => update('mediaIds', ids)}
+                  max={account.settings.max_images}
+                  maxBytes={account.settings.max_image_bytes}
+                  advertiserId={advertiserId}
+                  onBusy={setUploading}
                 />
-                <Link
-                  id="seller-profile-name-link"
-                  className="text-link seller-name-link"
-                  href={
-                    assisted
-                      ? `/admin/${identity?.kind === 'business' ? `businesses/${advertiserId}/profile` : `personal/${advertiserId}`}`
-                      : identity?.kind === 'business'
-                        ? '/my-business'
-                        : '/my-personal-profile'
-                  }
-                  target="_blank"
-                >
-                  Edit name in profile
-                </Link>
-              </label>
-              <Uploads
-                compact
-                inputRef={uploadInput}
-                ids={form.mediaIds}
-                onChange={(ids) => update('mediaIds', ids)}
-                max={account.settings.max_images}
-                maxBytes={account.settings.max_image_bytes}
-                advertiserId={advertiserId}
-                onBusy={setUploading}
-              />
+              </div>
               <label className="form-group">
                 <span className="form-label">
                   {form.kind === 'event' ? 'Event venue' : 'Campus location'}
@@ -814,7 +816,7 @@ export function PostForm({
                   ))}
                 </fieldset>
               </details>
-              <label className="check" style={{ marginTop: 24, alignItems: 'flex-start' }}>
+              <label className="check composer-contact-consent">
                 <input
                   type="checkbox"
                   required
