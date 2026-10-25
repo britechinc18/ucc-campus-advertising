@@ -106,7 +106,10 @@ export function OwnerDashboard({
           {drafts.map((d) => (
             <div key={d.key}>
               <strong>{d.title}</strong>
-              <Link className="text-link" href={d.href}>
+              <Link
+                className="text-link"
+                href={`${d.href}${d.href.includes('?') ? '&' : '?'}resume=1`}
+              >
                 Continue draft <Icon name="arrow" />
               </Link>
               <button
