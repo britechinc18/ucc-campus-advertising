@@ -35,7 +35,7 @@ export function AdvertPreview({
       <div className="preview-brand">
         <Image src="/icons/icon-192.png?v=2" width={36} height={36} alt="MedStash" unoptimized />
         <div>
-          <strong>Medstash.</strong>
+          <strong>medstash.</strong>
           <span>Sponsored</span>
         </div>
         <span className="live-preview-heading">
