@@ -142,7 +142,14 @@ export function Shell({
               ['/explore', 'Market'],
               ['/campus-360', 'Campus 360'],
               ['/saved', 'Saved'],
-              ...(seller ? [['/my-adverts', 'My Ads']] : []),
+              ...(seller
+                ? [
+                    ['/my-adverts', 'My Ads'],
+                    ['/post', 'Post advert'],
+                  ]
+                : !user?.sellerActive
+                  ? [['/sell', 'Start Selling']]
+                  : []),
             ].map(([href, label]) => (
               <Link
                 key={href}
@@ -154,6 +161,9 @@ export function Shell({
                 {label}
               </Link>
             ))}
+            {user?.sellerActive && !seller ? (
+              <AccountModeSwitch mode="seller" className="header-selling-link" />
+            ) : null}
           </nav>
           <div className="header-actions">
             <Link

@@ -3532,3 +3532,76 @@
     -webkit-backdrop-filter: none;
   }
 }
+
+/* Reference refinement: one slim menu capsule, with an unframed wordmark. */
+.site-header .wordmark {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.site-header .desktop-nav {
+  padding: 3px 8px;
+  gap: 2px;
+  box-shadow: 0 3px 14px rgb(15 35 28 / 4%);
+}
+.site-header .desktop-nav a,
+.site-header .desktop-nav .header-selling-link {
+  min-height: 30px;
+  padding: 5px 10px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 12px;
+  line-height: 20px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.site-header .desktop-nav a[aria-current='page'],
+.site-header .desktop-nav a:hover,
+.site-header .desktop-nav .header-selling-link:hover {
+  background: transparent;
+  color: var(--brand);
+  font-weight: 500;
+}
+.site-header .header-actions .icon-btn,
+.site-header .header-actions > details > summary {
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+@media (min-width: 901px) {
+  .site-header .header-actions > .btn {
+    display: none;
+  }
+  .site-header .header-inner {
+    min-height: 48px;
+  }
+}
+@media (min-width: 901px) and (max-width: 1100px) {
+  .site-header .desktop-nav a,
+  .site-header .desktop-nav .header-selling-link {
+    padding-inline: 7px;
+    font-size: 11px;
+  }
+}
+@media (max-width: 900px) {
+  .site-header .header-inner {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0 2px;
+    min-height: 46px;
+  }
+  .site-header .header-inner::before {
+    content: none;
+  }
+}
