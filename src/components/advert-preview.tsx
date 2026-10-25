@@ -2,12 +2,12 @@ import Image from 'next/image';
 import { Icon } from './icon';
 import { MediaImage } from './ui';
 import { priceText, parseMoney, type AdvertContent } from '@/lib/market';
-import { kindName } from '@/lib/campus';
 import { socialLabels, socialPlatforms, socialProfile, type SocialLinks } from '@/lib/socials';
 
 export function AdvertPreview({
   data,
-  seller,
+  onAddPhotos,
+  uploading = false,
 }: {
   data: {
     title: string;
@@ -26,24 +26,41 @@ export function AdvertPreview({
     offer?: string;
     externalUrl?: string;
   };
-  seller: string;
+  onAddPhotos?: () => void;
+  uploading?: boolean;
 }) {
   const price = parseMoney(data.price);
   return (
     <article className="composer-preview-card" aria-label="Advert preview">
-      <header className="preview-brand">
+      <div className="preview-brand">
         <Image src="/icons/icon-192.png?v=2" width={36} height={36} alt="MedStash" unoptimized />
         <div>
-          <strong>{data.displayName || seller || 'Your seller name'}</strong>
-          <span>MedStash · {kindName(data.kind)}</span>
+          <strong>MedStash</strong>
+          <span>Sponsored</span>
         </div>
-      </header>
+      </div>
       <div className="preview-image">
-        <MediaImage
-          key={data.mediaIds[0] ?? 'empty'}
-          id={data.mediaIds[0]}
-          alt={data.title || 'Your advert photo'}
-        />
+        {data.mediaIds.length ? (
+          <MediaImage
+            key={data.mediaIds[0]}
+            id={data.mediaIds[0]}
+            alt={data.title || 'Your advert photo'}
+          />
+        ) : (
+          <button
+            type="button"
+            className="preview-add-photo"
+            onClick={onAddPhotos}
+            disabled={uploading}
+          >
+            <span className="preview-add-photo-icon">
+              <Icon name="camera" />
+              <span>+</span>
+            </span>
+            <strong>{uploading ? 'Uploading…' : 'Add a photo'}</strong>
+            <span>Your cover photo will appear here</span>
+          </button>
+        )}
         {data.mediaIds.length > 1 ? (
           <span className="preview-photo-count">1 / {data.mediaIds.length}</span>
         ) : null}

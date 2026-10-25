@@ -98,7 +98,7 @@ export function PostForm({
   const identity = profiles.find((p) => p.id === advertiserId);
   const canChooseIdentity = !advert && profiles.some((p) => p.kind === 'business');
   const [confirmChange, setConfirmChange] = useState<{
-    type: 'identity' | 'restore';
+    type: 'identity';
     id: string;
   } | null>(null);
   const assisted =
@@ -120,7 +120,9 @@ export function PostForm({
             ? (categories.find((c) => c.slug === 'services')?.id ?? categories[0]?.id ?? '')
             : '',
         };
-    return identity ? { ...initial, ...autofillContacts(initial, identity) } : initial;
+    return identity
+      ? { ...initial, ...autofillContacts(initial, identity), displayName: identity.name }
+      : initial;
   });
   const flyer = isFlyer(form.kind);
   const [step, setStep] = useState(1);
@@ -128,6 +130,21 @@ export function PostForm({
   const [localSaved, setLocalSaved] = useState('');
   const requiresReview = !account.settings.auto_publish;
   const stepPanel = useRef<HTMLElement>(null);
+  const uploadInput = useRef<HTMLInputElement>(null);
+  const pickPhotoOnMount = useRef(false);
+  useEffect(() => {
+    if (step === 2 && pickPhotoOnMount.current) {
+      pickPhotoOnMount.current = false;
+      uploadInput.current?.click();
+    }
+  }, [step]);
+  function addPreviewPhoto() {
+    setPreviewOpen(false);
+    if (step !== 2) {
+      pickPhotoOnMount.current = true;
+      setStep(2);
+    } else requestAnimationFrame(() => uploadInput.current?.click());
+  }
   const previousStep = useRef(1);
   useEffect(() => {
     if (previousStep.current === step) return;
@@ -205,7 +222,12 @@ export function PostForm({
     const selected = profiles.find((p) => p.id === id);
     if (!selected) return;
     setForm((old) => {
-      const next = { ...old, ...autofillContacts(old, selected), mediaIds: [] };
+      const next = {
+        ...old,
+        ...autofillContacts(old, selected),
+        displayName: selected.name,
+        mediaIds: [],
+      };
       try {
         localStorage.setItem(`ucc-draft-v1:${userId}:${id}`, JSON.stringify(next));
       } catch {}
@@ -226,7 +248,7 @@ export function PostForm({
       ));
   function content(): AdvertContent {
     return {
-      ...(form.displayName.trim() ? { displayName: form.displayName.trim() } : {}),
+      displayName: identity?.name ?? account.profile?.name ?? form.displayName,
       ...(form.contactSources
         ? { contactSources: form.contactSources, profileVersion: form.profileVersion }
         : {}),
@@ -381,9 +403,7 @@ export function PostForm({
     onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       update(key, e.target.value),
   });
-  const preview = (
-    <AdvertPreview data={form} seller={identity?.name ?? account.profile?.name ?? ''} />
-  );
+  const preview = <AdvertPreview data={form} onAddPhotos={addPreviewPhoto} uploading={uploading} />;
   function saveLocalDraft() {
     try {
       localStorage.setItem(storageKey, JSON.stringify(form));
@@ -395,33 +415,17 @@ export function PostForm({
   return (
     <div className="post-layout advert-composer">
       {confirmChange ? (
-        <Dialog
-          title={
-            confirmChange.type === 'identity'
-              ? 'Change seller identity?'
-              : 'Restore Profile Defaults?'
-          }
-          onClose={() => setConfirmChange(null)}
-        >
+        <Dialog title="Change seller identity?" onClose={() => setConfirmChange(null)}>
           <p>
-            {confirmChange.type === 'identity'
-              ? 'Photos belong to the current identity and will be cleared. Re-upload them for the selected profile. Your product details and customized contacts will remain.'
-              : 'This replaces customized contact and location values with your selected profile’s current defaults. Product details and photos stay as they are.'}
+            Photos belong to the current identity and will be cleared. Your advert details and
+            customized contacts will remain.
           </p>
           <div className="form-actions">
             <button
               type="button"
               className="btn"
               onClick={() => {
-                if (confirmChange.type === 'identity') chooseIdentity(confirmChange.id);
-                else if (identity)
-                  setForm((old) => {
-                    const next = { ...old, ...autofillContacts(old, identity, true) };
-                    try {
-                      localStorage.setItem(storageKey, JSON.stringify(next));
-                    } catch {}
-                    return next;
-                  });
+                chooseIdentity(confirmChange.id);
                 setConfirmChange(null);
               }}
             >
@@ -444,21 +448,34 @@ export function PostForm({
                   ? 'Create assisted advert'
                   : 'Post an advert'}
           </h1>
-          <p>
-            {assisted
-              ? 'Posting for the selected advertiser. Review and contact consent still apply.'
-              : 'Share something with your campus.'}
-          </p>
         </div>
         <div className="composer-header-actions">
-          <button
-            className="btn secondary"
-            type="button"
-            disabled={busy || uploading}
-            onClick={saveLocalDraft}
-          >
-            Save draft
-          </button>
+          {canChooseIdentity ? (
+            <div className="composer-identity" role="group" aria-label="Public identity">
+              {profiles.map((p) => (
+                <button
+                  type="button"
+                  key={p.id}
+                  data-identity={p.id}
+                  aria-pressed={advertiserId === p.id}
+                  disabled={busy || uploading || identityLocked || p.suspended || p.deactivated}
+                  onClick={() => {
+                    if (p.id === advertiserId) return;
+                    if (form.mediaIds.length) setConfirmChange({ type: 'identity', id: p.id });
+                    else chooseIdentity(p.id);
+                  }}
+                >
+                  {p.kind === 'business' ? 'Business' : 'Personal'}
+                </button>
+              ))}
+            </div>
+          ) : advert || assisted ? (
+            <p className="inline-notice">
+              Posting as <strong>{identity?.name ?? account.profile?.name}</strong>
+              {identityLocked ? ' · Identity fixed for this advert.' : ''}
+            </p>
+          ) : null}
+
           <button
             className="btn secondary mobile-preview-trigger"
             type="button"
@@ -469,37 +486,6 @@ export function PostForm({
           </button>
         </div>
       </div>
-      {canChooseIdentity ? (
-        <div className="composer-identity" role="group" aria-label="Public identity">
-          {profiles.map((p) => (
-            <button
-              type="button"
-              key={p.id}
-              data-identity={p.id}
-              aria-pressed={advertiserId === p.id}
-              disabled={busy || uploading || identityLocked || p.suspended || p.deactivated}
-              onClick={() => {
-                if (p.id === advertiserId) return;
-                if (form.mediaIds.length) setConfirmChange({ type: 'identity', id: p.id });
-                else chooseIdentity(p.id);
-              }}
-            >
-              {p.kind === 'business' ? 'Business' : 'Personal'}
-            </button>
-          ))}
-          <span>{identity?.name}</span>
-        </div>
-      ) : advert || assisted ? (
-        <p className="inline-notice">
-          Posting as <strong>{identity?.name ?? account.profile?.name}</strong>
-          {identityLocked ? ' · Identity fixed for this advert.' : ''}
-        </p>
-      ) : null}
-      {localSaved ? (
-        <p className="local-draft-status" role="status">
-          {localSaved}
-        </p>
-      ) : null}
       {stored ? (
         <div className="inline-notice">
           <div>
@@ -513,7 +499,10 @@ export function PostForm({
                 className="btn small"
                 type="button"
                 onClick={() => {
-                  setForm(stored);
+                  setForm({
+                    ...stored,
+                    displayName: identity?.name ?? account.profile?.name ?? stored.displayName,
+                  });
                   setStored(null);
                 }}
               >
@@ -571,37 +560,58 @@ export function PostForm({
           {step === 1 ? (
             <form onSubmit={advance}>
               <h2>Advert details</h2>
-              <p>Clear details help the right person find it.</p>
-              <label className="form-group">
-                <span className="form-label">What are you posting?</span>
-                <select
-                  className="field-input"
-                  value={form.kind}
-                  onChange={(e) => {
-                    const kind = e.target.value as DraftForm['kind'];
-                    update('kind', kind);
-                    update(
-                      'priceMode',
-                      isFlyer(kind) ? 'contact' : kind === 'wanted' ? 'budget' : 'fixed',
-                    );
-                    if (isFlyer(kind))
+              <div className="composer-kind-category">
+                <label className="form-group">
+                  <span className="form-label">What are you posting?</span>
+                  <select
+                    className="field-input"
+                    value={form.kind}
+                    onChange={(e) => {
+                      const kind = e.target.value as DraftForm['kind'];
+                      update('kind', kind);
                       update(
-                        'categoryId',
-                        categories.find((c) => c.slug === 'services')?.id ??
-                          categories[0]?.id ??
-                          '',
+                        'priceMode',
+                        isFlyer(kind) ? 'contact' : kind === 'wanted' ? 'budget' : 'fixed',
                       );
-                  }}
-                >
-                  <option value="product">An item</option>
-                  <option value="service">A service</option>
-                  <option value="wanted">Wanted</option>
-                  <option value="event">Event or program flyer</option>
-                  <option value="promotion">Promotion or campaign</option>
-                  <option value="announcement">Announcement</option>
-                  <option value="business_ad">Business advertisement</option>
-                </select>
-              </label>
+                      if (isFlyer(kind))
+                        update(
+                          'categoryId',
+                          categories.find((c) => c.slug === 'services')?.id ??
+                            categories[0]?.id ??
+                            '',
+                        );
+                    }}
+                  >
+                    <option value="product">An item</option>
+                    <option value="service">A service</option>
+                    <option value="wanted">Wanted</option>
+                    <option value="event">Event or program flyer</option>
+                    <option value="promotion">Promotion or campaign</option>
+                    <option value="announcement">Announcement</option>
+                    <option value="business_ad">Business advertisement</option>
+                  </select>
+                </label>
+                {!flyer ? (
+                  <>
+                    <label className="form-group">
+                      <span className="form-label">Category</span>
+                      <select
+                        required
+                        className="field-input"
+                        value={form.categoryId}
+                        onChange={(e) => update('categoryId', e.target.value)}
+                      >
+                        <option value="">Choose a category</option>
+                        {categories.map((c) => (
+                          <option value={c.id} key={c.id}>
+                            {c.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </>
+                ) : null}
+              </div>
               <label className="form-group">
                 <span className="form-label">Advert title</span>
                 <input
@@ -617,23 +627,9 @@ export function PostForm({
               {!flyer ? (
                 <>
                   {' '}
-                  <label className="form-group">
-                    <span className="form-label">Category</span>
-                    <select
-                      required
-                      className="field-input"
-                      value={form.categoryId}
-                      onChange={(e) => update('categoryId', e.target.value)}
-                    >
-                      <option value="">Choose a category</option>
-                      {categories.map((c) => (
-                        <option value={c.id} key={c.id}>
-                          {c.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <div className="field-inline">
+                  <div
+                    className={`field-inline composer-price-fields ${form.kind === 'product' ? 'has-condition' : ''}`}
+                  >
                     <label className="form-group">
                       <span className="form-label">
                         {form.kind === 'wanted' ? 'Budget' : 'Price'} (GH₵)
@@ -667,22 +663,22 @@ export function PostForm({
                         )}
                       </select>
                     </label>
+                    {form.kind === 'product' ? (
+                      <label className="form-group">
+                        <span className="form-label">Condition</span>
+                        <select
+                          className="field-input"
+                          value={form.condition}
+                          onChange={(e) =>
+                            update('condition', e.target.value as DraftForm['condition'])
+                          }
+                        >
+                          <option value="used">Used</option>
+                          <option value="new">New</option>
+                        </select>
+                      </label>
+                    ) : null}
                   </div>
-                  {form.kind === 'product' ? (
-                    <label className="form-group">
-                      <span className="form-label">Condition</span>
-                      <select
-                        className="field-input"
-                        value={form.condition}
-                        onChange={(e) =>
-                          update('condition', e.target.value as DraftForm['condition'])
-                        }
-                      >
-                        <option value="used">Used</option>
-                        <option value="new">New</option>
-                      </select>
-                    </label>
-                  ) : null}
                 </>
               ) : (
                 <div className="flyer-fields">
@@ -745,21 +741,9 @@ export function PostForm({
                   minLength={20}
                   maxLength={5000}
                   className="field-input"
+                  rows={3}
                   {...common('description')}
                   placeholder="Describe the condition, what is included and useful details."
-                />
-              </label>
-              <label className="form-group">
-                <span className="form-label">
-                  {form.kind === 'event' ? 'Event venue' : 'Campus location'}
-                </span>
-                <input
-                  required
-                  minLength={2}
-                  maxLength={120}
-                  className="field-input"
-                  {...common('location')}
-                  placeholder="For example, Amamoma"
                 />
               </label>
               <div className="form-bottom">
@@ -774,49 +758,28 @@ export function PostForm({
           ) : step === 2 ? (
             <form onSubmit={advance}>
               <h2>Photos & contact</h2>
-              <p>Use your own photos and contacts you have permission to share.</p>
-              <div className="profile-defaults">
-                <p>
-                  {form.contactSources
-                    ? 'Auto-filled from your saved profile. Changes here apply only to this advert.'
-                    : 'Save your reusable contacts in your profile, or complete this advert’s contact fields below.'}
-                </p>
-                <div className="form-actions">
-                  <button
-                    type="button"
-                    className="btn secondary small"
-                    disabled={!identity || busy || uploading}
-                    onClick={() =>
-                      identity && setConfirmChange({ type: 'restore', id: identity.id })
-                    }
-                  >
-                    Restore Profile Defaults
-                  </button>
-                  <Link
-                    href={
-                      assisted
-                        ? `/admin/${identity?.kind === 'business' ? `businesses/${advertiserId}/profile` : `personal/${advertiserId}`}`
-                        : identity?.kind === 'business'
-                          ? '/my-business'
-                          : '/my-personal-profile'
-                    }
-                    className="text-link"
-                    target="_blank"
-                  >
-                    Manage saved profile →
-                  </Link>
-                </div>
-              </div>
               <label className="form-group">
                 <span className="form-label">Seller / Business Name</span>
                 <input
                   className="field-input"
                   minLength={2}
                   maxLength={100}
-                  {...common('displayName')}
+                  value={identity?.name ?? account.profile?.name ?? form.displayName}
+                  readOnly
+                  aria-describedby="seller-profile-name-link"
                 />
+                <Link
+                  id="seller-profile-name-link"
+                  className="text-link seller-name-link"
+                  href={identity?.kind === 'business' ? '/my-business' : '/my-personal-profile'}
+                  target="_blank"
+                >
+                  Edit name in profile
+                </Link>
               </label>
               <Uploads
+                compact
+                inputRef={uploadInput}
                 ids={form.mediaIds}
                 onChange={(ids) => update('mediaIds', ids)}
                 max={account.settings.max_images}
@@ -825,33 +788,47 @@ export function PostForm({
                 onBusy={setUploading}
               />
               <label className="form-group">
-                <span className="form-label">Phone number</span>
+                <span className="form-label">
+                  {form.kind === 'event' ? 'Event venue' : 'Campus location'}
+                </span>
                 <input
+                  required
+                  minLength={2}
+                  maxLength={120}
                   className="field-input"
-                  type="tel"
-                  maxLength={32}
-                  autoComplete="tel"
-                  {...common('phone')}
-                  placeholder="024 123 4567"
+                  {...common('location')}
+                  placeholder="For example, Amamoma"
                 />
               </label>
-              <label className="form-group">
-                <span className="form-label">WhatsApp number</span>
-                <input
-                  className="field-input"
-                  type="tel"
-                  maxLength={32}
-                  {...common('whatsapp')}
-                  placeholder="024 123 4567"
-                />
-              </label>
+              <div className="composer-contact-grid">
+                <label className="form-group">
+                  <span className="form-label">Phone number</span>
+                  <input
+                    className="field-input"
+                    type="tel"
+                    maxLength={32}
+                    autoComplete="tel"
+                    {...common('phone')}
+                    placeholder="024 123 4567"
+                  />
+                </label>
+                <label className="form-group">
+                  <span className="form-label">WhatsApp number</span>
+                  <input
+                    className="field-input"
+                    type="tel"
+                    maxLength={32}
+                    {...common('whatsapp')}
+                    placeholder="024 123 4567"
+                  />
+                </label>
+              </div>
               <details className="optional-socials">
                 <summary>
                   Social profiles <span className="meta">(optional)</span>
                 </summary>
                 <fieldset className="social-fields">
                   <legend className="sr-only">Social profiles</legend>
-                  <p className="meta">Add the profiles you want buyers to see on this advert.</p>
                   {socialPlatforms.map((platform) => (
                     <label className="form-group" key={platform}>
                       <span className="form-label">{socialLabels[platform]} profile URL</span>
@@ -890,11 +867,6 @@ export function PostForm({
           ) : (
             <>
               <h2>Review your advert</h2>
-              <p>
-                {requiresReview
-                  ? 'Check your advert before submitting for approval.'
-                  : 'Check the details below. Your advert will go live when you publish.'}
-              </p>
               <div className="review-live-preview">{preview}</div>
               <div className="review-edit-actions">
                 <button type="button" className="text-link" onClick={() => setStep(1)}>
@@ -904,6 +876,11 @@ export function PostForm({
                   Edit photos & contact
                 </button>
               </div>
+              {localSaved ? (
+                <p className="local-draft-status" role="status">
+                  {localSaved}
+                </p>
+              ) : null}
               {savedMessage ? (
                 <p className="form-success" role="status">
                   {savedMessage}
@@ -914,6 +891,14 @@ export function PostForm({
                   Back
                 </button>
                 <button
+                  className="btn secondary"
+                  type="button"
+                  disabled={busy || uploading}
+                  onClick={saveLocalDraft}
+                >
+                  Save draft
+                </button>
+                <button
                   className="btn"
                   disabled={busy || uploading}
                   onClick={() => void save(true)}
@@ -921,21 +906,13 @@ export function PostForm({
                   {busy ? 'Saving…' : requiresReview ? 'Submit for approval' : 'Publish advert'}
                 </button>
               </div>
-              <button
-                className="btn quiet"
-                disabled={busy || uploading}
-                onClick={() => void save(false)}
-              >
-                Save as draft
-              </button>
             </>
           )}
         </section>
         <aside className="posting-guide live-preview-panel">
           <div className="live-preview-heading">
-            <Icon name="eye" />
+            <Icon name="laptop" />
             <h2>Live preview</h2>
-            <span>Updates as you type</span>
           </div>
           {preview}
         </aside>

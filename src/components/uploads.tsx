@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, type RefObject } from 'react';
 import { api } from '@/lib/api';
 import { MediaImage, ErrorMessage } from './ui';
 import { Icon } from './icon';
@@ -11,6 +11,8 @@ export function Uploads({
   advertiserId,
   onBusy,
   profilePhoto = false,
+  compact = false,
+  inputRef,
 }: {
   ids: string[];
   onChange: (ids: string[]) => void;
@@ -19,6 +21,8 @@ export function Uploads({
   advertiserId?: string;
   onBusy?: (busy: boolean) => void;
   profilePhoto?: boolean;
+  compact?: boolean;
+  inputRef?: RefObject<HTMLInputElement | null>;
 }) {
   const [busy, setBusy] = useState(false);
   const [failures, setFailures] = useState<{ file: File; message: string }[]>([]);
@@ -67,7 +71,7 @@ export function Uploads({
     }
   }
   return (
-    <div>
+    <div className={compact ? 'compact-photo-upload' : undefined}>
       <div className="upload-grid">
         {ids.map((id, i) => (
           <div className="uploaded-photo" key={id}>
@@ -120,9 +124,10 @@ export function Uploads({
         ))}
         {ids.length < max ? (
           <label className="upload-tile">
-            <Icon name="upload" />
+            <Icon name={compact ? 'camera' : 'upload'} />
             <span>{busy ? 'Uploading…' : profilePhoto ? 'Add photo' : 'Add photos'}</span>
             <input
+              ref={inputRef}
               type="file"
               multiple={max > 1}
               accept="image/jpeg,image/png,image/webp"

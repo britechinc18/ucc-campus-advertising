@@ -94,8 +94,9 @@ test('seller manages separate profiles and posting autofill preserves explicit o
     .getByRole('combobox', { name: 'Category', exact: true })
     .selectOption(fixture.category);
   await page.getByLabel('Price (GH₵)').fill('55');
-  await expect(page.getByLabel('Campus location', { exact: true })).toHaveValue('UCC North campus');
+  await expect(page.getByLabel('Campus location', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await expect(page.getByLabel('Campus location', { exact: true })).toHaveValue('UCC North campus');
   await expect(page.getByLabel('Seller / Business Name')).toHaveValue('Profile Test Seller');
   await expect(page.getByLabel('WhatsApp number', { exact: true })).toHaveValue('+233543982307');
   await page.getByLabel('Phone number', { exact: true }).fill('0271234567');
@@ -128,9 +129,8 @@ test('seller manages separate profiles and posting autofill preserves explicit o
   await expect(page.getByLabel('Seller / Business Name')).toHaveValue('Profile Test Business');
   await expect(page.getByLabel('Phone number', { exact: true })).toHaveValue('0271234567');
   await expect(page.getByLabel('WhatsApp number', { exact: true })).toHaveValue('+233201234567');
-  await page.getByRole('button', { name: 'Restore Profile Defaults' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Confirm' }).click();
-  await expect(page.getByLabel('Phone number', { exact: true })).toHaveValue('+233201234567');
+  await expect(page.getByRole('button', { name: 'Restore Profile Defaults' })).toHaveCount(0);
+  await expect(page.getByLabel('Seller / Business Name')).toHaveAttribute('readonly', '');
   for (const width of [320, 390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(

@@ -2754,3 +2754,298 @@
   border-bottom: 2px solid var(--brand);
   font-weight: 600;
 }
+
+/* Compact posting workspace and reference-style advert preview. */
+.advert-composer .post-heading {
+  margin-bottom: 16px;
+}
+.advert-composer .composer-header-actions {
+  align-items: center;
+  gap: 12px;
+}
+.advert-composer .composer-identity {
+  margin: 0;
+  padding: 4px;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--soft);
+  flex-wrap: nowrap;
+}
+.advert-composer .composer-identity button {
+  min-width: 90px;
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+.advert-composer .composer-identity button[aria-pressed='true'] {
+  background: var(--action);
+  color: var(--on-action);
+}
+.advert-composer .steps {
+  margin-bottom: 18px;
+}
+.advert-composer .form-panel {
+  padding: 20px;
+}
+.advert-composer .form-panel h2 {
+  font-size: 19px;
+  margin-bottom: 18px;
+}
+.advert-composer .form-group {
+  margin-bottom: 14px;
+}
+.advert-composer .form-label {
+  margin-bottom: 6px;
+  font-size: 12px;
+}
+.advert-composer .field-input {
+  min-height: 40px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+.advert-composer textarea.field-input {
+  min-height: 96px;
+  height: 96px;
+  resize: vertical;
+}
+.composer-kind-category,
+.composer-contact-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.advert-composer .composer-price-fields {
+  gap: 12px;
+}
+.advert-composer .composer-price-fields.has-condition {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.advert-composer .form-bottom {
+  margin-top: 16px;
+  padding-top: 14px;
+}
+.advert-composer .form-bottom .btn {
+  font-size: 12px;
+  min-height: 40px;
+  padding: 10px 16px;
+}
+.advert-composer .seller-name-link {
+  display: inline-block;
+  font-size: 11px;
+  margin-top: 5px;
+}
+.advert-composer input[readonly] {
+  color: var(--muted);
+  background: var(--soft);
+  cursor: default;
+}
+.advert-composer .optional-socials {
+  border: 0;
+  padding: 10px 0;
+  margin: 0;
+}
+.advert-composer .optional-socials .social-fields {
+  padding: 12px 0 0;
+  border: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 12px;
+}
+.advert-composer .optional-socials summary {
+  font-size: 13px;
+}
+.advert-composer .compact-photo-upload {
+  margin: 0 0 14px;
+}
+.advert-composer .compact-photo-upload .upload-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.advert-composer .compact-photo-upload .upload-tile,
+.advert-composer .compact-photo-upload .uploaded-photo {
+  width: 92px;
+  height: 80px;
+  min-height: 80px;
+  aspect-ratio: auto;
+  border-radius: 10px;
+}
+.advert-composer .compact-photo-upload .upload-tile {
+  padding: 8px;
+  gap: 5px;
+  font-size: 11px;
+}
+.advert-composer .compact-photo-upload .upload-tile svg {
+  width: 22px;
+  height: 22px;
+}
+.advert-composer .compact-photo-upload .uploaded-photo > img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+.advert-composer .compact-photo-upload .helper {
+  font-size: 10px;
+  margin: 6px 0 0;
+}
+.advert-composer .compact-photo-upload .upload-controls {
+  gap: 3px;
+}
+.advert-composer .compact-photo-upload .upload-controls button {
+  min-width: 22px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  font-size: 11px;
+}
+.advert-composer .compact-photo-upload .upload-cover {
+  font-size: 9px;
+  padding: 2px 5px;
+}
+.advert-composer .live-preview-panel {
+  padding: 16px;
+}
+.advert-composer .live-preview-heading {
+  margin-bottom: 12px;
+}
+.advert-composer .live-preview-heading svg {
+  width: 19px;
+  height: 19px;
+}
+.composer-preview-card .preview-brand {
+  padding: 14px;
+  gap: 10px;
+}
+.composer-preview-card .preview-brand strong {
+  font-size: 15px;
+}
+.composer-preview-card .preview-brand span {
+  font-size: 11px;
+}
+.composer-preview-card .preview-image {
+  margin: 0 12px;
+  border-radius: 14px;
+  aspect-ratio: 16/10;
+}
+.preview-add-photo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  height: 100%;
+  background: var(--soft);
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  font: inherit;
+}
+.preview-add-photo > strong {
+  font-size: 14px;
+  color: var(--brand);
+}
+.preview-add-photo > span:last-child {
+  font-size: 11px;
+}
+.preview-add-photo-icon {
+  position: relative;
+  display: block;
+}
+.preview-add-photo-icon > svg {
+  width: 38px;
+  height: 38px;
+}
+.preview-add-photo-icon > span {
+  position: absolute;
+  right: -9px;
+  bottom: -3px;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: var(--action);
+  color: var(--on-action);
+  font-size: 17px;
+  line-height: 20px;
+}
+.composer-preview-card .preview-body {
+  padding: 14px;
+}
+.composer-preview-card .preview-body h3 {
+  font-size: 19px;
+  margin-bottom: 8px;
+}
+.composer-preview-card .preview-body .price {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+.composer-preview-card .preview-description {
+  margin-bottom: 12px;
+  -webkit-line-clamp: 3;
+}
+.composer-preview-card .preview-contact > span {
+  margin-top: 12px;
+  padding: 10px;
+}
+@media (min-width: 1000px) {
+  .advert-composer .post-columns {
+    align-items: start;
+  }
+  .advert-composer .form-panel {
+    max-height: calc(100dvh - 235px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+  }
+  .advert-composer .live-preview-panel {
+    max-height: calc(100dvh - 235px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+}
+@media (max-width: 800px) {
+  .advert-composer .post-heading {
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .advert-composer .post-heading h1 {
+    font-size: 26px;
+    margin: 0;
+  }
+  .advert-composer .composer-header-actions {
+    margin-left: auto;
+    flex-wrap: nowrap;
+  }
+  .advert-composer .composer-identity button {
+    min-width: 66px;
+    padding: 7px 10px;
+    font-size: 11px;
+  }
+  .advert-composer .form-panel {
+    padding: 16px;
+  }
+  .advert-composer .form-bottom {
+    gap: 6px;
+  }
+  .advert-composer .form-bottom .btn {
+    min-width: 0;
+    padding: 10px 9px;
+  }
+  .advert-composer .composer-kind-category {
+    gap: 10px;
+  }
+  .advert-composer .composer-contact-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .advert-composer .optional-socials .social-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

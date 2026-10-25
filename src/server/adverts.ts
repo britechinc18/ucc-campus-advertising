@@ -72,7 +72,7 @@ async function validateContent(tx: Executor, sellerId: string, data: Content, se
       data.profileVersion === p.defaults_version,
       409,
       'PROFILE_CHANGED',
-      'Your profile changed. Restore current defaults or reload this advert before saving',
+      'Your profile changed. Reload this advert to use the current profile details.',
     );
     const defaults =
       p.kind === 'business'
@@ -113,7 +113,7 @@ async function writeRevision(
   purpose: string,
   charged = false,
 ) {
-  if (!data.displayName) {
+  {
     const identity = await one<{ name: string }>(
       tx,
       sql`select coalesce(b.approved->>'name',p.name) as name from advertisers p left join business_profiles b on b.advertiser_id=p.id where p.id=${a.advertiser_id}`,
