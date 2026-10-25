@@ -486,43 +486,6 @@ export function PostForm({
           </button>
         </div>
       </div>
-      {stored ? (
-        <div className="inline-notice">
-          <div>
-            <strong>Continue your unfinished advert?</strong>
-            <p>
-              Text and completed photos were saved on this device. Unfinished uploads must be
-              selected again.
-            </p>
-            <div className="form-actions">
-              <button
-                className="btn small"
-                type="button"
-                onClick={() => {
-                  setForm({
-                    ...stored,
-                    ...(identity ? autofillContacts(stored, identity) : {}),
-                    displayName: identity?.name ?? account.profile?.name ?? stored.displayName,
-                  });
-                  setStored(null);
-                }}
-              >
-                Restore draft
-              </button>
-              <button
-                className="btn secondary small"
-                type="button"
-                onClick={() => {
-                  localStorage.removeItem(storageKey);
-                  setStored(null);
-                }}
-              >
-                Discard local copy
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
       <div className="steps">
         {['Details', flyer ? 'Artwork & contact' : 'Photos & contact', 'Review & publish'].map(
           (label, i) => (
@@ -558,6 +521,43 @@ export function PostForm({
               ))}
             </div>
           ) : null}
+          {stored ? (
+            <details className="composer-draft-notice">
+              <summary>
+                Unfinished advert saved <span>Continue or discard</span>
+              </summary>
+              <div>
+                <p>Saved on this device. Select any unfinished uploads again.</p>
+                <div className="form-actions">
+                  <button
+                    className="btn small"
+                    type="button"
+                    onClick={() => {
+                      setForm({
+                        ...stored,
+                        ...(identity ? autofillContacts(stored, identity) : {}),
+                        displayName: identity?.name ?? account.profile?.name ?? stored.displayName,
+                      });
+                      setStored(null);
+                    }}
+                  >
+                    Restore draft
+                  </button>
+                  <button
+                    className="btn secondary small"
+                    type="button"
+                    onClick={() => {
+                      localStorage.removeItem(storageKey);
+                      setStored(null);
+                    }}
+                  >
+                    Discard local copy
+                  </button>
+                </div>
+              </div>
+            </details>
+          ) : null}
+
           {step === 1 ? (
             <form onSubmit={advance}>
               <h2>Advert details</h2>
