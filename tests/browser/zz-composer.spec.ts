@@ -105,6 +105,10 @@ test('composer updates preview, restores local drafts and publishes without revi
       (document.activeElement as HTMLElement)?.blur();
       window.scrollTo(0, 0);
     });
+    const contactPanels = await page
+      .locator('.post-columns > *')
+      .evaluateAll((elements) => elements.map((element) => element.getBoundingClientRect().height));
+    expect(Math.abs(contactPanels[0] - contactPanels[1])).toBeLessThan(2);
     await page.screenshot({
       path: testInfo.outputPath('composer-contacts-desktop.png'),
       fullPage: true,
