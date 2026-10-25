@@ -3489,3 +3489,46 @@
     -webkit-backdrop-filter: none;
   }
 }
+@media (max-width: 900px) {
+  .site-header .header-inner {
+    position: relative;
+    isolation: isolate;
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+  .site-header .header-inner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: color-mix(in srgb, var(--surface) 88%, transparent);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+    pointer-events: none;
+  }
+}
+@media (max-width: 767px) {
+  .site-header .mobile-header-title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: clamp(16px, 5vw, 23px);
+    letter-spacing: -0.04em;
+  }
+  .market-header .mobile-header-title,
+  .campus-header .mobile-header-title,
+  .recent-header .mobile-header-title {
+    display: block;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .site-header .header-inner::before {
+    background: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}

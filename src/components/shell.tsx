@@ -176,13 +176,14 @@ export function Shell({
                 );
                 if (target) {
                   event.preventDefault();
-                  target.focus();
+                  target.focus({ preventScroll: true });
                   target.scrollIntoView({
                     block: 'center',
                     behavior: matchMedia('(prefers-reduced-motion: reduce)').matches
                       ? 'instant'
                       : 'smooth',
                   });
+                  requestAnimationFrame(() => target.focus({ preventScroll: true }));
                 }
               }}
             >
