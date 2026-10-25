@@ -102,6 +102,13 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
     await pool.end();
     await db().$client.end();
   });
+  it('uses the saved profile name even when an advert supplies a different name', async () => {
+    const saved = await createAdvert(owner, { ...content(), displayName: 'Unrelated seller' });
+    const row = (
+      await pool.query('select data from advert_revisions where id=$1', [saved.revisionId])
+    ).rows[0];
+    expect(row.data.displayName).toBe('Campus Seller');
+  });
   it('saves complete seller setup atomically and refuses overwrites or invalid contacts', async () => {
     const setup = {
       phone: '0241234567',

@@ -87,8 +87,8 @@ test('advertiser submits, admin approves, public search finds it, advertiser mar
   await page
     .getByLabel('Description')
     .fill('Browser-only tutoring appointment to verify submission and approval end to end.');
-  await page.getByLabel('Campus location').fill('Science Market');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Campus location').fill('Science Market');
   await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
   await page.getByLabel('WhatsApp number', { exact: true }).fill('0241234567');
   await page.locator('.optional-socials summary').click();
@@ -372,8 +372,8 @@ test('business edits appear immediately and upload failure never looks successfu
   await page
     .getByLabel('Description')
     .fill('Browser fixture wanted request for study supplies in good condition.');
-  await page.getByLabel('Campus location').fill('UCC campus');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Campus location').fill('UCC campus');
   await page.getByLabel('Select photographs').setInputFiles({
     name: 'test.png',
     mimeType: 'image/png',
@@ -528,10 +528,10 @@ test('existing seller gets flat navigation and can draft every supported advert 
     await page
       .getByRole('textbox', { name: /^Description/ })
       .fill('Local browser draft covering the full real advert creation API.');
+    await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page
       .getByLabel(kind === 'event' ? 'Event venue' : 'Campus location', { exact: true })
       .fill('Campus central hall');
-    await page.getByRole('button', { name: 'Continue', exact: true }).click();
     if (kind !== 'service' && kind !== 'wanted') {
       await page.getByLabel('Select photographs').setInputFiles({
         name: `${kind}.png`,
@@ -550,7 +550,7 @@ test('existing seller gets flat navigation and can draft every supported advert 
       await page.getByRole('button', { name: 'Submit for approval' }).click();
       await expect(page).toHaveURL(/submitted=1/);
     } else {
-      await page.getByRole('button', { name: 'Save as draft' }).click();
+      await page.getByRole('button', { name: 'Save draft' }).click();
       await expect(page.getByRole('status')).toContainText('Draft saved');
     }
   }
@@ -743,8 +743,8 @@ test('admin selects an assisted advertiser by name and sees real protected syste
   await page
     .getByLabel('Description')
     .fill('Consent-based assisted graphic design service for the campus community.');
-  await page.getByLabel('Campus location').fill('UCC campus');
   await page.getByRole('button', { name: 'Continue', exact: true }).click();
+  await page.getByLabel('Campus location').fill('UCC campus');
   await page.getByLabel('Phone number', { exact: true }).fill('0543982307');
   await page.getByLabel('WhatsApp number', { exact: true }).fill('0543982307');
   await page.getByRole('checkbox').check();
