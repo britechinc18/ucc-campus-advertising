@@ -3335,3 +3335,10 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+@media (max-width: 800px) {
+  .advert-composer .form-bottom {
+    position: static;
+    bottom: auto;
+    margin-bottom: 0;
+  }
+}
