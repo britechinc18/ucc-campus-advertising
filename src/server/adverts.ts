@@ -224,7 +224,12 @@ export async function createProfile(userId: string, input: unknown) {
         );
       await audit(tx, userId, 'seller_setup_completed', identity.id);
     }
-    return { id: identity.id, name: data.name, kind: data.kind, pending: pendingSetup };
+    return {
+      id: identity.id,
+      name: data.name,
+      kind: data.kind,
+      ...(pendingSetup ? { pending: true } : {}),
+    };
   });
 }
 export async function createAdvert(userId: string, input: unknown, sellerId?: string) {

@@ -197,6 +197,51 @@ suite('PostgreSQL advert lifecycle and concurrent quotas', () => {
       status: 'pending',
     });
   });
+  it('holds business profile changes for approval through both editing endpoints', async () => {
+    const b = await createProfile(owner, {
+      name: 'Approved shop',
+      kind: 'business',
+      consent: true,
+    });
+    const initial = {
+      name: 'Approved shop',
+      slug: 'approved-shop',
+      description: 'A campus shop with stationery and books.',
+      location: 'UCC',
+      phone: '0241234567',
+      whatsapp: '0543982307',
+      contactConsent: true as const,
+      defaultsEnabled: true,
+    };
+    await saveBusiness(owner, initial);
+    await setControls({ profileEdits: 'approval' });
+    const changed = await saveBusiness(owner, { ...initial, name: 'Pending shop' });
+    expect(changed.pending).toBe(true);
+    expect(
+      (await pool.query('select name from advertisers where id=$1', [b.id])).rows[0].name,
+    ).toBe('Approved shop');
+    const patch = await patchProfileField(owner, {
+      kind: 'business',
+      version: 2,
+      field: 'location',
+      value: 'Cape Coast',
+    });
+    expect(patch.pending).toBe(true);
+    const row = (await pool.query('select * from business_profiles where advertiser_id=$1', [b.id]))
+      .rows[0];
+    expect(row.approved.name).toBe('Approved shop');
+    expect(row.pending.name).toBe('Pending shop');
+    await moderateBusiness(admin, row.id, {
+      decision: 'approve',
+      version: 3,
+      reason: 'Verified changes',
+    });
+    expect(
+      (await pool.query('select name from advertisers where id=$1', [b.id])).rows[0].name,
+    ).toBe('Pending shop');
+    await setControls({ profileEdits: 'paused' });
+    await expect(saveBusiness(owner, initial)).rejects.toMatchObject({ code: 'ACTION_PAUSED' });
+  });
   it('enforces paused profile edits on full and individual-field endpoints', async () => {
     await setControls({ profileEdits: 'paused' });
     await expect(
