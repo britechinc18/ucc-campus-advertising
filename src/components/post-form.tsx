@@ -771,7 +771,13 @@ export function PostForm({
                 <Link
                   id="seller-profile-name-link"
                   className="text-link seller-name-link"
-                  href={identity?.kind === 'business' ? '/my-business' : '/my-personal-profile'}
+                  href={
+                    assisted
+                      ? `/admin/${identity?.kind === 'business' ? `businesses/${advertiserId}/profile` : `personal/${advertiserId}`}`
+                      : identity?.kind === 'business'
+                        ? '/my-business'
+                        : '/my-personal-profile'
+                  }
                   target="_blank"
                 >
                   Edit name in profile
