@@ -926,7 +926,6 @@ export function PostForm({
               </div>
               <div
                 className={`review-publishing-notice ${publishingMode === 'paused' ? 'is-paused' : ''}`}
-                role="status"
               >
                 <strong>
                   {publishingMode === 'paused'

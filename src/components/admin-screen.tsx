@@ -1035,7 +1035,14 @@ function AdvertiserDetails({
 }
 function Settings({ data, onSaved }: { data: Row; onSaved: () => void }) {
   const [controls, setControls] = useState<PlatformControls>(
-    (data.platform_controls as PlatformControls) ?? defaultControls,
+    (data.platform_controls as PlatformControls) ?? {
+      ...defaultControls,
+      enabled: !data.auto_publish || !!data.posting_limits_enabled,
+      personalPosting: data.auto_publish ? 'open' : 'approval',
+      businessPosting: data.auto_publish ? 'open' : 'approval',
+      advertEdits: data.auto_publish ? 'open' : 'approval',
+      postingLimits: !!data.posting_limits_enabled,
+    },
   );
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');

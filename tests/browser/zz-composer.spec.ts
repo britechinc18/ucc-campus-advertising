@@ -1,3 +1,4 @@
+import { defaultControls } from '../../src/lib/platform-controls';
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 const fixture = JSON.parse(
@@ -39,6 +40,7 @@ test('composer updates preview, restores local drafts and publishes without revi
     maxImageBytes: old.max_image_bytes,
     expectedVersion: old.version,
     autoPublish: true,
+    platformControls: { ...defaultControls, enabled: false },
     postingLimitsEnabled: false,
     reason: 'Verify open publishing in disposable browser tests',
   };
@@ -151,6 +153,14 @@ test('composer updates preview, restores local drafts and publishes without revi
         headers: { Origin: 'http://localhost:3000' },
         data: {
           ...policy,
+          platformControls: old.platform_controls ?? {
+            ...defaultControls,
+            enabled: true,
+            personalPosting: old.auto_publish ? 'open' : 'approval',
+            businessPosting: old.auto_publish ? 'open' : 'approval',
+            advertEdits: old.auto_publish ? 'open' : 'approval',
+            postingLimits: old.posting_limits_enabled,
+          },
           autoPublish: old.auto_publish,
           postingLimitsEnabled: old.posting_limits_enabled,
           expectedVersion: current.version,
@@ -176,7 +186,7 @@ test('platform controls change review actions and master off restores open publi
       sameSite: 'Lax',
     },
   ]);
-  const owner = await browser.newContext();
+  const owner = await browser.newContext({ baseURL: 'http://localhost:3000' });
   await owner.addCookies([
     {
       name: 'authjs.session-token',
