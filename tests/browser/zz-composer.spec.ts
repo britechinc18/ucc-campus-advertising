@@ -89,6 +89,10 @@ test('composer updates preview, restores local drafts and publishes without revi
     await page.getByLabel('Phone number', { exact: true }).fill('0241234567');
     await page.getByLabel('I consent to publish these contact details').check();
     await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.evaluate(() => {
+      (document.activeElement as HTMLElement)?.blur();
+      window.scrollTo(0, 0);
+    });
     await page.screenshot({
       path: testInfo.outputPath('composer-contacts-desktop.png'),
       fullPage: true,

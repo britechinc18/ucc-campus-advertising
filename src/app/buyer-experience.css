@@ -3052,3 +3052,15 @@
 .advert-composer .form-bottom {
   border-top: 0;
 }
+.advert-composer .compact-photo-upload .upload-tile {
+  position: relative;
+  overflow: hidden;
+}
+.advert-composer .compact-photo-upload .upload-tile input[type='file'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
