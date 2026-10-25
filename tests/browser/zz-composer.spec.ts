@@ -64,7 +64,7 @@ test('composer updates preview, restores local drafts and publishes without revi
     await page.setViewportSize({ width: 1440, height: 1000 });
     await expect(page.locator('.live-preview-panel h3')).toHaveText('Live preview campus tutoring');
     await expect(page.locator('.live-preview-panel .preview-brand strong')).toContainText(
-      'Medstash.',
+      'medstash.',
     );
     await expect(page.locator('.live-preview-panel .preview-brand > div > span')).toHaveText(
       'Sponsored',
