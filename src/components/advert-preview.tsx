@@ -50,6 +50,7 @@ export function AdvertPreview({
           <button
             type="button"
             className="preview-add-photo"
+            aria-label="Add a photo"
             onClick={onAddPhotos}
             disabled={uploading}
           >
