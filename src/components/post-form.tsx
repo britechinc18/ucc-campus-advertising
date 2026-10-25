@@ -159,7 +159,6 @@ export function PostForm({
   const [error, setError] = useState('');
   const [fields, setFields] = useState<{ path: string[]; message: string }[]>([]);
   const [savedMessage, setSavedMessage] = useState('');
-  const [stored, setStored] = useState<DraftForm | null>(null);
   const router = useRouter();
   const saved = useRef<{
     advertId: string;
@@ -172,18 +171,20 @@ export function PostForm({
     Promise.resolve().then(() => {
       try {
         const value = localStorage.getItem(storageKey);
-        if (value) {
+        if (value && new URLSearchParams(window.location.search).get('resume') === '1') {
           const draft = JSON.parse(value);
           if (draft && typeof draft.title === 'string' && Array.isArray(draft.mediaIds))
-            setStored({
+            setForm({
               ...initialForm(advert),
               ...draft,
               contactOverrides: draft.contactOverrides ?? [...contactFields],
+              ...(identity ? autofillContacts(draft, identity) : {}),
+              displayName: identity?.name ?? account.profile?.name ?? draft.displayName,
             });
         }
       } catch {}
     });
-  }, [storageKey, advert]);
+  }, [storageKey, advert, identity, account.profile?.name]);
   function update<K extends keyof DraftForm>(key: K, value: DraftForm[K]) {
     setForm((old) => {
       const field = contactFields.includes(key as ContactField) ? (key as ContactField) : undefined;
@@ -235,7 +236,6 @@ export function PostForm({
     });
     setAdvertiserId(id);
     saved.current = null;
-    setStored(null);
     setSavedMessage('');
   }
   const fieldError = (name: string) =>
@@ -521,43 +521,6 @@ export function PostForm({
               ))}
             </div>
           ) : null}
-          {stored ? (
-            <details className="composer-draft-notice">
-              <summary>
-                Unfinished advert saved <span>Continue or discard</span>
-              </summary>
-              <div>
-                <p>Saved on this device. Select any unfinished uploads again.</p>
-                <div className="form-actions">
-                  <button
-                    className="btn small"
-                    type="button"
-                    onClick={() => {
-                      setForm({
-                        ...stored,
-                        ...(identity ? autofillContacts(stored, identity) : {}),
-                        displayName: identity?.name ?? account.profile?.name ?? stored.displayName,
-                      });
-                      setStored(null);
-                    }}
-                  >
-                    Restore draft
-                  </button>
-                  <button
-                    className="btn secondary small"
-                    type="button"
-                    onClick={() => {
-                      localStorage.removeItem(storageKey);
-                      setStored(null);
-                    }}
-                  >
-                    Discard local copy
-                  </button>
-                </div>
-              </div>
-            </details>
-          ) : null}
-
           {step === 1 ? (
             <form onSubmit={advance}>
               <h2>Advert details</h2>
@@ -916,13 +879,7 @@ export function PostForm({
             </>
           )}
         </section>
-        <aside className="posting-guide live-preview-panel">
-          <div className="live-preview-heading">
-            <Icon name="laptop" />
-            <h2>Live preview</h2>
-          </div>
-          {preview}
-        </aside>
+        <aside className="posting-guide live-preview-panel">{preview}</aside>
       </div>
     </div>
   );

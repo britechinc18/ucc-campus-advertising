@@ -64,7 +64,7 @@ test('composer updates preview, restores local drafts and publishes without revi
     await page.setViewportSize({ width: 1440, height: 1000 });
     await expect(page.locator('.live-preview-panel h3')).toHaveText('Live preview campus tutoring');
     await expect(page.locator('.live-preview-panel .preview-brand strong')).toContainText(
-      'MedStash',
+      'Medstash.',
     );
     await expect(page.locator('.live-preview-panel .preview-brand > div > span')).toHaveText(
       'Sponsored',
@@ -117,8 +117,7 @@ test('composer updates preview, restores local drafts and publishes without revi
       .getByRole('region', { name: 'Drafts on this device' })
       .getByRole('link', { name: 'Continue draft' })
       .click();
-    await page.locator('.composer-draft-notice summary').click();
-    await page.getByRole('button', { name: 'Restore draft', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Restore draft', exact: true })).toHaveCount(0);
     await expect(page.getByLabel('Advert title')).toHaveValue('Live preview campus tutoring');
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
     await page.getByRole('button', { name: 'Review advert', exact: true }).click();
