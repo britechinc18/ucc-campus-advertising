@@ -63,9 +63,21 @@ test('composer updates preview, restores local drafts and publishes without revi
     await page.getByLabel('Price (GH₵)').fill('65');
     await page.setViewportSize({ width: 1440, height: 1000 });
     await expect(page.locator('.live-preview-panel h3')).toHaveText('Live preview campus tutoring');
-    await expect(page.locator('.live-preview-panel .preview-brand strong')).toHaveText('MedStash');
-    await expect(page.locator('.live-preview-panel .preview-brand span')).toHaveText('Sponsored');
+    await expect(page.locator('.live-preview-panel .preview-brand strong')).toContainText(
+      'MedStash',
+    );
+    await expect(page.locator('.live-preview-panel .preview-brand > div > span')).toHaveText(
+      'Sponsored',
+    );
     await expect(page.locator('.live-preview-heading')).not.toContainText('Updates as you type');
+    const panels = await page.locator('.post-columns > *').evaluateAll((elements) =>
+      elements.map((element) => ({
+        height: element.getBoundingClientRect().height,
+        overflow: getComputedStyle(element).overflowY,
+      })),
+    );
+    expect(Math.abs(panels[0].height - panels[1].height)).toBeLessThan(2);
+    expect(panels.every((panel) => panel.overflow === 'visible')).toBe(true);
     await page.screenshot({ path: testInfo.outputPath('composer-desktop.png'), fullPage: true });
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('button', { name: 'Preview', exact: true }).click();
@@ -105,6 +117,7 @@ test('composer updates preview, restores local drafts and publishes without revi
       .getByRole('region', { name: 'Drafts on this device' })
       .getByRole('link', { name: 'Continue draft' })
       .click();
+    await page.locator('.composer-draft-notice summary').click();
     await page.getByRole('button', { name: 'Restore draft', exact: true }).click();
     await expect(page.getByLabel('Advert title')).toHaveValue('Live preview campus tutoring');
     await page.getByRole('button', { name: 'Continue', exact: true }).click();
