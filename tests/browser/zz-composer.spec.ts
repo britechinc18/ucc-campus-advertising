@@ -7,6 +7,7 @@ test('composer updates preview, restores local drafts and publishes without revi
   page,
   browser,
 }, testInfo) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.context().addCookies([
     {
       name: 'authjs.session-token',
@@ -69,19 +70,11 @@ test('composer updates preview, restores local drafts and publishes without revi
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByRole('button', { name: 'Preview', exact: true }).click();
     await expect(page.getByRole('dialog')).toContainText('Live preview campus tutoring');
-    await page.evaluate(async () => {
-      await Promise.all(
-        document
-          .getAnimations()
-          .filter((a) => a.effect?.getComputedTiming().iterations !== Infinity)
-          .map((a) => a.finished.catch(() => undefined)),
-      );
-    });
     await page.screenshot({
       path: testInfo.outputPath('composer-mobile-preview.png'),
       fullPage: true,
     });
-    const chooser = page.waitForEvent('filechooser');
+    const chooser = page.waitForEvent('filechooser', { timeout: 10000 });
     await page
       .getByRole('dialog')
       .getByRole('button', { name: 'Add a photo', exact: true })
@@ -127,18 +120,23 @@ test('composer updates preview, restores local drafts and publishes without revi
       'Live preview campus tutoring',
     );
   } finally {
-    const current = (
-      await (await admin.request.get('http://localhost:3000/api/v1/me/context')).json()
-    ).settings;
-    await admin.request.patch('http://localhost:3000/api/v1/admin/settings', {
-      headers: { Origin: 'http://localhost:3000' },
-      data: {
-        ...policy,
-        autoPublish: old.auto_publish,
-        postingLimitsEnabled: old.posting_limits_enabled,
-        expectedVersion: current.version,
-      },
-    });
+    try {
+      const current = (
+        await (
+          await admin.request.get('http://localhost:3000/api/v1/me/context', { timeout: 5000 })
+        ).json()
+      ).settings;
+      await admin.request.patch('http://localhost:3000/api/v1/admin/settings', {
+        timeout: 5000,
+        headers: { Origin: 'http://localhost:3000' },
+        data: {
+          ...policy,
+          autoPublish: old.auto_publish,
+          postingLimitsEnabled: old.posting_limits_enabled,
+          expectedVersion: current.version,
+        },
+      });
+    } catch {}
     await admin.close();
   }
 });

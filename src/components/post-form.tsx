@@ -501,6 +501,7 @@ export function PostForm({
                 onClick={() => {
                   setForm({
                     ...stored,
+                    ...(identity ? autofillContacts(stored, identity) : {}),
                     displayName: identity?.name ?? account.profile?.name ?? stored.displayName,
                   });
                   setStored(null);
