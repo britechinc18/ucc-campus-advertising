@@ -3605,3 +3605,8 @@
     content: none;
   }
 }
+
+/* Keep scrolling content beneath an opaque header plane, with no visible divider. */
+.site-header {
+  background: var(--canvas);
+}
