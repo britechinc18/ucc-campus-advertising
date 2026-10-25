@@ -3490,6 +3490,9 @@
   }
 }
 @media (max-width: 900px) {
+  .site-header .header-search-trigger {
+    display: none;
+  }
   .site-header .header-inner {
     position: relative;
     isolation: isolate;
