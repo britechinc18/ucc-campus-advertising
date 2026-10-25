@@ -241,6 +241,35 @@ test('business lifecycle confirms deactivation, reviewed reopening and closure w
   });
   const admin = await browser.newContext();
   await session(admin, 'admin');
+  const settings = (
+    await (await admin.request.get('http://localhost:3000/api/v1/me/context')).json()
+  ).settings;
+  async function setBusinessPolicy(controls: unknown) {
+    const current = (
+      await (await admin.request.get('http://localhost:3000/api/v1/me/context')).json()
+    ).settings;
+    const result = await admin.request.patch('http://localhost:3000/api/v1/admin/settings', {
+      headers: { Origin: 'http://localhost:3000' },
+      data: {
+        expectedVersion: current.version,
+        maxActive: settings.max_active,
+        dailyLimit: settings.daily_limit,
+        durationDays: settings.duration_days,
+        maxImages: settings.max_images,
+        maxImageBytes: settings.max_image_bytes,
+        autoPublish: settings.auto_publish,
+        postingLimitsEnabled: settings.posting_limits_enabled,
+        platformControls: controls,
+        reason: 'Verify explicit business reactivation approval policy',
+      },
+    });
+    expect(result.status()).toBe(200);
+  }
+  await setBusinessPolicy({
+    ...settings.platform_controls,
+    enabled: true,
+    businessCreation: 'approval',
+  });
   await page.goto('/my-business');
   await page.getByRole('button', { name: 'Deactivate business', exact: true }).click();
   await page.getByRole('dialog').getByRole('checkbox').check();
@@ -281,6 +310,7 @@ test('business lifecycle confirms deactivation, reviewed reopening and closure w
   expect(context.profiles).toHaveLength(1);
   expect(context.profiles[0].kind).toBe('student');
   expect(context.profiles[0].id).not.toBe(profile.id);
+  await setBusinessPolicy(settings.platform_controls);
   await admin.close();
 });
 

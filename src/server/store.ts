@@ -58,6 +58,7 @@ export async function advertiser(tx: Executor, user: Actor, advertiserId?: strin
   return value;
 }
 export interface Settings {
+  platform_controls?: import('../lib/platform-controls').PlatformControls | null;
   auto_publish: boolean;
   posting_limits_enabled: boolean;
   max_active: number;

@@ -1,4 +1,5 @@
 'use client';
+import { controlMode, postingAction, pauseMessage } from '@/lib/platform-controls';
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -12,6 +13,7 @@ import { isFlyer } from '@/lib/campus';
 import { api, ApiError } from '@/lib/api';
 import {
   parseMoney,
+  priceText,
   type Account,
   type AdvertContent,
   type Category,
@@ -28,7 +30,7 @@ import {
 import { Uploads } from './uploads';
 import { Icon } from './icon';
 import { AdvertPreview } from './advert-preview';
-import { ErrorMessage, Dialog } from './ui';
+import { ErrorMessage, Dialog, MediaImage } from './ui';
 interface DraftForm extends ContactDraft {
   startsAt: string;
   endsAt: string;
@@ -128,7 +130,11 @@ export function PostForm({
   const [step, setStep] = useState(1);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [localSaved, setLocalSaved] = useState('');
-  const requiresReview = !account.settings.auto_publish;
+  const publishingMode = controlMode(
+    account.settings,
+    postingAction(identity?.kind, !!advert?.approved_revision_id && !renew),
+  );
+  const requiresReview = publishingMode === 'approval';
   const stepPanel = useRef<HTMLElement>(null);
   const uploadInput = useRef<HTMLInputElement>(null);
   const pickPhotoOnMount = useRef(false);
@@ -360,7 +366,7 @@ export function PostForm({
       }
       if (submit) {
         const ref = saved.current;
-        await api(
+        const result = await api<{ status: string }>(
           `me/adverts/${ref.advertId}/submit`,
           'POST',
           { revisionId: ref.revisionId },
@@ -370,9 +376,9 @@ export function PostForm({
           localStorage.removeItem(storageKey);
         } catch {}
         router.push(
-          assisted && requiresReview
+          assisted && result.status === 'pending'
             ? '/admin/submissions'
-            : `/my-adverts?${requiresReview ? 'submitted' : 'published'}=1`,
+            : `/my-adverts?${result.status === 'pending' ? 'submitted' : 'published'}=1`,
         );
         router.refresh();
       } else {
@@ -839,15 +845,111 @@ export function PostForm({
           ) : (
             <>
               <h2>Review your advert</h2>
-              <div className="review-live-preview">{preview}</div>
-              <div className="review-edit-actions">
-                <button type="button" className="text-link" onClick={() => setStep(1)}>
-                  Edit details
-                </button>
-                <button type="button" className="text-link" onClick={() => setStep(2)}>
-                  Edit photos & contact
-                </button>
+              <div className="advert-review-summary">
+                <section>
+                  <div className="review-section-heading">
+                    <h3>Advert details</h3>
+                    <button type="button" className="text-link" onClick={() => setStep(1)}>
+                      Edit details
+                    </button>
+                  </div>
+                  <strong className="review-title">{form.title}</strong>
+                  <p className="review-price">
+                    {priceText({ priceMode: form.priceMode, pricePesewas: parseMoney(form.price) })}
+                  </p>
+                  <p className="meta">{categories.find((c) => c.id === form.categoryId)?.name}</p>
+                  <p className="review-description">{form.description}</p>
+                  {form.startsAt ? (
+                    <p>Starts {form.startsAt.replace('T', ' ')} · Ghana time</p>
+                  ) : null}
+                  {form.endsAt ? <p>Ends {form.endsAt.replace('T', ' ')} · Ghana time</p> : null}
+                  {form.offer ? <p>{form.offer}</p> : null}
+                  {form.externalUrl ? (
+                    <p className="review-description">{form.externalUrl}</p>
+                  ) : null}
+                </section>
+                <section>
+                  <div className="review-section-heading">
+                    <h3>Photos</h3>
+                    <button type="button" className="text-link" onClick={() => setStep(2)}>
+                      Edit photos
+                    </button>
+                  </div>
+                  <div className="review-photo-strip">
+                    {form.mediaIds.length ? (
+                      form.mediaIds.map((id, i) => (
+                        <MediaImage key={id} id={id} alt={`Advert photo ${i + 1}`} />
+                      ))
+                    ) : (
+                      <span className="meta">No photos added</span>
+                    )}
+                  </div>
+                </section>
+                <section>
+                  <div className="review-section-heading">
+                    <h3>Seller & contact</h3>
+                    <button type="button" className="text-link" onClick={() => setStep(2)}>
+                      Edit contact
+                    </button>
+                  </div>
+                  <dl className="review-contact-list">
+                    <div>
+                      <dt>Posting as</dt>
+                      <dd>{identity?.name ?? form.displayName}</dd>
+                    </div>
+                    <div>
+                      <dt>Location</dt>
+                      <dd>{form.location}</dd>
+                    </div>
+                    {form.phone ? (
+                      <div>
+                        <dt>Phone</dt>
+                        <dd>{form.phone}</dd>
+                      </div>
+                    ) : null}
+                    {form.whatsapp ? (
+                      <div>
+                        <dt>WhatsApp</dt>
+                        <dd>{form.whatsapp}</dd>
+                      </div>
+                    ) : null}
+                    {socialPlatforms
+                      .filter((p) => form.socials[p])
+                      .map((p) => (
+                        <div key={p}>
+                          <dt>{socialLabels[p]}</dt>
+                          <dd>{form.socials[p]}</dd>
+                        </div>
+                      ))}
+                  </dl>
+                </section>
               </div>
+              <div
+                className={`review-publishing-notice ${publishingMode === 'paused' ? 'is-paused' : ''}`}
+              >
+                <strong>
+                  {publishingMode === 'paused'
+                    ? 'Publishing paused'
+                    : requiresReview
+                      ? 'Approval required'
+                      : 'Ready to publish'}
+                </strong>
+                <p>
+                  {publishingMode === 'paused'
+                    ? pauseMessage(account.settings)
+                    : requiresReview
+                      ? 'An admin will review your advert before it appears publicly.'
+                      : 'Your advert will go live as soon as you publish.'}
+                </p>
+              </div>
+              <button
+                type="button"
+                className="text-link review-preview-button"
+                onClick={() => setPreviewOpen(true)}
+              >
+                <Icon name="eye" />
+                Preview advert
+              </button>
               {localSaved ? (
                 <p className="local-draft-status" role="status">
                   {localSaved}
@@ -872,10 +974,16 @@ export function PostForm({
                 </button>
                 <button
                   className="btn"
-                  disabled={busy || uploading}
+                  disabled={busy || uploading || publishingMode === 'paused'}
                   onClick={() => void save(true)}
                 >
-                  {busy ? 'Saving…' : requiresReview ? 'Submit for approval' : 'Publish advert'}
+                  {busy
+                    ? 'Saving…'
+                    : publishingMode === 'paused'
+                      ? 'Publishing paused'
+                      : requiresReview
+                        ? 'Submit for approval'
+                        : 'Publish advert'}
                 </button>
               </div>
             </>

@@ -1,4 +1,5 @@
 'use client';
+import { controlMode } from '@/lib/platform-controls';
 import type { Account, BusinessProfile } from '@/lib/market';
 import { ProfileFieldEditor, type ProfileDetails } from './profile-field-editor';
 import { BusinessLifecycle } from './business-lifecycle';
@@ -32,6 +33,12 @@ export function BusinessForm({
     business?.approved ?? { name: account.profile?.name }) as ProfileDetails;
   return (
     <>
+      {business?.pending ? (
+        <p className="inline-notice" role="status">
+          Your business changes are awaiting approval. Your approved details stay public until
+          reviewed.
+        </p>
+      ) : null}
       <ProfileFieldEditor
         key={id}
         id={id}
@@ -45,7 +52,11 @@ export function BusinessForm({
           !assisted
             ? (name) => (
                 <BusinessLifecycle
-                  requiresReview={!account.settings.auto_publish}
+                  requiresReview={
+                    account.settings.platform_controls
+                      ? controlMode(account.settings, 'businessCreation') !== 'open'
+                      : !account.settings.auto_publish
+                  }
                   name={name}
                   deactivated={!!identity?.deactivated}
                   reactivationPending={!!identity?.reactivationPending}

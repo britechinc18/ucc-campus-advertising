@@ -156,7 +156,7 @@ export function Onboarding({
             setBusy(true);
             setError('');
             try {
-              const result = await api<{ id: string }>('me/profile', 'POST', {
+              const result = await api<{ id: string; pending?: boolean }>('me/profile', 'POST', {
                 name: form.get('name'),
                 kind: selected,
                 consent: true,
@@ -170,6 +170,11 @@ export function Onboarding({
                   contactConsent: form.get('contactConsent') === 'on',
                 },
               });
+              if (result.pending) {
+                router.replace('/my-profile?identity=business');
+                router.refresh();
+                return;
+              }
               setIdentityId(result.id);
               advance(4);
             } catch (e) {

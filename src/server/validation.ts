@@ -185,6 +185,19 @@ export const profileSchema = z
     consent: z.literal(true),
   })
   .strict();
+export const platformControlsSchema = z
+  .object({
+    enabled: z.boolean(),
+    registration: z.enum(['open', 'paused']),
+    businessCreation: z.enum(['open', 'approval', 'paused']),
+    profileEdits: z.enum(['open', 'approval', 'paused']),
+    personalPosting: z.enum(['open', 'approval', 'paused']),
+    businessPosting: z.enum(['open', 'approval', 'paused']),
+    advertEdits: z.enum(['open', 'approval', 'paused']),
+    postingLimits: z.boolean(),
+    pauseMessage: z.string().trim().min(3).max(300),
+  })
+  .strict();
 export const settingsSchema = z
   .object({
     maxActive: z.number().int().min(1).max(100),
@@ -192,6 +205,7 @@ export const settingsSchema = z
     durationDays: z.number().int().min(1).max(365),
     maxImages: z.number().int().min(1).max(5),
     maxImageBytes: z.number().int().min(1).max(5242880),
+    platformControls: platformControlsSchema.optional(),
     autoPublish: z.boolean(),
     postingLimitsEnabled: z.boolean().default(true),
   })

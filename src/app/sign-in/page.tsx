@@ -97,7 +97,9 @@ export default async function SignInPage({
           <p className="form-error" role="alert">
             {params.error === 'rules'
               ? 'Please agree to the platform rules before continuing.'
-              : 'Sign-in couldn’t be completed. Please try again.'}
+              : params.error === 'registration-paused'
+                ? 'New account registration is temporarily paused. Existing users can still sign in.'
+                : 'Sign-in couldn’t be completed. Please try again.'}
           </p>
         ) : null}
         {v.configured ? (
