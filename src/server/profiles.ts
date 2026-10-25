@@ -264,6 +264,12 @@ export async function businessLifecycle(userId: string, input: unknown, sellerId
     if (data.action === 'reactivate') {
       ensure(p.deactivated_at, 409, 'ALREADY_ACTIVE', 'Business is already active');
       const settings = await limits(tx);
+      ensure(
+        controlMode(settings, 'businessCreation') !== 'paused',
+        403,
+        'ACTION_PAUSED',
+        pauseMessage(settings),
+      );
       await tx.execute(
         (
           settings.platform_controls
